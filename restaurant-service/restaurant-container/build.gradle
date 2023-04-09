@@ -1,0 +1,20 @@
+plugins {
+    id 'java-commons'
+    id "org.springframework.boot" version "2.7.7"
+}
+
+group = 'com.sangjun.restaurant.container'
+
+dependencies {
+    implementation project(":restaurant-domain:restaurant-application-service")
+    implementation project(":restaurant-domain:restaurant-domain-core")
+    implementation project(":restaurant-messaging")
+    implementation project(":restaurant-dataaccess")
+
+    implementation 'org.springframework.boot:spring-boot-starter:'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+}
+
+bootBuildImage {
+    imageName("${project.group}/restaurant.service:${project.version}")
+}

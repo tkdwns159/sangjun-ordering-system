@@ -1,0 +1,14 @@
+plugins {
+    id 'java-commons'
+}
+
+group = 'com.sangjun.saga'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.sangjun.common:common-domain'
+}
+

@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+dependencies {
+    implementation platform('com.sangjun.platform:product-platform')
+
+    implementation('org.springframework.kafka:spring-kafka') {
+        exclude group: 'org.slf4j', module:'slft4j-log4j12'
+        exclude group: 'log4j', module: 'log4j'
+        exclude group: 'io.swagger', module: 'swagger-annotations'
+    }
+
+    implementation 'io.confluent:kafka-avro-serializer'
+    implementation 'org.apache.avro:avro'
+}

@@ -1,0 +1,14 @@
+plugins {
+    id 'java-commons'
+    id 'io.freefair.lombok' version '6.6.1'
+}
+
+group = 'com.sangjun.common'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+}

@@ -1,0 +1,21 @@
+pluginManagement {
+    plugins {
+        id "io.freefair.lombok" version "6.6.1"
+    }
+
+    includeBuild("../build-logic")
+}
+
+includeBuild("../common")
+includeBuild("../platforms")
+includeBuild("../infra")
+
+rootProject.name = 'order-service'
+
+include('order-application')
+include('order-container')
+include('order-dataaccess')
+include('order-messaging')
+include('order-domain')
+include('order-domain:order-application-service')
+include('order-domain:order-domain-core')

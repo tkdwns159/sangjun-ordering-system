@@ -1,0 +1,11 @@
+plugins {
+    id 'java-commons'
+    id 'io.freefair.lombok'
+    id 'java-library'
+}
+
+group 'com.sangjun.order.domain'
+
+dependencies {
+    api ('com.sangjun.common:common-domain')
+}

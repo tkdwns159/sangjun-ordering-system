@@ -1,0 +1,13 @@
+pluginManagement {
+    includeBuild("../build-logic")
+}
+
+rootProject.name = 'restaurant-service'
+include("restaurant-domain")
+include("restaurant-domain:restaurant-domain-core")
+include("restaurant-domain:restaurant-application-service")
+include("restaurant-dataaccess")
+include("restaurant-messaging")
+include("restaurant-container")
+includeBuild("../common")
+includeBuild("../infra")

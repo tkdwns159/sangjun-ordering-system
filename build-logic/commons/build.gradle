@@ -1,0 +1,13 @@
+plugins {
+    id 'groovy-gradle-plugin'
+}
+
+group 'com.sangjun.build-logic'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('com.sangjun.platform:plugin-platform')
+}

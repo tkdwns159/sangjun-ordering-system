@@ -1,0 +1,11 @@
+plugins {
+    id 'java-platform'
+}
+
+group = 'com.sangjun.platform'
+
+dependencies {
+    constraints {
+        api('org.springframework.boot:org.springframework.boot.gradle.plugin:2.7.7')
+    }
+}

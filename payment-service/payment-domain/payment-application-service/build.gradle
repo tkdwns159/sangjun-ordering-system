@@ -1,0 +1,15 @@
+plugins {
+    id 'java-commons'
+    id 'io.freefair.lombok' version '6.6.1'
+    id 'java-library'
+}
+
+group = "com.sangjun.payment.domain"
+
+dependencies {
+    api project(":payment-domain:payment-domain-core")
+    implementation 'com.sangjun.common:common-domain'
+
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework:spring-tx'
+}

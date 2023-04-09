@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+java {
+    sourceCompatibility(JavaVersion.VERSION_17)
+    targetCompatibility(JavaVersion.VERSION_17)
+}
+
+dependencies {
+    implementation platform('com.sangjun.platform:product-platform')
+    testImplementation platform('com.sangjun.platform:test-platform')
+
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+}
+
+project.afterEvaluate {
+    project.configurations.each { config ->
+        {
+            if (config.dependencies.stream().anyMatch {
+                it instanceof Dependency && it.group == 'org.mapstruct' && it.name == 'mapstruct'
+            }) {
+                dependencies.annotationProcessor('org.mapstruct:mapstruct-processor:1.5.3.Final')
+            }
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}

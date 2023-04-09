@@ -1,0 +1,3 @@
+rootProject.name='platforms'
+
+include('plugin-platform', 'product-platform', 'test-platform')

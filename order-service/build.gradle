@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+    id 'com.savvasdalkitsis.module-dependency-graph' version '0.10'
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://packages.confluent.io/maven/"
+        }
+    }
+}

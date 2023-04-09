@@ -1,0 +1,14 @@
+pluginManagement {
+    includeBuild('../build-logic')
+}
+
+includeBuild('../platforms')
+includeBuild('../common')
+
+rootProject.name = "infra"
+include 'kafka'
+include 'kafka:kafka-config-data'
+include 'kafka:kafka-consumer'
+include 'kafka:kafka-model'
+include 'kafka:kafka-producer'
+include 'saga'

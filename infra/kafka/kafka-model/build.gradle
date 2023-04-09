@@ -1,0 +1,15 @@
+plugins {
+    id "com.github.davidmc24.gradle.plugin.avro" version "1.3.0"
+    id "java-library"
+}
+
+group 'com.sangjun.kafka'
+
+dependencies {
+    api 'org.apache.avro:avro'
+}
+
+generateAvroJava {
+    source 'src/main/resources/avro'
+    setOutputDir(new File("src/main/java/avro"))
+}

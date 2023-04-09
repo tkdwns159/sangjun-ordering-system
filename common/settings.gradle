@@ -1,0 +1,9 @@
+pluginManagement {
+    includeBuild("../build-logic")
+}
+
+rootProject.name = 'common'
+
+include ':common-domain'
+include ':common-application'
+include ':common-dataaccess'

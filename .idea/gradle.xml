@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/common" name="common">
+                <projects>
+                  <project path="$PROJECT_DIR$/common" />
+                  <project path="$PROJECT_DIR$/common/common-application" />
+                  <project path="$PROJECT_DIR$/common/common-dataaccess" />
+                  <project path="$PROJECT_DIR$/common/common-domain" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/order-service" name="order-service">
+                <projects>
+                  <project path="$PROJECT_DIR$/order-service" />
+                  <project path="$PROJECT_DIR$/order-service/order-application" />
+                  <project path="$PROJECT_DIR$/order-service/order-container" />
+                  <project path="$PROJECT_DIR$/order-service/order-dataaccess" />
+                  <project path="$PROJECT_DIR$/order-service/order-domain" />
+                  <project path="$PROJECT_DIR$/order-service/order-domain/order-application-service" />
+                  <project path="$PROJECT_DIR$/order-service/order-domain/order-domain-core" />
+                  <project path="$PROJECT_DIR$/order-service/order-messaging" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/platforms" name="platforms">
+                <projects>
+                  <project path="$PROJECT_DIR$/platforms" />
+                  <project path="$PROJECT_DIR$/platforms/plugin-platform" />
+                  <project path="$PROJECT_DIR$/platforms/product-platform" />
+                  <project path="$PROJECT_DIR$/platforms/test-platform" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/build-logic" name="build-logic">
+                <projects>
+                  <project path="$PROJECT_DIR$/build-logic" />
+                  <project path="$PROJECT_DIR$/build-logic/commons" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/infra" name="infra">
+                <projects>
+                  <project path="$PROJECT_DIR$/infra" />
+                  <project path="$PROJECT_DIR$/infra/kafka" />
+                  <project path="$PROJECT_DIR$/infra/kafka/kafka-config-data" />
+                  <project path="$PROJECT_DIR$/infra/kafka/kafka-consumer" />
+                  <project path="$PROJECT_DIR$/infra/kafka/kafka-model" />
+                  <project path="$PROJECT_DIR$/infra/kafka/kafka-producer" />
+                  <project path="$PROJECT_DIR$/infra/saga" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/customer-service" name="customer-service">
+                <projects>
+                  <project path="$PROJECT_DIR$/customer-service" />
+                  <project path="$PROJECT_DIR$/customer-service/customer-application" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/payment-service" name="payment-service">
+                <projects>
+                  <project path="$PROJECT_DIR$/payment-service" />
+                  <project path="$PROJECT_DIR$/payment-service/payment-container" />
+                  <project path="$PROJECT_DIR$/payment-service/payment-dataaccess" />
+                  <project path="$PROJECT_DIR$/payment-service/payment-domain" />
+                  <project path="$PROJECT_DIR$/payment-service/payment-domain/payment-application-service" />
+                  <project path="$PROJECT_DIR$/payment-service/payment-domain/payment-domain-core" />
+                  <project path="$PROJECT_DIR$/payment-service/payment-messaging" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/restaurant-service" name="restaurant-service">
+                <projects>
+                  <project path="$PROJECT_DIR$/restaurant-service" />
+                  <project path="$PROJECT_DIR$/restaurant-service/restaurant-container" />
+                  <project path="$PROJECT_DIR$/restaurant-service/restaurant-dataaccess" />
+                  <project path="$PROJECT_DIR$/restaurant-service/restaurant-domain" />
+                  <project path="$PROJECT_DIR$/restaurant-service/restaurant-domain/restaurant-application-service" />
+                  <project path="$PROJECT_DIR$/restaurant-service/restaurant-domain/restaurant-domain-core" />
+                  <project path="$PROJECT_DIR$/restaurant-service/restaurant-messaging" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/build-logic" />
+            <option value="$PROJECT_DIR$/build-logic/commons" />
+            <option value="$PROJECT_DIR$/common" />
+            <option value="$PROJECT_DIR$/common/common-application" />
+            <option value="$PROJECT_DIR$/common/common-dataaccess" />
+            <option value="$PROJECT_DIR$/common/common-domain" />
+            <option value="$PROJECT_DIR$/customer-service" />
+            <option value="$PROJECT_DIR$/customer-service/customer-application" />
+            <option value="$PROJECT_DIR$/infra" />
+            <option value="$PROJECT_DIR$/infra/kafka" />
+            <option value="$PROJECT_DIR$/infra/kafka/kafka-config-data" />
+            <option value="$PROJECT_DIR$/infra/kafka/kafka-consumer" />
+            <option value="$PROJECT_DIR$/infra/kafka/kafka-model" />
+            <option value="$PROJECT_DIR$/infra/kafka/kafka-producer" />
+            <option value="$PROJECT_DIR$/infra/saga" />
+            <option value="$PROJECT_DIR$/order-service" />
+            <option value="$PROJECT_DIR$/order-service/order-application" />
+            <option value="$PROJECT_DIR$/order-service/order-container" />
+            <option value="$PROJECT_DIR$/order-service/order-dataaccess" />
+            <option value="$PROJECT_DIR$/order-service/order-domain" />
+            <option value="$PROJECT_DIR$/order-service/order-domain/order-application-service" />
+            <option value="$PROJECT_DIR$/order-service/order-domain/order-domain-core" />
+            <option value="$PROJECT_DIR$/order-service/order-messaging" />
+            <option value="$PROJECT_DIR$/payment-service" />
+            <option value="$PROJECT_DIR$/payment-service/payment-container" />
+            <option value="$PROJECT_DIR$/payment-service/payment-dataaccess" />
+            <option value="$PROJECT_DIR$/payment-service/payment-domain" />
+            <option value="$PROJECT_DIR$/payment-service/payment-domain/payment-application-service" />
+            <option value="$PROJECT_DIR$/payment-service/payment-domain/payment-domain-core" />
+            <option value="$PROJECT_DIR$/payment-service/payment-messaging" />
+            <option value="$PROJECT_DIR$/platforms" />
+            <option value="$PROJECT_DIR$/platforms/plugin-platform" />
+            <option value="$PROJECT_DIR$/platforms/product-platform" />
+            <option value="$PROJECT_DIR$/platforms/test-platform" />
+            <option value="$PROJECT_DIR$/restaurant-service" />
+            <option value="$PROJECT_DIR$/restaurant-service/restaurant-container" />
+            <option value="$PROJECT_DIR$/restaurant-service/restaurant-dataaccess" />
+            <option value="$PROJECT_DIR$/restaurant-service/restaurant-domain" />
+            <option value="$PROJECT_DIR$/restaurant-service/restaurant-domain/restaurant-application-service" />
+            <option value="$PROJECT_DIR$/restaurant-service/restaurant-domain/restaurant-domain-core" />
+            <option value="$PROJECT_DIR$/restaurant-service/restaurant-messaging" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

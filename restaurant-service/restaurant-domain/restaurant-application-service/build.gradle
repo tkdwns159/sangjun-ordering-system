@@ -1,0 +1,15 @@
+plugins {
+    id 'java-commons'
+    id 'java-library'
+    id 'io.freefair.lombok' version '6.6.1'
+}
+
+group = 'com.sangjun.restaurant.domain'
+
+dependencies {
+    api project(':restaurant-domain:restaurant-domain-core')
+    api 'com.sangjun.common:common-domain'
+
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework:spring-tx'
+}

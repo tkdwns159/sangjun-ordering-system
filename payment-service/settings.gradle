@@ -1,0 +1,13 @@
+pluginManagement {
+    includeBuild("../build-logic")
+}
+
+rootProject.name = 'payment-service'
+include('payment-container')
+include('payment-messaging')
+include('payment-domain')
+include('payment-dataaccess')
+include('payment-domain:payment-domain-core')
+include('payment-domain:payment-application-service')
+includeBuild('../common')
+includeBuild('../infra')

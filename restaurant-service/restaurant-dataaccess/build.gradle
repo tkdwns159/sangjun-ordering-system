@@ -1,0 +1,14 @@
+plugins {
+    id 'java-commons'
+    id 'io.freefair.lombok' version '6.6.1'
+}
+
+group = "com.sangjun.restaurant.dataaccess"
+
+dependencies {
+    implementation project(':restaurant-domain:restaurant-application-service')
+    implementation 'com.sangjun.common:common-dataaccess'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.postgresql:postgresql'
+
+}

@@ -1,0 +1,9 @@
+includeBuild('common')
+includeBuild('order-service')
+includeBuild('platforms')
+includeBuild('build-logic')
+includeBuild('infra')
+includeBuild('customer-service')
+includeBuild('payment-service')
+includeBuild('restaurant-service')
+

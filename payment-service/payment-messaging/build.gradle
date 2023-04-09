@@ -1,0 +1,16 @@
+plugins {
+    id 'java-commons'
+    id 'java-library'
+    id 'io.freefair.lombok' version '6.6.1'
+}
+
+group = "com.sangjun.payment.messaging"
+
+dependencies {
+    implementation project(":payment-domain:payment-application-service")
+    implementation "com.sangjun.kafka:kafka-consumer"
+    implementation "com.sangjun.kafka:kafka-producer"
+    implementation "com.sangjun.kafka:kafka-model"
+
+    implementation "org.springframework.kafka:spring-kafka"
+}

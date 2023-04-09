@@ -1,0 +1,24 @@
+plugins {
+    id 'java-platform'
+}
+
+group = 'com.sangjun.platform'
+
+javaPlatform {
+    allowDependencies()
+}
+
+dependencies {
+    api platform('org.springframework.boot:spring-boot-dependencies:2.7.7')
+    constraints {
+        api 'org.apache.logging.log4j:log4j-api:2.19.0'
+        api 'org.apache.logging.log4j:log4j-core:2.19.0'
+
+        api 'io.confluent:kafka-avro-serializer:7.0.1'
+        api 'org.apache.avro:avro:1.11.0'
+
+        api 'org.springframework.kafka:spring-kafka:2.8.2'
+        api 'org.postgresql:postgresql:42.3.1'
+        api 'org.mapstruct:mapstruct:1.5.3.Final'
+    }
+}

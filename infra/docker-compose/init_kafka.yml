@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 services:
   init-kafka:
     image: confluentinc/cp-kafka:${KAFKA_VERSION}

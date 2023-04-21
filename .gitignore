@@ -11,6 +11,8 @@ build/
 .idea/compiler.xml
 .idea/libraries/
 .idea/workspace.xml
+.idea/uiDesigner.xml
+.idea/aws.xml
 *.iws
 *.iml
 *.ipr

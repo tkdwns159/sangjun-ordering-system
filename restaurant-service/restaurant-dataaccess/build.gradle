@@ -1,6 +1,5 @@
 plugins {
     id 'java-commons'
-    id 'io.freefair.lombok' version '6.6.1'
 }
 
 group = "com.sangjun.restaurant.dataaccess"

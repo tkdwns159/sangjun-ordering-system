@@ -13,10 +13,12 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-logging'
 
-    if (!project.name.endsWith("domain-core") && !project.name.endsWith("application")) {
-        println(project.name)
-        def mapstructDep = implementation 'org.mapstruct:mapstruct:1.5.3.Final'
-        annotationProcessor "org.mapstruct:mapstruct:${mapstructDep.getVersion()}"
+    if (!name.endsWith("domain-core")) {
+
+        if (!name.endsWith("application")) {
+            def mapstructDep = implementation 'org.mapstruct:mapstruct:1.5.3.Final'
+            annotationProcessor "org.mapstruct:mapstruct:${mapstructDep.getVersion()}"
+        }
 
         def lombokDep = compileOnly 'org.projectlombok:lombok:1.18.26'
         annotationProcessor "org.projectlombok:lombok:${lombokDep.getVersion()}"

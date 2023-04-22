@@ -1,8 +1,9 @@
-package com.sangjun.payment.domain;
+package com.sangjun.payment.service;
 
 import com.sangjun.common.domain.event.publisher.DomainEventPublisher;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.PaymentStatus;
+import com.sangjun.payment.domain.PaymentDomainService;
 import com.sangjun.payment.domain.entity.CreditEntry;
 import com.sangjun.payment.domain.entity.CreditHistory;
 import com.sangjun.payment.domain.entity.Payment;

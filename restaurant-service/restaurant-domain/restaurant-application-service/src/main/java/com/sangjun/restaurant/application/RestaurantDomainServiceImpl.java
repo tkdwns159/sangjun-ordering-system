@@ -1,7 +1,8 @@
-package com.sangjun.restaurant.domain;
+package com.sangjun.restaurant.application;
 
 import com.sangjun.common.domain.event.publisher.DomainEventPublisher;
 import com.sangjun.common.domain.valueobject.OrderApprovalStatus;
+import com.sangjun.restaurant.domain.RestaurantDomainService;
 import com.sangjun.restaurant.domain.entity.Restaurant;
 import com.sangjun.restaurant.domain.event.OrderApprovalEvent;
 import com.sangjun.restaurant.domain.event.OrderApprovedEvent;

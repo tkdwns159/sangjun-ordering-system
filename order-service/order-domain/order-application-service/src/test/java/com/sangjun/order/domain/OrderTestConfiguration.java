@@ -1,5 +1,6 @@
 package com.sangjun.order.domain;
 
+import com.sangjun.order.domain.service.OrderDomainServiceImpl;
 import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCancelledPaymentRequestMessagePublisher;
 import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCreatedPaymentRequestMessagePublisher;
 import com.sangjun.order.domain.service.ports.output.message.publisher.restaurant.OrderPaidRestaurantRequestMessagePublisher;
@@ -10,7 +11,7 @@ import org.mockito.Mockito;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication(scanBasePackages= {"com.sangjun.order"})
+@SpringBootApplication(scanBasePackages = {"com.sangjun.order"})
 public class OrderTestConfiguration {
 
     @Bean

@@ -13,11 +13,13 @@ import com.sangjun.order.service.dataaccess.order.entity.OrderEntity;
 import com.sangjun.order.service.dataaccess.order.entity.OrderItemEntity;
 import org.springframework.stereotype.Component;
 
-import javax.sql.CommonDataSource;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.sangjun.common.domain.CommonConstants.*;
+import static com.sangjun.common.domain.CommonConstants.FAILURE_MESSAGE_DELIMITER;
 
 @Component
 public class OrderDataAccessMapper {

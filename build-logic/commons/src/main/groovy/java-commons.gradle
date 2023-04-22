@@ -13,21 +13,18 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-logging'
 
-    testImplementation 'org.mockito:mockito-core'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-}
+    if (!project.name.endsWith("domain-core") && !project.name.endsWith("application")) {
+        println(project.name)
+        def mapstructDep = implementation 'org.mapstruct:mapstruct:1.5.3.Final'
+        annotationProcessor "org.mapstruct:mapstruct:${mapstructDep.getVersion()}"
 
-project.afterEvaluate {
-    project.configurations.each { config ->
-        {
-            if (config.dependencies.stream().anyMatch {
-                it instanceof Dependency && it.group == 'org.mapstruct' && it.name == 'mapstruct'
-            }) {
-                dependencies.annotationProcessor('org.mapstruct:mapstruct-processor:1.5.3.Final')
-            }
-        }
+        def lombokDep = compileOnly 'org.projectlombok:lombok:1.18.26'
+        annotationProcessor "org.projectlombok:lombok:${lombokDep.getVersion()}"
     }
+
+    testImplementation 'org.mockito:mockito-core:4.3.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
 }
 
 test {

@@ -1,7 +1,6 @@
 plugins {
     id 'java-commons'
     id 'java-library'
-    id 'io.freefair.lombok'
 }
 
 group 'com.sangjun.order.domain'
@@ -15,10 +14,6 @@ dependencies {
     implementation('org.springframework:spring-tx')
 
     testImplementation('org.springframework.boot:spring-boot-starter-test')
-}
-
-project.afterEvaluate {
-    project.configurations.getByName('annotationProcessor').dependencies.each { println(it.group + ":" + it.name) }
 }
 
 test {

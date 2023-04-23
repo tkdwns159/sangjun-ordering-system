@@ -22,7 +22,7 @@ SQL로 mocking 데이터를 생성하여 해당 데이터로만 실행 테스트
 
 `infra/docker-compose`
 
-위 디렉토리에 PostgreSQL와 Kafka에 대한 docker compose 파일이 위치있습니다.
+위 디렉토리에 PostgreSQL와 Kafka에 대한 docker compose 파일이 위치해있습니다.
 
 아래 순서로 실행시키면 됩니다.
 

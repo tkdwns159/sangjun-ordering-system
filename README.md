@@ -22,7 +22,7 @@ SQL로 mocking 데이터를 생성하여 해당 데이터로만 실행 테스트
 
 `infra/docker-compose`
 
-위 디렉토리에 PostgreSQL와 Kafka에 대한 docker compose 파일이 위치해 했습니다.
+위 디렉토리에 PostgreSQL와 Kafka에 대한 docker compose 파일이 위치있습니다.
 
 아래 순서로 실행시키면 됩니다.
 
@@ -35,7 +35,7 @@ SQL로 mocking 데이터를 생성하여 해당 데이터로만 실행 테스트
 
 **주의할 점**
 
-Kafka broker의 `/var/lib/kafka/data` 볼륨 마운트 설정을 해놓았으므로, `infra/docker-compose` 내부에 반드시
+Kafka broker의 `/var/lib/kafka/data` 에 볼륨 마운트 설정을 해놓았으므로, `infra/docker-compose` 내부에 반드시
 `volumes/kafka/broker-1` , `volumes/kafka/broker-2`, `volumes/kafka/broker-3` 폴더를 생성해주어야합니다.
 
 그렇게 하지 않는다면, docker가 root 권한으로 폴더를 생성하기 때문에 Kafka broker으로의 마운트가 실패하고 컨테이너 실행도 실패하게 됩니다.

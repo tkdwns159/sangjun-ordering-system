@@ -42,9 +42,21 @@ Kafka broker의 `/var/lib/kafka/data` 에 볼륨 마운트 설정을 해놓았�
 
 ## 프로젝트 구조
 
-![Order_Project_Graph.jpg](img%2FOrder_Project_Graph.jpg)
-![Restaurant_Project_Graph.jpg](img%2FRestaurant_Project_Graph.jpg)
-![Payment_Project_Graph.jpg](img%2FPayment_Project_Graph.jpg)
+<p align="middle">
+    <img src="img/Order_Project_Graph.jpg" title="order-service" />
+    <text>[order-service 의존성 그래프]</text>
+</p>
+
+<p align="middle">
+    <img src="img/Restaurant_Project_Graph.jpg" title="restaurant-service" />
+    <text>[restaurant-service 의존성 그래프]</text>
+</p>
+
+<p align="middle">
+    <img src="img/Payment_Project_Graph.jpg" title="payment-service" />
+    <text>[payment-service 의존성 그래프]</text>
+</p>
+
 각 프로젝트는 헥사고날 아키텍처로 구성되어 있고, 다음과 같은 서브 프로젝트로 이루어져 있습니다.
 
 ### {domain name}-domain-core
@@ -171,4 +183,6 @@ GET /orders/f410ab7d-8678-49b4-84d6-35c00933932e
 
 ## 메세지 플로우
 
-![saga-2.png](img%2Fsaga-2.png)
+<p>
+    <img src="img/saga-2.png"/>
+</p>

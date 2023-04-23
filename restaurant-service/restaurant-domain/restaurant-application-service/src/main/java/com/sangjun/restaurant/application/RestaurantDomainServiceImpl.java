@@ -20,6 +20,7 @@ public class RestaurantDomainServiceImpl implements RestaurantDomainService {
     @Override
     public OrderApprovalEvent validateOrder(Restaurant restaurant, List<String> failureMessages, DomainEventPublisher<OrderApprovedEvent> orderApprovedEventDomainEventPublisher, DomainEventPublisher<OrderRejectedEvent> orderRejectedEventDomainEventPublisher) {
         log.info("Validating order with id: {}", restaurant.getOrderDetail().getId().getValue());
+        restaurant.validateOrder(failureMessages);
 
         if (!failureMessages.isEmpty()) {
             return getOrderRejectedEvent(restaurant, failureMessages, orderRejectedEventDomainEventPublisher);

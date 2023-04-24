@@ -16,6 +16,18 @@ public class StreetAddress {
         this.city = city;
     }
 
+    private StreetAddress(Builder builder) {
+        id = builder.id;
+        street = builder.street;
+        postalCode = builder.postalCode;
+        city = builder.city;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
     public UUID getId() {
         return id;
     }
@@ -43,5 +55,40 @@ public class StreetAddress {
     @Override
     public int hashCode() {
         return Objects.hash(street, postalCode, city);
+    }
+
+
+    public static final class Builder {
+        private UUID id;
+        private String street;
+        private String postalCode;
+        private String city;
+
+        private Builder() {
+        }
+
+        public Builder id(UUID val) {
+            id = val;
+            return this;
+        }
+
+        public Builder street(String val) {
+            street = val;
+            return this;
+        }
+
+        public Builder postalCode(String val) {
+            postalCode = val;
+            return this;
+        }
+
+        public Builder city(String val) {
+            city = val;
+            return this;
+        }
+
+        public StreetAddress build() {
+            return new StreetAddress(this);
+        }
     }
 }

@@ -28,6 +28,10 @@ public class Restaurant extends AggregateRoot<RestaurantId> {
         return active;
     }
 
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     public static final class Builder {
         private RestaurantId restaurantId;
         private List<Product> products;

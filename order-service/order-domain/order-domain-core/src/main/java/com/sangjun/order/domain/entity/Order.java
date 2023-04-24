@@ -6,12 +6,15 @@ import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.valueobject.OrderItemId;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class Order extends AggregateRoot<OrderId> {
+
+    private static final Logger log = LoggerFactory.getLogger(Order.class.getName());
     private final CustomerId customerId;
     private final RestaurantId restaurantId;
     private final StreetAddress deliveryAddress;
@@ -85,53 +88,81 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     public void validateOrder() {
-        validateInitialOrder();
-        validateTotalPrice();
-        validateItemsPrice();
+        checkIdIsEmpty();
+        checkOrderStatusIsEmpty();
+        checkTotalPriceIsPresent();
+
+        checkItemSubTotalsArePresent();
+        checkItemPricesArePresent();
+
+        checkTotalPriceEqualsActualItemSubTotalSum();
+        checkItemSubTotalEqualsActualItemPriceSum();
     }
 
-    private void validateInitialOrder() {
-        if (orderStatus != null || getId() != null) {
-            throw new OrderDomainException("Order is not in correct state for init!");
+
+    public void checkIdIsEmpty() {
+        if (this.getId() != null) {
+            log.error("Order id is not null! {}", this.getId().getValue());
+            throw new OrderDomainException("Order id is not null! " + this.getId().getValue());
         }
     }
 
-    private void validateTotalPrice() {
-        if (price == null || !price.isGreaterThanZero()) {
-            throw new OrderDomainException("Total price must be greater than zero!");
+    private void checkOrderStatusIsEmpty() {
+        if (this.orderStatus != null) {
+            log.error("Order status is not null! {}", this.orderStatus);
+            throw new OrderDomainException("Order status is not null! " + this.orderStatus);
         }
     }
 
-    private void validateItemsPrice() {
-        Money orderItemsTotal = items.stream().map(orderItem -> {
-            validateItemPrice(orderItem);
-            return orderItem.getSubTotal();
-        }).reduce(Money.ZERO, Money::add);
+    private void checkTotalPriceIsPresent() {
+        if (this.price == null) {
+            log.error("Total price is null!");
+            throw new OrderDomainException("Total price is null!");
+        }
+    }
+
+    private void checkTotalPriceEqualsActualItemSubTotalSum() {
+        Money orderItemsTotal = items.stream()
+                .map(OrderItem::getSubTotal)
+                .reduce(Money.ZERO, Money::add);
 
         if (!this.price.equals(orderItemsTotal)) {
+            log.error("Total price: {} is not equal to Order items total: {}",
+                    price.getAmount(), orderItemsTotal.getAmount());
             throw new OrderDomainException("Total price: " + price.getAmount()
-                    + " is not equal to Order items total: " + orderItemsTotal.getAmount() + "!");
+                    + " is not equal to Order items total: " + orderItemsTotal.getAmount());
         }
     }
 
-    private void validateItemPrice(OrderItem orderItem) {
-        if (!orderItem.isPriceValid()) {
-            throw new OrderDomainException("Order item price: " + orderItem.getPrice().getAmount() + " is not valid for product " + orderItem.getProduct().getId().getValue());
-        }
+    private void checkItemSubTotalsArePresent() {
+        this.items.forEach(OrderItem::checkSubTotalIsPresent);
+    }
+
+    private void checkItemPricesArePresent() {
+        this.items.forEach(OrderItem::checkPriceIsPresent);
+    }
+
+    private void checkItemSubTotalEqualsActualItemPriceSum() {
+        this.items.forEach(OrderItem::checkSubTotalEqualsActualPriceSum);
     }
 
     public void pay() {
-        if (orderStatus != OrderStatus.PENDING) {
-            throw new OrderDomainException("Order is not in correct state for pay operation!");
+        if (this.orderStatus != OrderStatus.PENDING) {
+            log.error("Order must be in PENDING state for pay operation! Order status: {}",
+                    this.orderStatus);
+            throw new OrderDomainException("Order must be in PENDING state for pay operation!" +
+                    " Order status: " + this.orderStatus);
         }
 
         this.orderStatus = OrderStatus.PAID;
     }
 
     public void approve() {
-        if (orderStatus != OrderStatus.PAID) {
-            throw new OrderDomainException("Order is not in correct state for approve operation!");
-
+        if (this.orderStatus != OrderStatus.PAID) {
+            log.error("Order must be in PAID state for approve operation! Order status: {}",
+                    this.orderStatus);
+            throw new OrderDomainException("Order must be in PAID state for approve operation! Order status: "
+                    + this.orderStatus);
         }
 
         this.orderStatus = OrderStatus.APPROVED;
@@ -139,7 +170,10 @@ public class Order extends AggregateRoot<OrderId> {
 
     public void initCancel(List<String> failureMessages) {
         if (orderStatus != OrderStatus.PAID) {
-            throw new OrderDomainException("Order is not in correct state for initCancel operation");
+            log.error("Order must be in PAID state for cancel operation! Order status: {}",
+                    this.orderStatus);
+            throw new OrderDomainException("Order must be in PAID state for cancel operation! " +
+                    "Order status: " + this.orderStatus);
         }
 
         this.orderStatus = OrderStatus.CANCELLING;
@@ -148,7 +182,11 @@ public class Order extends AggregateRoot<OrderId> {
 
     private void updateFailureMessages(List<String> failureMessages) {
         if (this.failureMessages != null && failureMessages != null) {
-            this.failureMessages.addAll(failureMessages.stream().filter(msg -> !msg.isEmpty()).collect(Collectors.toList()));
+            this.failureMessages.addAll(failureMessages
+                    .stream()
+                    .filter(String::isBlank)
+                    .toList());
+            return;
         }
 
         if (this.failureMessages == null) {
@@ -158,13 +196,19 @@ public class Order extends AggregateRoot<OrderId> {
 
     public void cancel(List<String> failureMessages) {
         if (orderStatus == OrderStatus.CANCELLING || orderStatus == OrderStatus.PENDING) {
-            throw new OrderDomainException("Order is not in correct state for cancel operation!");
+            log.error("Order must be in PAID or CANCELLED state for cancel operation! Order Status: {}",
+                    this.orderStatus);
+            throw new OrderDomainException("Order must be in PAID or CANCELLED state " +
+                    "for cancel operation! Order Status: " + this.orderStatus);
         }
 
         this.orderStatus = OrderStatus.CANCELED;
         updateFailureMessages(failureMessages);
     }
 
+    public void setOrderStatus(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
+    }
 
     public static final class Builder {
         private OrderId orderId;

@@ -190,3 +190,17 @@ GET /orders/f410ab7d-8678-49b4-84d6-35c00933932e
 <p>
     <img src="img/saga(failure).png"/>
 </p>
+
+### 결제 실패시
+
+결제 실패시, 주문 상태를 PENDING에서 CANCELLED로 바꾸고 실패처리합니다.
+
+### 식당 승인 거부 및 실패시
+
+식당 승인 요청을 하기 위해서는 결제가 성공적으로 완료되어야하기 때문에, 해당 주문의 현재 주문상태는 PAID 입니다.
+
+1. 결제를 완료하고 식당 승인 실패시, Order Service에서 주문 상태를 PAID 에서 CANCELLING 으로 바꿉니다.
+2. Payment Service에 ORDER CANCELLED 라는 결제철회 메세지를 전송합니다.
+3. 결제가 성공적으로 철회되면, Payment Service가 Order Service에게 PAYMENT CANCELLED
+   메세지를 전송하여 철회 완료를 알립니다.
+4. Order Service 해당 메세지를 수신하고, 주문 상태를 CANCELLED로 바꾸고 실패처리합니다.

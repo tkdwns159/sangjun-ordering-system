@@ -186,3 +186,7 @@ GET /orders/f410ab7d-8678-49b4-84d6-35c00933932e
 <p>
     <img src="img/saga-2.png"/>
 </p>
+
+<p>
+    <img src="img/saga(failure).png"/>
+</p>

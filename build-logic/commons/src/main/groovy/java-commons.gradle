@@ -7,13 +7,17 @@ java {
     targetCompatibility(JavaVersion.VERSION_17)
 }
 
+configurations {
+    configureEach {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+}
+
 dependencies {
     implementation platform('com.sangjun.platform:product-platform')
     testImplementation platform('com.sangjun.platform:test-platform')
 
-    implementation('org.springframework.boot:spring-boot-starter-logging') {
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-    }
+    implementation('org.springframework.boot:spring-boot-starter-log4j2')
 
     if (!name.endsWith("domain-core")) {
         if (!name.endsWith("application")) {

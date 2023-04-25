@@ -4,10 +4,8 @@ import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.OrderItem;
 import com.sangjun.order.domain.entity.Product;
-import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.valueobject.OrderItemId;
-import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -22,31 +20,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class OrderAfterInitTest {
     OrderDomainService orderDomainService = new OrderDomainServiceImpl();
-    private static final UUID RESTAURANT_ID = UUID.randomUUID();
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
     private static final UUID ORDER_ID = UUID.randomUUID();
-    private static final UUID STREET_ADDRESS_ID = UUID.randomUUID();
     private static final UUID TRACKING_ID = UUID.randomUUID();
     private static final List<Product> PRODUCTS = new ArrayList<>();
-    private static final Restaurant RESTAURANT = Restaurant.builder()
-            .restaurantId(new RestaurantId(RESTAURANT_ID))
-            .active(true)
-            .products(PRODUCTS)
-            .build();
-    private static final StreetAddress STREET_ADDRESS = StreetAddress.builder()
-            .id(STREET_ADDRESS_ID)
-            .city("SEOUL")
-            .postalCode("124213")
-            .build();
 
     private static final List<OrderItem> ORDER_ITEMS = new ArrayList<>();
     private static Money totalItemPrice;
-    private Order order = Order.builder()
+    private final Order order = Order.builder()
             .orderId(new OrderId(ORDER_ID))
             .customerId(new CustomerId(CUSTOMER_ID))
             .trackingId(new TrackingId(TRACKING_ID))
             .items(ORDER_ITEMS)
-            .deliveryAddress(STREET_ADDRESS)
             .orderStatus(OrderStatus.PENDING)
             .price(totalItemPrice)
             .build();

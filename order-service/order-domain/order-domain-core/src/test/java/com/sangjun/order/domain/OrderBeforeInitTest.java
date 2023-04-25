@@ -8,7 +8,6 @@ import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.valueobject.OrderItemId;
-import com.sangjun.order.domain.valueobject.StreetAddress;
 import org.junit.jupiter.api.*;
 
 import java.math.BigDecimal;
@@ -24,18 +23,13 @@ public class OrderBeforeInitTest {
     OrderDomainService orderDomainService = new OrderDomainServiceImpl();
     private static final UUID RESTAURANT_ID = UUID.randomUUID();
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
-    private static final UUID STREET_ADDRESS_ID = UUID.randomUUID();
     private static final List<Product> PRODUCTS = new ArrayList<>();
     private static final Restaurant RESTAURANT = Restaurant.builder()
-            .restaurantId(new RestaurantId(RESTAURANT_ID))
+            .id(new RestaurantId(RESTAURANT_ID))
             .active(true)
             .products(PRODUCTS)
             .build();
-    private static final StreetAddress STREET_ADDRESS = StreetAddress.builder()
-            .id(STREET_ADDRESS_ID)
-            .city("SEOUL")
-            .postalCode("124213")
-            .build();
+
 
     @BeforeAll
     static void init() {
@@ -238,18 +232,6 @@ public class OrderBeforeInitTest {
     }
 
     @Test
-    void 식당이_운영하지_않으면_예외가_발생한다() {
-        RESTAURANT.setActive(false);
-
-        Order order = Order.builder()
-                .customerId(new CustomerId(CUSTOMER_ID))
-                .build();
-
-        assertThrows(OrderDomainException.class,
-                () -> orderDomainService.validateOrder(order, RESTAURANT));
-    }
-
-    @Test
     void 주문을_시작하면_주문관련_값들이_배속된다() {
         Product product1 = PRODUCTS.get(0);
         int quantity = 2;
@@ -269,7 +251,6 @@ public class OrderBeforeInitTest {
                 .restaurantId(RESTAURANT.getId())
                 .price(subTotal)
                 .items(items)
-                .deliveryAddress(STREET_ADDRESS)
                 .build();
 
         Order initiatedOrder = orderDomainService

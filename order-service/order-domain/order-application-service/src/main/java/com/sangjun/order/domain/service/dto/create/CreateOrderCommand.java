@@ -1,6 +1,9 @@
 package com.sangjun.order.domain.service.dto.create;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -10,7 +13,7 @@ import java.util.UUID;
 @Getter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor
 public class CreateOrderCommand {
     @NotNull
     private UUID customerId;

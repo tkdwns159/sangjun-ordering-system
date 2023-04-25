@@ -11,6 +11,6 @@ javaPlatform {
 dependencies {
     api platform('org.junit:junit-bom:5.9.2')
     constraints {
-        api('org.mockito:mockito-core:4.3.1')
+        api('org.mockito:mockito-core:5.2.0')
     }
 }

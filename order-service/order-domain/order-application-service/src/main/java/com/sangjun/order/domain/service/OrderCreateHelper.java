@@ -34,7 +34,7 @@ public class OrderCreateHelper {
     @Transactional
     public OrderCreatedEvent createOrder(CreateOrderCommand createOrderCommand) {
         Order validOrder = createValidOrder(createOrderCommand);
-        OrderCreatedEvent orderCreatedEvent = orderDomainService.initiateOrder(validOrder, orderCreatedEventDomainEventPublisher);
+        OrderCreatedEvent orderCreatedEvent = orderDomainService.initiateOrder(validOrder);
 
         Order savedOrder = saveOrder(orderCreatedEvent.getOrder());
         log.info("Order created with id : {}", savedOrder.getId());
@@ -46,7 +46,8 @@ public class OrderCreateHelper {
         checkCustomer(createOrderCommand.getCustomerId());
         Restaurant restaurant = getRestaurant(createOrderCommand);
         Order order = orderDataMapper.createOrderCommandToOrder(createOrderCommand);
-        return orderDomainService.validateOrder(order, restaurant);
+        orderDomainService.validateOrder(order, restaurant);
+        return null;
     }
 
     private void checkCustomer(UUID customerId) {

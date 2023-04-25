@@ -1,7 +1,7 @@
 package com.sangjun.order.container.domain;
 
 import com.sangjun.order.domain.OrderDomainService;
-import com.sangjun.order.domain.service.OrderDomainServiceImpl;
+import com.sangjun.order.domain.OrderDomainServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

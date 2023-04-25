@@ -7,24 +7,31 @@ java {
     targetCompatibility(JavaVersion.VERSION_17)
 }
 
+configurations {
+    configureEach {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+}
+
 dependencies {
     implementation platform('com.sangjun.platform:product-platform')
     testImplementation platform('com.sangjun.platform:test-platform')
 
-    implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation('org.springframework.boot:spring-boot-starter-log4j2')
 
     if (!name.endsWith("domain-core")) {
-
         if (!name.endsWith("application")) {
             def mapstructDep = implementation 'org.mapstruct:mapstruct:1.5.3.Final'
-            annotationProcessor "org.mapstruct:mapstruct:${mapstructDep.getVersion()}"
+            annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructDep.getVersion()}"
+            testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructDep.getVersion()}"
         }
 
         def lombokDep = compileOnly 'org.projectlombok:lombok:1.18.26'
         annotationProcessor "org.projectlombok:lombok:${lombokDep.getVersion()}"
     }
 
-    testImplementation 'org.mockito:mockito-core:4.3.1'
+
+    testImplementation 'org.mockito:mockito-core:5.2.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
 }

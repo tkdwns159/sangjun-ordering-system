@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {OrderTestConfiguration.class})
 public class OrderCreateTest {
     private static final UUID CUSTOMER_ID = UUID.randomUUID();

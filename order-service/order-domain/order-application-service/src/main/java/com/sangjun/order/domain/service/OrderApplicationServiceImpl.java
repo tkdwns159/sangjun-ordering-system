@@ -16,6 +16,7 @@ import com.sangjun.order.domain.service.ports.output.repository.RestaurantReposi
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.UUID;
@@ -33,21 +34,19 @@ class OrderApplicationServiceImpl implements OrderApplicationService {
     private final OrderDomainService orderDomainService;
     private final OrderRepository orderRepository;
 
+    @Transactional
     @Override
     public CreateOrderResponse createOrder(CreateOrderCommand createOrderCommand) {
         Order orderDraft = MAPPER.toOrder(createOrderCommand);
-        validateCommand(orderDraft);
+        validateOrderDraft(orderDraft);
         OrderCreatedEvent orderCreatedEvent = orderDomainService.initiateOrder(orderDraft);
-        Order order = orderCreatedEvent.getOrder();
-
+        Order order = orderRepository.save(orderCreatedEvent.getOrder());
         return MAPPER.toCreateOrderResponse(order);
     }
 
-    private void validateCommand(Order orderDraft) {
+    private void validateOrderDraft(Order orderDraft) {
         checkCustomerIsValid(orderDraft.getCustomerId().getValue());
-        Restaurant restaurant = getRestaurant(orderDraft);
-        checkRestaurantIsActive(restaurant);
-        orderDomainService.validateOrder(orderDraft, restaurant);
+        orderDomainService.validateOrder(orderDraft, getRestaurant(orderDraft));
     }
 
     private void checkCustomerIsValid(UUID customerId) {
@@ -70,13 +69,7 @@ class OrderApplicationServiceImpl implements OrderApplicationService {
                 });
     }
 
-    private static void checkRestaurantIsActive(Restaurant restaurant) {
-        if (!restaurant.isActive()) {
-            log.error("Restaurant with id: {} is currently not active", restaurant.getId().getValue());
-            throw new OrderDomainException("Restaurant with id " + restaurant.getId().getValue() + " is currently not active");
-        }
-    }
-
+    @Transactional(readOnly = true)
     @Override
     public TrackOrderResponse trackOrder(TrackOrderQuery trackOrderQuery) {
         Order order = getOrderByTrackingId(trackOrderQuery.getOrderTrackingId());

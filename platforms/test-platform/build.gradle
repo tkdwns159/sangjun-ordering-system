@@ -12,5 +12,6 @@ dependencies {
     api platform('org.junit:junit-bom:5.9.2')
     constraints {
         api('org.mockito:mockito-core:5.2.0')
+        api 'com.h2database:h2:2.1.214'
     }
 }

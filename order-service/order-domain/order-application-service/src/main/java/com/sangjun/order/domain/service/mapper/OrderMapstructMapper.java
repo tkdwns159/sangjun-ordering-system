@@ -58,6 +58,7 @@ public interface OrderMapstructMapper {
     @Mapping(target = "product.id", source = "productId")
     com.sangjun.order.domain.entity.OrderItem toOrderItem(OrderItem orderItem);
 
+    @Mapping(target = "id", expression = "java(UUID.randomUUID())")
     StreetAddress toStreetAddress(OrderAddress orderAddress);
 
     @Mapping(target = "deliveryAddress", source = "orderAddress")
@@ -65,6 +66,7 @@ public interface OrderMapstructMapper {
 
 
     @Mapping(target = "orderTrackingId", source = "trackingId.value")
+    @Mapping(target = "message", constant = "Order created successfully")
     CreateOrderResponse toCreateOrderResponse(Order order);
 
     @Mapping(target = "orderTrackingId", source = "trackingId.value")

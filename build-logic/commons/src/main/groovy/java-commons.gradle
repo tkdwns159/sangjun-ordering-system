@@ -23,11 +23,14 @@ dependencies {
         if (!name.endsWith("application")) {
             def mapstructDep = implementation 'org.mapstruct:mapstruct:1.5.3.Final'
             annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructDep.getVersion()}"
+            annotationProcessor "org.projectlombok:lombok-mapstruct-binding:0.2.0"
             testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructDep.getVersion()}"
         }
 
         def lombokDep = compileOnly 'org.projectlombok:lombok:1.18.26'
         annotationProcessor "org.projectlombok:lombok:${lombokDep.getVersion()}"
+        testCompileOnly "org.projectlombok:lombok:${lombokDep.getVersion()}"
+        testAnnotationProcessor "org.projectlombok:lombok:${lombokDep.getVersion()}"
     }
 
 

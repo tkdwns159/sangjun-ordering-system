@@ -5,7 +5,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -15,18 +17,20 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateOrderCommand {
-    @NotNull
+    @NotNull(message = "CustomerId is required")
     private UUID customerId;
 
-    @NotNull
+    @NotNull(message = "RestaurantId is required")
     private UUID restaurantId;
 
-    @NotNull
+    @NotNull(message = "Price is required")
     private BigDecimal price;
 
-    @NotNull
+    @Valid
+    @NotNull(message = "Items is required")
+    @Size(min = 1, message = "Items is required")
     private List<OrderItem> items;
 
-    @NotNull
+    @NotNull(message = "Address is required")
     private OrderAddress orderAddress;
 }

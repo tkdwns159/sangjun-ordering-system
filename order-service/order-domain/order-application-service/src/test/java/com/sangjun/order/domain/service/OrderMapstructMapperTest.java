@@ -98,7 +98,7 @@ public class OrderMapstructMapperTest {
 
     @Test
     void testBigDecimalToMoney() {
-        BigDecimal price = new BigDecimal("1000");
+        BigDecimal price = new BigDecimal("1000.00");
         Money money = MAPPER.toMoney(price);
 
         assertEquals(price, money.getAmount());
@@ -106,7 +106,7 @@ public class OrderMapstructMapperTest {
 
     @Test
     void testOrderItemToProduct() {
-        BigDecimal price = new BigDecimal("1000");
+        BigDecimal price = new BigDecimal("1000.00");
 
         OrderItem orderItem = OrderItem.builder()
                 .productId(PRODUCT_ID)
@@ -121,9 +121,9 @@ public class OrderMapstructMapperTest {
 
     @Test
     void testOrderItemToOrderItemEntity() {
-        BigDecimal price = new BigDecimal("1000");
+        BigDecimal price = new BigDecimal("1000.00");
         int quantity = 2;
-        BigDecimal subTotal = price.multiply(BigDecimal.valueOf(quantity));
+        BigDecimal subTotal = new BigDecimal("2000.00");
 
         OrderItem orderItem = OrderItem.builder()
                 .productId(PRODUCT_ID)
@@ -142,7 +142,7 @@ public class OrderMapstructMapperTest {
     @Test
     void testOrderAddressToStreetAddress() {
         StreetAddress streetAddress = MAPPER.toStreetAddress(ORDER_ADDRESS);
-
+        assertNotNull(streetAddress.getId());
         assertEquals(ORDER_ADDRESS.getCity(), streetAddress.getCity());
         assertEquals(ORDER_ADDRESS.getStreet(), streetAddress.getStreet());
         assertEquals(ORDER_ADDRESS.getPostalCode(), streetAddress.getPostalCode());
@@ -150,7 +150,7 @@ public class OrderMapstructMapperTest {
 
     @Test
     void testCreateOrderCommandToOrder() {
-        BigDecimal price = new BigDecimal("1000");
+        BigDecimal price = new BigDecimal("1000.00");
         int quantity = 2;
         BigDecimal subTotal = price.multiply(BigDecimal.valueOf(quantity));
 

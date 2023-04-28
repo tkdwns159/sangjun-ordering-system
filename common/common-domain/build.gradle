@@ -3,3 +3,12 @@ plugins {
 }
 
 group 'com.sangjun.common'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('com.sangjun.platform:product-platform')
+}
+

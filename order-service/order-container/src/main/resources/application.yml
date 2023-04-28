@@ -5,32 +5,11 @@ logging:
   level:
     com.sangjun: DEBUG
 
-
 order-service:
   payment-request-topic-name: payment-request
   payment-response-topic-name: payment-response
   restaurant-approval-request-topic-name: restaurant-approval-request
   restaurant-approval-response-topic-name: restaurant-approval-response
-
-spring:
-  jpa:
-    open-in-view: false
-    show-sql: true
-    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
-
-  datasource:
-    url:
-      jdbc:postgresql://localhost:5000/postgres?currentSchema=p_order&binaryTransfer=true&reWriteBatchedInserts=true&stringtype=unspecified
-    username: postgres
-    password: admin
-  sql:
-    init:
-      # ddl-auto와 schema init 중에 한 가지만 사용해야한다. 서로 충돌 할 수 있다. 그러므로 ddl-auto 옵션을 꺼두자.
-      # (참고사항 : ddl-auto 기본값은, embedded db일때는 create-drop 아닐때는 none)
-      platform: postgres
-      schema-locations:
-        - classpath*:init-schema.sql
-      mode: always
 
 kafka-config:
   bootstrap-servers: localhost:19092, localhost:29092, localhost:39092
@@ -68,3 +47,37 @@ kafka-consumer-config:
   max-partition-fetch-bytes-default: 1048576
   max-partition-fetch-bytes-boost-factor: 1
   poll-timeout-ms: 150
+
+---
+spring:
+  profiles:
+    active: prod
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile:
+        - prod
+  jpa:
+    open-in-view: false
+    show-sql: true
+    database: POSTGRESQL
+    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
+    hibernate:
+      ddl-auto: none
+
+  datasource:
+    url:
+      jdbc:postgresql://localhost:5000/postgres?currentSchema=p_order&binaryTransfer=true&reWriteBatchedInserts=true&stringtype=unspecified
+    username: postgres
+    password: admin
+  sql:
+    init:
+      # ddl-auto와 schema init 중에 한 가지만 사용해야한다. 서로 충돌 할 수 있다. 그러므로 ddl-auto 옵션을 꺼두자.
+      # (참고사항 : ddl-auto 기본값은, embedded db일때는 create-drop 아닐때는 none)
+      platform: postgres
+      schema-locations:
+        - classpath*:init-schema.sql
+      mode: ALWAYS

@@ -2,7 +2,8 @@ package com.sangjun.common.domain.entity;
 
 import java.util.Objects;
 
-public abstract class BaseEntity<ID>  {
+public abstract class BaseEntity<ID> {
+
     private ID id;
 
     public ID getId() {

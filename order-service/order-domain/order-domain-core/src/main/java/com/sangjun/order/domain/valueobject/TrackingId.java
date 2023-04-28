@@ -1,15 +1,11 @@
 package com.sangjun.order.domain.valueobject;
 
+import com.sangjun.common.domain.valueobject.BaseId;
+
 import java.util.UUID;
 
-public class TrackingId {
-    private final UUID id;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public TrackingId(UUID id) {
-        this.id = id;
+public class TrackingId extends BaseId<UUID> {
+    public TrackingId(UUID value) {
+        super(value);
     }
 }

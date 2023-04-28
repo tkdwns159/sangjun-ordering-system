@@ -6,11 +6,15 @@ import com.sangjun.order.domain.entity.Order;
 import java.time.ZonedDateTime;
 
 public class OrderCancelledEvent extends OrderEvent {
-    private final DomainEventPublisher<OrderCancelledEvent> orderCancelledEventDomainEventPublisher;
+    private DomainEventPublisher<OrderCancelledEvent> orderCancelledEventDomainEventPublisher;
 
     public OrderCancelledEvent(Order order, ZonedDateTime createdAt, DomainEventPublisher<OrderCancelledEvent> orderCancelledEventDomainEventPublisher) {
         super(order, createdAt);
         this.orderCancelledEventDomainEventPublisher = orderCancelledEventDomainEventPublisher;
+    }
+
+    public OrderCancelledEvent(Order order, ZonedDateTime createAt) {
+        super(order, createAt);
     }
 
     @Override

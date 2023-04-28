@@ -3,9 +3,13 @@ package com.sangjun.order.domain.entity;
 import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderId;
+import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.valueobject.OrderItemId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OrderItem extends BaseEntity<OrderItemId> {
+    private static final Logger log = LoggerFactory.getLogger(OrderItem.class.getName());
     private OrderId orderId;
     private final Product product;
     private final int quantity;
@@ -46,15 +50,34 @@ public class OrderItem extends BaseEntity<OrderItemId> {
         return subTotal;
     }
 
-    boolean isPriceValid() {
-        return this.price.isGreaterThanZero() &&
-                this.price.equals(product.getPrice()) &&
-                this.price.multiply(this.quantity).equals(subTotal);
-    }
-
     void initializeOrderItem(OrderId orderId, OrderItemId orderItemId) {
         this.orderId = orderId;
         super.setId(orderItemId);
+    }
+
+    public void checkSubTotalIsPresent() {
+        if (this.subTotal == null) {
+            log.error("subtotal is empty");
+            throw new OrderDomainException("subtotal is empty");
+        }
+    }
+
+    public void checkPriceIsPresent() {
+        if (this.price == null) {
+            log.error("price is empty");
+            throw new OrderDomainException("price is empty");
+        }
+    }
+
+    public void checkSubTotalEqualsActualPriceSum() {
+        Money actualPriceSum = this.price.multiply(this.quantity);
+
+        if (!actualPriceSum.equals(this.subTotal)) {
+            log.error("subtotal: {} is not equals actual price sum: {}",
+                    this.subTotal.getAmount(), actualPriceSum.getAmount());
+            throw new OrderDomainException("subtotal: " + this.subTotal.getAmount() + " " +
+                    "is not equals actual price sum: " + actualPriceSum.getAmount());
+        }
     }
 
     public static final class Builder {

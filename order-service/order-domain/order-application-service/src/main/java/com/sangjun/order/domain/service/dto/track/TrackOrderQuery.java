@@ -10,6 +10,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TrackOrderQuery {
-    @NotNull
+    @NotNull(message = "OrderTrackingId cannot be null")
     private UUID orderTrackingId;
 }

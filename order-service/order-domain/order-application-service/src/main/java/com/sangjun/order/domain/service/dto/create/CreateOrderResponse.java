@@ -19,4 +19,8 @@ public class CreateOrderResponse {
 
     @NotNull
     private String message;
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
 }

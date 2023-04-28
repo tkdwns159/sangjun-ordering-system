@@ -232,6 +232,33 @@ public class OrderBeforeInitTest {
     }
 
     @Test
+    void 주문물품_가격과_식당_물품_가격이_다르면_예외가_발생한다() {
+        Product product1 = PRODUCTS.get(0);
+        Money wrongPrice = Money.of(new BigDecimal("5000"));
+        int quantity = 2;
+        Money subTotal = wrongPrice.multiply(2);
+
+        List<OrderItem> items = new ArrayList<>();
+        items.add(OrderItem.builder()
+                .orderItemId(new OrderItemId(1L))
+                .product(new Product(new ProductId(product1.getId().getValue())))
+                .price(wrongPrice)
+                .subTotal(subTotal)
+                .quantity(quantity)
+                .build());
+
+        Order order = Order.builder()
+                .customerId(new CustomerId(CUSTOMER_ID))
+                .restaurantId(RESTAURANT.getId())
+                .price(subTotal)
+                .items(items)
+                .build();
+
+        assertThrows(OrderDomainException.class,
+                () -> orderDomainService.validateOrder(order, RESTAURANT));
+    }
+
+    @Test
     void 주문을_시작하면_주문관련_값들이_배속된다() {
         Product product1 = PRODUCTS.get(0);
         int quantity = 2;

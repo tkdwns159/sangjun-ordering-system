@@ -9,10 +9,16 @@ import com.sangjun.order.domain.service.ports.output.repository.CustomerReposito
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
 import org.mockito.Mockito;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 
-@SpringBootApplication(scanBasePackages = {"com.sangjun.order"})
+@ComponentScan(basePackages = "com.sangjun.order",
+        excludeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, classes = ComponentScan.class)})
+@Configuration
+@EnableAutoConfiguration
 public class OrderTestConfiguration {
 
     @Bean

@@ -11,13 +11,13 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class OrderItem {
-    @NotNull
+    @NotNull(message = "Item productId is required")
     private UUID productId;
-    @NotNull
+    @NotNull(message = "Item quantity is required")
     private Integer quantity;
-    @NotNull
+    @NotNull(message = "Item price is required")
     private BigDecimal price;
-    @NotNull
+    @NotNull(message = "Item subTotal is required")
     private BigDecimal subTotal;
 
 }

@@ -10,15 +10,15 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class OrderAddress {
-    @NotNull
+    @NotNull(message = "street is required")
     @Max(value = 50)
     private String street;
 
-    @NotNull
+    @NotNull(message = "postalCode is required")
     @Max(value = 10)
     private String postalCode;
 
-    @NotNull
+    @NotNull(message = "city is required")
     @Max(value = 50)
     private String city;
 }

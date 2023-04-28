@@ -9,11 +9,11 @@ public class Money {
     public static final Money ZERO = new Money(BigDecimal.ZERO);
 
     public Money(BigDecimal amount) {
-        this.amount = amount;
+        this.amount = setScale(amount);
     }
 
     public static Money of(BigDecimal amount) {
-        return new Money(setScale(amount));
+        return new Money(amount);
     }
 
     private static BigDecimal setScale(BigDecimal input) {

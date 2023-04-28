@@ -29,6 +29,8 @@ dependencies {
 
         def lombokDep = compileOnly 'org.projectlombok:lombok:1.18.26'
         annotationProcessor "org.projectlombok:lombok:${lombokDep.getVersion()}"
+        testCompileOnly "org.projectlombok:lombok:${lombokDep.getVersion()}"
+        testAnnotationProcessor "org.projectlombok:lombok:${lombokDep.getVersion()}"
     }
 
 

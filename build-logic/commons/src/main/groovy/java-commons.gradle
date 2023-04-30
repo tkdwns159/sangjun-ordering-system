@@ -15,6 +15,7 @@ configurations {
 
 dependencies {
     implementation platform('com.sangjun.platform:product-platform')
+    implementation('com.sangjun.common:common-utils')
     testImplementation platform('com.sangjun.platform:test-platform')
 
     implementation('org.springframework.boot:spring-boot-starter-log4j2')

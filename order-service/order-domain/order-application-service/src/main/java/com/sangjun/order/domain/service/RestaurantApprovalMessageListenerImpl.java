@@ -1,12 +1,11 @@
 package com.sangjun.order.domain.service;
 
-import com.sangjun.common.domain.CommonConstants;
+import com.sangjun.common.utils.CommonConstants;
 import com.sangjun.order.domain.event.OrderCancelledEvent;
 import com.sangjun.order.domain.service.dto.message.RestaurantApprovalResponse;
 import com.sangjun.order.domain.service.ports.input.message.listener.restaurant.RestaurantApprovalMessageListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 

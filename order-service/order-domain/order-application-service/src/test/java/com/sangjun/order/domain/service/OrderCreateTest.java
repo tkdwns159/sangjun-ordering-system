@@ -152,7 +152,7 @@ public class OrderCreateTest {
                 .thenReturn(Optional.of(RESTAURANT));
         when(orderRepository.save(any(Order.class)))
                 .thenReturn(Order.builder()
-                        .orderId(new OrderId(orderId))
+                        .id(new OrderId(orderId))
                         .restaurantId(new RestaurantId(RESTAURANT_ID))
                         .customerId(new CustomerId(CUSTOMER_ID))
                         .trackingId(new TrackingId(trackingId))

@@ -16,6 +16,15 @@ public class OrderItem extends BaseEntity<OrderItemId> {
     private final Money price;
     private final Money subTotal;
 
+    public OrderItem(OrderItemId orderItemId, OrderId orderId, Product product, int quantity, Money price, Money subTotal) {
+        setId(orderItemId);
+        this.orderId = orderId;
+        this.product = product;
+        this.quantity = quantity;
+        this.price = price;
+        this.subTotal = subTotal;
+    }
+
     private OrderItem(Builder builder) {
         setId(builder.id);
         orderId = builder.orderId;

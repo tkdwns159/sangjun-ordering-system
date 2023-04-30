@@ -1,16 +1,14 @@
 package com.sangjun.order.domain.service;
 
-import com.sangjun.common.domain.CommonConstants;
 import com.sangjun.order.domain.event.OrderPaidEvent;
 import com.sangjun.order.domain.service.dto.message.PaymentResponse;
 import com.sangjun.order.domain.service.ports.input.message.listener.payment.PaymentResponseMessageListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import static com.sangjun.common.domain.CommonConstants.*;
+import static com.sangjun.common.utils.CommonConstants.FAILURE_MESSAGE_DELIMITER;
 
 @Slf4j
 @Service

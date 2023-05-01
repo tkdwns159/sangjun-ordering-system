@@ -20,7 +20,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static com.sangjun.common.domain.CommonConstants.ZONE_ID;
+import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 
 @Slf4j
 public class PaymentDomainServiceImpl implements PaymentDomainService {

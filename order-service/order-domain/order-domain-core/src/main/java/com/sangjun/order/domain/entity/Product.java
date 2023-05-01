@@ -13,12 +13,6 @@ public class Product extends BaseEntity<ProductId> {
         super.setId(productId);
     }
 
-    public Product(ProductId productId, String name, Money price) {
-        setId(productId);
-        this.name = name;
-        this.price = price;
-    }
-
     private Product(Builder builder) {
         setId(builder.id);
         name = builder.name;

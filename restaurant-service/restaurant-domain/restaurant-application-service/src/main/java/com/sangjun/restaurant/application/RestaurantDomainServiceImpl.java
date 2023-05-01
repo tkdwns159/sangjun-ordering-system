@@ -13,7 +13,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import static com.sangjun.common.domain.CommonConstants.ZONE_ID;
+import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 
 @Slf4j
 public class RestaurantDomainServiceImpl implements RestaurantDomainService {

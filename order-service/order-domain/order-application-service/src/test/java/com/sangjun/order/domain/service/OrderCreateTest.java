@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {OrderTestConfiguration.class})
 public class OrderCreateTest {
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
@@ -152,7 +152,7 @@ public class OrderCreateTest {
                 .thenReturn(Optional.of(RESTAURANT));
         when(orderRepository.save(any(Order.class)))
                 .thenReturn(Order.builder()
-                        .orderId(new OrderId(orderId))
+                        .id(new OrderId(orderId))
                         .restaurantId(new RestaurantId(RESTAURANT_ID))
                         .customerId(new CustomerId(CUSTOMER_ID))
                         .trackingId(new TrackingId(trackingId))

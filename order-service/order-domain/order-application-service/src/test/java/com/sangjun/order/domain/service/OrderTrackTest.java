@@ -36,7 +36,7 @@ public class OrderTrackTest {
         UUID trackingId = UUID.randomUUID();
         TrackOrderQuery trackOrderQuery = new TrackOrderQuery(trackingId);
         Order order = Order.builder()
-                .orderId(new OrderId(UUID.randomUUID()))
+                .id(new OrderId(UUID.randomUUID()))
                 .trackingId(new TrackingId(trackingId))
                 .orderStatus(OrderStatus.PENDING)
                 .customerId(new CustomerId(UUID.randomUUID()))

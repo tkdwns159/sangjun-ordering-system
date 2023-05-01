@@ -104,7 +104,7 @@ public class OrderIntegrationTest {
             .postalCode("4321")
             .build();
     public static final Order ORDER = Order.builder()
-            .orderId(new OrderId(ORDER_ID))
+            .id(new OrderId(ORDER_ID))
             .customerId(new CustomerId(CUSTOMER_ID))
             .trackingId(new TrackingId(ORDER_TRACKING_ID))
             .restaurantId(new RestaurantId(RESTAURANT_ID))

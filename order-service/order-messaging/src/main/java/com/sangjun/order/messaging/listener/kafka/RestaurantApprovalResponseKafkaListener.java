@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.sangjun.common.domain.CommonConstants.FAILURE_MESSAGE_DELIMITER;
+import static com.sangjun.common.utils.CommonConstants.FAILURE_MESSAGE_DELIMITER;
 
 
 @Slf4j

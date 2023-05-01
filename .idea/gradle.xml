@@ -13,6 +13,7 @@
                   <project path="$PROJECT_DIR$/common/common-application" />
                   <project path="$PROJECT_DIR$/common/common-dataaccess" />
                   <project path="$PROJECT_DIR$/common/common-domain" />
+                  <project path="$PROJECT_DIR$/common/common-utils" />
                 </projects>
               </build>
               <build path="$PROJECT_DIR$/order-service" name="order-service">
@@ -85,7 +86,6 @@
         </compositeConfiguration>
         <option name="delegatedBuild" value="false" />
         <option name="testRunner" value="PLATFORM" />
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="modules">
           <set>
@@ -96,6 +96,7 @@
             <option value="$PROJECT_DIR$/common/common-application" />
             <option value="$PROJECT_DIR$/common/common-dataaccess" />
             <option value="$PROJECT_DIR$/common/common-domain" />
+            <option value="$PROJECT_DIR$/common/common-utils" />
             <option value="$PROJECT_DIR$/customer-service" />
             <option value="$PROJECT_DIR$/customer-service/customer-application" />
             <option value="$PROJECT_DIR$/infra" />

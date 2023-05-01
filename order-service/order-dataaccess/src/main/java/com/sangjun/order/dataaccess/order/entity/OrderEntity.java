@@ -24,9 +24,10 @@ public class OrderEntity {
     private UUID restaurantId;
     private UUID trackingId;
     private BigDecimal price;
+    private String failureMessages;
+
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
-    private String failureMessages;
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private OrderAddressEntity address;

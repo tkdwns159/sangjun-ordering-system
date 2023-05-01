@@ -28,7 +28,7 @@ public class OrderAfterInitTest {
     private static final List<OrderItem> ORDER_ITEMS = new ArrayList<>();
     private static Money totalItemPrice;
     private final Order order = Order.builder()
-            .orderId(new OrderId(ORDER_ID))
+            .id(new OrderId(ORDER_ID))
             .customerId(new CustomerId(CUSTOMER_ID))
             .trackingId(new TrackingId(TRACKING_ID))
             .items(ORDER_ITEMS)

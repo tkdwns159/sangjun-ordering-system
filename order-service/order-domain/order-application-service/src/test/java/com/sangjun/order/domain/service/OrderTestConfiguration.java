@@ -17,7 +17,7 @@ import org.springframework.context.annotation.FilterType;
 
 @ComponentScan(basePackages = "com.sangjun.order",
         excludeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, classes = ComponentScan.class)})
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableAutoConfiguration
 public class OrderTestConfiguration {
 

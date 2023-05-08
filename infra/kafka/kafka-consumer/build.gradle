@@ -4,4 +4,6 @@ dependencies {
     implementation project(":kafka:kafka-config-data")
     implementation 'org.apache.avro:avro'
     implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'io.confluent:kafka-avro-serializer'
+
 }

@@ -45,9 +45,11 @@ public class KafkaConsumerConfig<K extends Serializable, V extends SpecificRecor
         return props;
     }
 
+
     @Bean
     public ConsumerFactory<K, V> consumerFactory() {
         return new DefaultKafkaConsumerFactory<>(consumerConfig());
+
     }
 
     @Bean

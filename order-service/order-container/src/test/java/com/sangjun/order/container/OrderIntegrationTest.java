@@ -3,6 +3,7 @@ package com.sangjun.order.container;
 import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
 import com.sangjun.common.dataaccess.restaurant.repository.RestaurantJpaRepository;
 import com.sangjun.common.domain.valueobject.*;
+import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
 import com.sangjun.order.dataaccess.customer.entity.CustomerEntity;
 import com.sangjun.order.dataaccess.customer.repository.CustomerJpaRepository;
 import com.sangjun.order.domain.entity.Order;
@@ -19,13 +20,19 @@ import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.valueobject.OrderItemId;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.transaction.AfterTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -44,8 +51,17 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("test")
 @Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(classes = OrderDataTestConfiguration.class,
+@DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+@SpringBootTest(classes = OrderIntegrationTestConfig.class,
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@EmbeddedKafka(
+        count = 3,
+        partitions = 3,
+        bootstrapServersProperty = "kafka-config.bootstrap-servers",
+        zookeeperPort = 2182,
+        zkSessionTimeout = 3000,
+        zkConnectionTimeout = 3000
+)
 @Slf4j
 public class OrderIntegrationTest {
     public static final UUID CUSTOMER_ID = UUID.randomUUID();
@@ -130,15 +146,21 @@ public class OrderIntegrationTest {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Autowired
+    private ConsumerFactory<String, PaymentRequestAvroModel> consumerFactory;
 
-    @AfterTransaction
-    void clearContext() {
-        entityManager.clear();
-    }
+    @Value("${kafka-consumer-config.payment-consumer-group-id}")
+    private String consumerGroupId;
+
+    @Value("${order-service.payment-request-topic-name}")
+    private String paymentRequestTopic;
 
     @Test
     void 주문이_성공한다() {
         //given
+        Consumer<String, PaymentRequestAvroModel> consumer = consumerFactory.createConsumer(consumerGroupId, "1");
+        consumer.subscribe(List.of(paymentRequestTopic));
+
         CustomerEntity customerEntity = new CustomerEntity(CUSTOMER_ID);
 
         when(customerJpaRepository.findById(CUSTOMER_ID))
@@ -173,6 +195,10 @@ public class OrderIntegrationTest {
                 .orElseThrow(() -> new OrderNotFoundException("Order not found")));
         assertEquals(OrderStatus.PENDING, order.getOrderStatus());
         assertEquals(response.getOrderTrackingId(), order.getTrackingId().getValue());
+
+        ConsumerRecord<String, PaymentRequestAvroModel> record = KafkaTestUtils.getSingleRecord(consumer, paymentRequestTopic, 1000);
+        assertEquals(record.key(), order.getId().getValue().toString());
+        assertNotNull(record.value());
     }
 
     private OrderItem getOrderItem(Product product, int quantity) {

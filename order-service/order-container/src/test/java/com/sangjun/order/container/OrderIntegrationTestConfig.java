@@ -1,7 +1,6 @@
 package com.sangjun.order.container;
 
 import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCancelledPaymentRequestMessagePublisher;
-import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCreatedPaymentRequestMessagePublisher;
 import com.sangjun.order.domain.service.ports.output.message.publisher.restaurant.OrderPaidRestaurantRequestMessagePublisher;
 import org.mockito.Mockito;
 import org.springframework.boot.SpringBootConfiguration;
@@ -16,18 +15,12 @@ import static org.springframework.context.annotation.ComponentScan.Filter;
 
 @EnableJpaRepositories(basePackages = {"com.sangjun.order.dataaccess", "com.sangjun.common.dataaccess"})
 @EntityScan(basePackages = {"com.sangjun.order.dataaccess", "com.sangjun.common.dataaccess"})
-@ComponentScan(basePackages = "com.sangjun.order",
-        excludeFilters = {@Filter(type = FilterType.ANNOTATION, classes = {ComponentScan.class}),
-                @Filter(type = FilterType.REGEX, pattern = "com\\.sangjun\\.order\\.messaging\\..*")
+@ComponentScan(basePackages = {"com.sangjun.order", "com.sangjun.kafka"},
+        excludeFilters = {@Filter(type = FilterType.ANNOTATION, classes = {ComponentScan.class})
         })
 @SpringBootConfiguration
 @EnableAutoConfiguration
-public class OrderDataTestConfiguration {
-    @Bean
-    public OrderCreatedPaymentRequestMessagePublisher orderCreatedPaymentRequestMessagePublisher() {
-        return Mockito.mock(OrderCreatedPaymentRequestMessagePublisher.class);
-    }
-
+public class OrderIntegrationTestConfig {
     @Bean
     public OrderCancelledPaymentRequestMessagePublisher orderCancelledPaymentRequestMessagePublisher() {
         return Mockito.mock(OrderCancelledPaymentRequestMessagePublisher.class);

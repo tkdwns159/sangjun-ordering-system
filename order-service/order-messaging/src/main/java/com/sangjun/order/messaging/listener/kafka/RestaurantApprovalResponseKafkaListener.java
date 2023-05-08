@@ -11,7 +11,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -19,7 +18,6 @@ import static com.sangjun.common.utils.CommonConstants.FAILURE_MESSAGE_DELIMITER
 
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
 public class RestaurantApprovalResponseKafkaListener implements KafkaConsumer<RestaurantApprovalResponseAvroModel> {
 

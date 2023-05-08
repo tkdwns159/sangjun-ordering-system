@@ -5,7 +5,6 @@ import com.sangjun.order.domain.OrderDomainService;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.event.OrderCancelledEvent;
 import com.sangjun.order.domain.service.dto.message.RestaurantApprovalResponse;
-import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCancelledPaymentRequestMessagePublisher;
 import com.sangjun.saga.SagaStep;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderApprovalSaga implements SagaStep<RestaurantApprovalResponse, EmptyEvent, OrderCancelledEvent> {
     private final OrderDomainService orderDomainService;
-    private final OrderCancelledPaymentRequestMessagePublisher orderCancelledPaymentRequestMessagePublisher;
     private final OrderSagaHelper orderSagaHelper;
 
 

@@ -1,4 +1,4 @@
-package com.sangjun.order.domain.service;
+package com.sangjun.order.domain.service.mapper;
 
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.order.domain.entity.Order;

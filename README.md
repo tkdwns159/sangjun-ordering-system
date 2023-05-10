@@ -9,6 +9,10 @@ SQL로 mocking 데이터를 생성하여 해당 데이터로만 실행 테스트
 
 추후 리팩토링과 테스트를 추가하고 customer-service를 구현하여 더욱 완성도 있는 프로젝트로 만들 예정입니다.
 
+### 리팩토링 완료
+
+- order-service
+
 ## 사용 기술
 
 - Java 17 (Java 11까지의 기능만 활용)
@@ -16,22 +20,25 @@ SQL로 mocking 데이터를 생성하여 해당 데이터로만 실행 테스트
 - Spring Boot
 - Spring Data JPA
 - Kafka
+- Mapstruct
 - Docker
 
 ## 인프라 환경 실행
 
 `infra/docker-compose`
 
-위 디렉토리에 PostgreSQL와 Kafka에 대한 docker compose 파일이 위치해있습니다.
+위 디렉토리에 PostgreSQL, ZooKeeper, Kafka에 대한 docker compose 파일이 위치해있습니다.
 
 아래 순서로 실행시키면 됩니다.
 
 1. `docker compose -f postgresql.yml up -d`
 2. `docker compose -f common.yml -f zookeeper.yml up -d`
 3. `docker compose -f common.yml -f kafka_cluster.yml up -d`
-4. `docker compose -f init_kafka.yml up`
+4. [optional] `docker compose -f init_kafka.yml up`
 
-`init_kafka.yml`는 topic을 생성시키는 compose 파일이므로 처음에 한번만 실행시키면 됩니다.
+~~`init_kafka.yml`는 topic을 생성시키는 compose 파일이므로 처음에 한번만 실행시키면 됩니다.~~
+
+KafkaAdmin과 Topic을 Bean으로 등록해두었으므로, 어플리케이션 실행시 자동으로 topic이 등록됩니다.
 
 **주의할 점**
 
@@ -59,23 +66,23 @@ Kafka broker의 `/var/lib/kafka/data` 에 볼륨 마운트 설정을 해놓았�
 
 각 프로젝트는 헥사고날 아키텍처로 구성되어 있고, 다음과 같은 서브 프로젝트로 이루어져 있습니다.
 
+헥사고날 아키텍처는 "구" 또는 "원"의 형태로 나타낼 수 있습니다. 중심쪽에 해당하는 서브 프로젝트부터 설명하겠습니다.
+
 ### {domain name}-domain-core
 
-엔티티와 최소단위의 비즈니스 로직이 구현되어 있는 서브 프로젝트입니다.
+엔티티와 최소단위의 비즈니스 로직이 구현되어 있는 레이어입니다.
 
 ### {domain name}-application-service
 
-domain-core 서브 프로젝트를 참조하여, 여러 엔티티의 비즈니스 로직을 조합하여 복잡한 비즈니스 로직이 구현되어 있는 서브 프로젝트입니다.
+domain-core 레이어에 구현한 로직과 ports를 활용하여 더욱 복잡한 로직이 구현되어 있는 레이어입니다.
 
-Input adapter는 해당 프로젝트를 참조하여 구현됩니다. 반대로, output adatper의 경우 해당 프로젝트가 output port를 통해 참조하여
-비즈니스 로직을 구현합니다.
+Input adapter는 해당 레이어에 구현된 input port를 이용합니다.
+
+Output adapter는 output port의 구현체입니다. 해당 레이어는 Output port를 통해 Output adapter와 통신합니다.
 
 ### {domain name}-application
 
-Input adapter가 위치한 서브 프로젝트입니다.
-
-해당 프로젝트에서는 order 도메인에만 application 서브 프로젝트가 존재하고,
-REST API Controller가 위치해 있습니다.
+Input adapter가 위치한 레이어입니다.
 
 ### {domain name}-dataaccess
 
@@ -93,9 +100,11 @@ Kafka Listener는 input adapter이고 Kakfa Publisher는 output adapter라 헥�
 
 ### {domain name}-container
 
-Spring Boot와 같은 프레임워크가 위치한 서브 프로젝트입니다.
+헥사고날 아키텍처에서는 존재하지 않는 레이어입니다.
 
-해당 서브 프로젝트에서는 다른 모든 서브 프로젝트를 참조하여 어플리케이션을 실행시킵니다. 이 프로젝트에서는 Spring Boot를 사용했습니다.
+해당 레이어에서는 모든 레이어를 참조하여 엮어서 프로그램으로서 실행될 수 있도록 합니다.
+
+해당 프로젝트에서는 Spring Boot를 이용했습니다.
 
 ## REST API Spec
 

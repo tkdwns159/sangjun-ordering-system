@@ -1,10 +1,18 @@
+plugins {
+    id 'kafka-commons'
+}
+
 group 'com.sangjun.kafka'
 
 dependencies {
     implementation project(":kafka:kafka-config-data")
     implementation project(":kafka:kafka-model")
     implementation 'com.sangjun.common:common-domain'
-    implementation 'com.sangjun.order.domain:order-domain-core'
-    implementation 'org.springframework.kafka:spring-kafka'
+    implementation('org.springframework.kafka:spring-kafka') {
+        exclude group: 'org.slf4j', module: 'slft4j-log4j12'
+        exclude group: 'log4j', module: 'log4j'
+        exclude group: 'io.swagger', module: 'swagger-annotations'
+    }
+
     implementation 'io.confluent:kafka-avro-serializer'
 }

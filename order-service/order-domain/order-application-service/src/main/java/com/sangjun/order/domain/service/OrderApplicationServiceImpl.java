@@ -33,6 +33,7 @@ class OrderApplicationServiceImpl implements OrderApplicationService {
     private final RestaurantRepository restaurantRepository;
     private final OrderDomainService orderDomainService;
     private final OrderRepository orderRepository;
+    private final OrderEventShooter orderEventShooter;
 
     @Transactional
     @Override
@@ -41,6 +42,8 @@ class OrderApplicationServiceImpl implements OrderApplicationService {
         validateOrderDraft(orderDraft);
         OrderCreatedEvent orderCreatedEvent = orderDomainService.initiateOrder(orderDraft);
         Order order = orderRepository.save(orderCreatedEvent.getOrder());
+        orderEventShooter.fire(orderCreatedEvent);
+
         return MAPPER.toCreateOrderResponse(order);
     }
 

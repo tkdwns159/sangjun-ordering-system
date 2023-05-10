@@ -1,9 +1,7 @@
 package com.sangjun.order.domain.service.mapper;
 
-import com.sangjun.common.domain.valueobject.CustomerId;
-import com.sangjun.common.domain.valueobject.Money;
-import com.sangjun.common.domain.valueobject.ProductId;
-import com.sangjun.common.domain.valueobject.RestaurantId;
+import com.sangjun.common.utils.CentralConfig;
+import com.sangjun.common.utils.CommonMapstructMapper;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.entity.Restaurant;
@@ -18,25 +16,14 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
-@Mapper
+@Mapper(config = CentralConfig.class, uses = CommonMapstructMapper.class)
 public interface OrderMapstructMapper {
 
     OrderMapstructMapper MAPPER = Mappers.getMapper(OrderMapstructMapper.class);
 
-    @Mapping(target = "value", source = "id")
-    RestaurantId toRestaurantId(UUID id);
-
-    @Mapping(target = "value", source = "id")
-    ProductId toProductId(UUID id);
-
-    @Mapping(target = "value", source = "id")
-    CustomerId toCustomerId(UUID id);
-
-    @Mapping(target = "value", source = "id")
-    TrackingId toTrackingId(UUID id);
+    TrackingId toTrackingId(UUID value);
 
     @Mapping(target = "id", source = "restaurantId")
     Restaurant toRestaurant(CreateOrderCommand createOrderCommand);
@@ -48,9 +35,6 @@ public interface OrderMapstructMapper {
     @Mapping(target = "id", source = "restaurantId")
     @Mapping(target = "products", source = "items")
     Restaurant toRestaurant(Order order);
-
-    @Mapping(target = ".", source = "amount")
-    Money toMoney(BigDecimal amount);
 
     @Mapping(target = "id", source = "productId")
     Product toProduct(OrderItem orderItem);

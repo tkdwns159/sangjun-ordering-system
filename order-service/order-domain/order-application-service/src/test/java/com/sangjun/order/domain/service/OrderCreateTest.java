@@ -33,15 +33,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = {OrderTestConfiguration.class})
 public class OrderCreateTest {
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
     private static final UUID RESTAURANT_ID = UUID.randomUUID();
-    public static final UUID PRODUCT_ID = UUID.randomUUID();
+    private static final UUID PRODUCT_ID = UUID.randomUUID();
     private static final Customer CUSTOMER = new Customer(new CustomerId(CUSTOMER_ID));
 
-    public static final Product PRODUCT = Product.builder()
+    private static final Product PRODUCT = Product.builder()
             .id(new ProductId(PRODUCT_ID))
             .name("product1")
             .price(Money.of(new BigDecimal("1000")))
@@ -57,7 +57,7 @@ public class OrderCreateTest {
             .street("Sillim")
             .build();
 
-    public static final OrderItem ORDER_ITEM = OrderItem.builder()
+    private static final OrderItem ORDER_ITEM = OrderItem.builder()
             .productId(PRODUCT_ID)
             .price(PRODUCT.getPrice().getAmount())
             .quantity(1)
@@ -69,22 +69,21 @@ public class OrderCreateTest {
     private RestaurantRepository restaurantRepository;
 
     @Autowired
-    public OrderDomainService orderDomainService;
+    private OrderDomainService orderDomainService;
 
     @Autowired
-    public CustomerRepository customerRepository;
+    private CustomerRepository customerRepository;
 
     @Autowired
-    public OrderApplicationService orderApplicationService;
+    private OrderApplicationService orderApplicationService;
 
     @Autowired
-    public OrderRepository orderRepository;
+    private OrderRepository orderRepository;
 
     @BeforeEach
     void setUp() {
         RESTAURANT.setActive(true);
     }
-
 
     @Test
     void 고객번호를_찾을수없으면_예외가_발생한다() {
@@ -152,7 +151,7 @@ public class OrderCreateTest {
                 .thenReturn(Optional.of(RESTAURANT));
         when(orderRepository.save(any(Order.class)))
                 .thenReturn(Order.builder()
-                        .orderId(new OrderId(orderId))
+                        .id(new OrderId(orderId))
                         .restaurantId(new RestaurantId(RESTAURANT_ID))
                         .customerId(new CustomerId(CUSTOMER_ID))
                         .trackingId(new TrackingId(trackingId))

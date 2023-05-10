@@ -54,7 +54,7 @@ public class OrderBeforeInitTest {
     @Test
     void ID가_존재하면_예외가_발생한다() {
         Order order = Order.builder()
-                .orderId(new OrderId(UUID.randomUUID()))
+                .id(new OrderId(UUID.randomUUID()))
                 .build();
 
         Assertions.assertThrows(DomainException.class,

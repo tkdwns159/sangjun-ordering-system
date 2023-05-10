@@ -37,6 +37,7 @@ public class PaymentRequestKafkaListener implements KafkaConsumer<PaymentRequest
 
         completePayments(messages);
         cancelPayments(messages);
+        
     }
 
 

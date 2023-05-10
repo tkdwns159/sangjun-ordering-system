@@ -25,8 +25,16 @@ public class Order extends AggregateRoot<OrderId> {
     private OrderStatus orderStatus;
     private List<String> failureMessages;
 
+    public Order(CustomerId customerId, RestaurantId restaurantId, StreetAddress deliveryAddress, Money price, List<OrderItem> items) {
+        this.customerId = customerId;
+        this.restaurantId = restaurantId;
+        this.deliveryAddress = deliveryAddress;
+        this.price = price;
+        this.items = items;
+    }
+
     private Order(Builder builder) {
-        setId(builder.orderId);
+        setId(builder.id);
         customerId = builder.customerId;
         restaurantId = builder.restaurantId;
         deliveryAddress = builder.deliveryAddress;
@@ -35,6 +43,14 @@ public class Order extends AggregateRoot<OrderId> {
         trackingId = builder.trackingId;
         orderStatus = builder.orderStatus;
         failureMessages = builder.failureMessages;
+    }
+
+    public void setTrackingId(TrackingId trackingId) {
+        this.trackingId = trackingId;
+    }
+
+    public void setFailureMessages(List<String> failureMessages) {
+        this.failureMessages = failureMessages;
     }
 
     public static Builder builder() {
@@ -211,7 +227,7 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     public static final class Builder {
-        private OrderId orderId;
+        private OrderId id;
         private CustomerId customerId;
         private RestaurantId restaurantId;
         private StreetAddress deliveryAddress;
@@ -224,8 +240,8 @@ public class Order extends AggregateRoot<OrderId> {
         private Builder() {
         }
 
-        public Builder orderId(OrderId val) {
-            orderId = val;
+        public Builder id(OrderId val) {
+            id = val;
             return this;
         }
 

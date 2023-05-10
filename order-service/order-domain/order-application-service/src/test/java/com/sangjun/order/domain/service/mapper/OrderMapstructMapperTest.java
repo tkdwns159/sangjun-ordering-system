@@ -1,4 +1,4 @@
-package com.sangjun.order.domain.service;
+package com.sangjun.order.domain.service.mapper;
 
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.order.domain.entity.Order;
@@ -74,16 +74,6 @@ public class OrderMapstructMapperTest {
                 .build();
     }
 
-    @Test
-    void testUUID_ToEntityId() {
-        CustomerId customerId = MAPPER.toCustomerId(CUSTOMER_ID);
-        ProductId productId = MAPPER.toProductId(PRODUCT_ID);
-        RestaurantId restaurantId = MAPPER.toRestaurantId(RESTAURANT_ID);
-
-        assertEquals(CUSTOMER_ID, customerId.getValue());
-        assertEquals(PRODUCT_ID, productId.getValue());
-        assertEquals(RESTAURANT_ID, restaurantId.getValue());
-    }
 
     @Test
     void testCreateOrderCommandToRestaurant() {
@@ -96,13 +86,6 @@ public class OrderMapstructMapperTest {
         assertEquals(RESTAURANT_ID, restaurant.getId().getValue());
     }
 
-    @Test
-    void testBigDecimalToMoney() {
-        BigDecimal price = new BigDecimal("1000.00");
-        Money money = MAPPER.toMoney(price);
-
-        assertEquals(price, money.getAmount());
-    }
 
     @Test
     void testOrderItemToProduct() {

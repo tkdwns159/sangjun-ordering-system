@@ -64,13 +64,18 @@ Kafka broker의 `/var/lib/kafka/data` 에 볼륨 마운트 설정을 해놓았�
     <text>[payment-service 의존성 그래프]</text>
 </p>
 
+<p align="middle" >
+    <img src="img/Hexagonal_Architecture.svg.png" title="hexagonal architecture" />
+    <text>[헥사고날 아키텍처 - wiki]</text>
+</p>
+
 각 프로젝트는 헥사고날 아키텍처로 구성되어 있고, 다음과 같은 서브 프로젝트로 이루어져 있습니다.
 
-헥사고날 아키텍처는 "구" 또는 "원"의 형태로 나타낼 수 있습니다. 중심쪽에 해당하는 서브 프로젝트부터 설명하겠습니다.
+헥사고날 아키텍처는 육각형의 형태로 나타낼 수 있습니다. 중심쪽에 해당하는 서브 프로젝트부터 설명하겠습니다.
 
 ### {domain name}-domain-core
 
-엔티티와 최소단위의 비즈니스 로직이 구현되어 있는 레이어입니다.
+엔티티와 최소단위의 비즈니스 로직이 구현되어 있는 레이어입니다. 육각형의 가장 안쪽에 해당합니다.
 
 ### {domain name}-application-service
 
@@ -82,7 +87,7 @@ Output adapter는 output port의 구현체입니다. 해당 레이어는 Output 
 
 ### {domain name}-application
 
-Input adapter가 위치한 레이어입니다.
+Input adapter가 위치한 서브 프로젝트입니다.
 
 ### {domain name}-dataaccess
 
@@ -100,9 +105,7 @@ Kafka Listener는 input adapter이고 Kakfa Publisher는 output adapter라 헥�
 
 ### {domain name}-container
 
-헥사고날 아키텍처에서는 존재하지 않는 레이어입니다.
-
-해당 레이어에서는 모든 레이어를 참조하여 엮어서 프로그램으로서 실행될 수 있도록 합니다.
+해당 서브 프로젝트에서는 모든 레이어를 참조하여 엮어서 프로그램으로서 실행될 수 있도록 합니다.
 
 해당 프로젝트에서는 Spring Boot를 이용했습니다.
 

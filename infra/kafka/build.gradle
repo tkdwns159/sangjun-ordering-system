@@ -1,6 +1,5 @@
 plugins {
     id 'java-commons' apply false
-    id 'io.freefair.lombok' version '6.6.1' apply false
 }
 
 repositories {
@@ -8,7 +7,6 @@ repositories {
 }
 
 subprojects {
-    apply plugin: "io.freefair.lombok"
     apply plugin: "java-commons"
 
     repositories {
@@ -19,14 +17,8 @@ subprojects {
     }
 
     dependencies {
-        if (!name.contains('kafka-model')) {
-            implementation 'org.springframework.boot:spring-boot-starter'
+        if (!name.contains('kafka-model') || !name.contains('kafka-test')) {
+            implementation('org.springframework.boot:spring-boot-starter')
         }
-    }
-
-    configurations.implementation {
-        exclude group: 'org.slf4j', module: 'slft4j-log4j12'
-        exclude group: 'log4j', module: 'log4j'
-        exclude group: 'io.swagger', module: 'swagger-annotations'
     }
 }

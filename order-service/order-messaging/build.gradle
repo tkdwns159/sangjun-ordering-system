@@ -11,7 +11,13 @@ dependencies {
     implementation 'com.sangjun.kafka:kafka-model'
     implementation 'com.sangjun.kafka:kafka-producer'
     implementation 'com.sangjun.kafka:kafka-consumer'
+    implementation 'com.sangjun.kafka:kafka-admin'
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.apache.avro:avro'
     implementation 'org.springframework.kafka:spring-kafka'
+
+//    testImplementation 'org.springframework.kafka:spring-kafka-test'
+//    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+//    testImplementation 'io.confluent:kafka-avro-serializer'
+//    testImplementation 'com.sangjun.kafka:kafka-config-data'
 }

@@ -15,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 @RequiredArgsConstructor
 public class RestaurantApprovalMessageListenerImpl implements RestaurantApprovalMessageListener {
     private final OrderApprovalSaga orderApprovalSaga;
+    private final OrderEventShooter orderEventShooter;
 
     @Override
     public void orderApproved(RestaurantApprovalResponse restaurantApprovalResponse) {
@@ -28,6 +29,6 @@ public class RestaurantApprovalMessageListenerImpl implements RestaurantApproval
         log.info("Publishing order cancelled event for order id: {} with failure messages: {}",
                 orderCancelledEvent.getOrder().getId().getValue(),
                 String.join(CommonConstants.FAILURE_MESSAGE_DELIMITER, restaurantApprovalResponse.getFailureMessages()));
-        orderCancelledEvent.fire();
+        orderEventShooter.fire(orderCancelledEvent);
     }
 }

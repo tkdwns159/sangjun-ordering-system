@@ -1,1 +1,5 @@
 group 'com.sangjun.kafka'
+
+dependencies {
+    implementation project(":kafka:kafka-model")
+}

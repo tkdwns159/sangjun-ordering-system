@@ -9,8 +9,11 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 @Slf4j
 @Component
 public class OrderKafkaMessageHelper {
-    public <T> ListenableFutureCallback<SendResult<String, T>> getKafkaCallback(String paymentResponseTopicName, T requestAvroModel, String orderId, String requestAvroModelName) {
-        return new ListenableFutureCallback<SendResult<String, T>>() {
+    public <T> ListenableFutureCallback<SendResult<String, T>> getKafkaCallback(String paymentResponseTopicName,
+                                                                                T requestAvroModel,
+                                                                                String orderId,
+                                                                                String requestAvroModelName) {
+        return new ListenableFutureCallback<>() {
             @Override
             public void onFailure(Throwable ex) {
                 log.error("Error while sending " + requestAvroModelName +

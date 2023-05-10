@@ -46,10 +46,12 @@
                 <projects>
                   <project path="$PROJECT_DIR$/infra" />
                   <project path="$PROJECT_DIR$/infra/kafka" />
+                  <project path="$PROJECT_DIR$/infra/kafka/kafka-admin" />
                   <project path="$PROJECT_DIR$/infra/kafka/kafka-config-data" />
                   <project path="$PROJECT_DIR$/infra/kafka/kafka-consumer" />
                   <project path="$PROJECT_DIR$/infra/kafka/kafka-model" />
                   <project path="$PROJECT_DIR$/infra/kafka/kafka-producer" />
+                  <project path="$PROJECT_DIR$/infra/kafka/kafka-test" />
                   <project path="$PROJECT_DIR$/infra/saga" />
                 </projects>
               </build>
@@ -101,10 +103,12 @@
             <option value="$PROJECT_DIR$/customer-service/customer-application" />
             <option value="$PROJECT_DIR$/infra" />
             <option value="$PROJECT_DIR$/infra/kafka" />
+            <option value="$PROJECT_DIR$/infra/kafka/kafka-admin" />
             <option value="$PROJECT_DIR$/infra/kafka/kafka-config-data" />
             <option value="$PROJECT_DIR$/infra/kafka/kafka-consumer" />
             <option value="$PROJECT_DIR$/infra/kafka/kafka-model" />
             <option value="$PROJECT_DIR$/infra/kafka/kafka-producer" />
+            <option value="$PROJECT_DIR$/infra/kafka/kafka-test" />
             <option value="$PROJECT_DIR$/infra/saga" />
             <option value="$PROJECT_DIR$/order-service" />
             <option value="$PROJECT_DIR$/order-service/order-application" />

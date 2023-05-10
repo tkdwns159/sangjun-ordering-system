@@ -18,7 +18,6 @@ public class OrderApprovalSaga implements SagaStep<RestaurantApprovalResponse, E
     private final OrderDomainService orderDomainService;
     private final OrderSagaHelper orderSagaHelper;
 
-
     @Transactional
     @Override
     public EmptyEvent process(RestaurantApprovalResponse data) {

@@ -17,12 +17,13 @@ import static com.sangjun.common.utils.CommonConstants.FAILURE_MESSAGE_DELIMITER
 public class PaymentResponseMessageListenerImpl implements PaymentResponseMessageListener {
 
     private final OrderPaymentSaga orderPaymentSaga;
+    private final OrderEventShooter orderEventShooter;
 
     @Override
     public void paymentCompleted(PaymentResponse paymentResponse) {
         OrderPaidEvent orderPaidEvent = orderPaymentSaga.process(paymentResponse);
         log.info("Publishing OrderPaidEvent with order id :{}", orderPaidEvent.getOrder().getId().getValue());
-        orderPaidEvent.fire();
+        orderEventShooter.fire(orderPaidEvent);
     }
 
     @Override

@@ -20,7 +20,7 @@ kafka-config:
 
 kafka-producer-config:
   key-serializer-class: org.apache.kafka.common.serialization.StringSerializer
-  value-serializer-class: com.sangjun.kafka.test.TestKafkaAvroSerializer
+  value-serializer-class: com.sangjun.kafka.producer.TestKafkaAvroSerializer
   compression-type: snappy
   acks: all
   batch-size: 16384
@@ -31,7 +31,7 @@ kafka-producer-config:
 
 kafka-consumer-config:
   key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-  value-deserializer: com.sangjun.kafka.test.TestKafkaAvroDeserializer
+  value-deserializer: com.sangjun.kafka.consumer.TestKafkaAvroDeserializer
   payment-consumer-group-id: payment-topic-consumer
   auto-offset-reset: earliest
   specific-avro-reader-key: specific.avro.reader

@@ -104,13 +104,7 @@ public class KafkaTest {
         PaymentRequestAvroModel value = result.getProducerRecord().value();
 
         assertEquals(orderId, key);
-        assertEquals(requestId, value.getId());
-        assertEquals(customerId, value.getCustomerId());
-        assertEquals(orderId, value.getOrderId());
-        assertEquals(price, value.getPrice());
-        assertEquals(sagaId, value.getSagaId());
-        assertEquals(now, value.getCreatedAt());
-        assertEquals(PaymentOrderStatus.PENDING, value.getPaymentOrderStatus());
+        assertEquals(msg, value);
     }
 
     @Test
@@ -142,14 +136,7 @@ public class KafkaTest {
         ConsumerRecord<String, PaymentRequestAvroModel> reply = KafkaTestUtils.getSingleRecord(consumer, KafkaTopics.PAYMENT_REQUEST_TOPIC.name);
 
         //then
-        assertEquals(orderId, reply.key());
-        assertEquals(requestId, reply.value().getId());
-        assertEquals(customerId, reply.value().getCustomerId());
-        assertEquals(orderId, reply.value().getOrderId());
-        assertEquals(price, reply.value().getPrice());
-        assertEquals(sagaId, reply.value().getSagaId());
-        assertEquals(now, reply.value().getCreatedAt());
-        assertEquals(PaymentOrderStatus.PENDING, reply.value().getPaymentOrderStatus());
+        assertEquals(msg, reply.value());
     }
 
 

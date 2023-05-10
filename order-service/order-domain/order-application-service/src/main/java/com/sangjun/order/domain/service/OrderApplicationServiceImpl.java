@@ -10,7 +10,6 @@ import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.track.TrackOrderQuery;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
-import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCreatedPaymentRequestMessagePublisher;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
@@ -34,7 +33,7 @@ class OrderApplicationServiceImpl implements OrderApplicationService {
     private final RestaurantRepository restaurantRepository;
     private final OrderDomainService orderDomainService;
     private final OrderRepository orderRepository;
-    private final OrderCreatedPaymentRequestMessagePublisher orderCreatedPaymentRequestMessagePublisher;
+    private final OrderEventShooter orderEventShooter;
 
     @Transactional
     @Override
@@ -43,7 +42,8 @@ class OrderApplicationServiceImpl implements OrderApplicationService {
         validateOrderDraft(orderDraft);
         OrderCreatedEvent orderCreatedEvent = orderDomainService.initiateOrder(orderDraft);
         Order order = orderRepository.save(orderCreatedEvent.getOrder());
-        orderCreatedPaymentRequestMessagePublisher.publish(orderCreatedEvent);
+        orderEventShooter.fire(orderCreatedEvent);
+
         return MAPPER.toCreateOrderResponse(order);
     }
 

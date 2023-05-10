@@ -30,6 +30,7 @@ public class OrderApprovalSaga implements SagaStep<RestaurantApprovalResponse, E
         return EmptyEvent.INSTANCE;
     }
 
+    @Transactional
     @Override
     public OrderCancelledEvent rollback(RestaurantApprovalResponse data) {
         log.info("Cancelling order with id: {}", data.getOrderId());

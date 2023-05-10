@@ -14,6 +14,7 @@ spring:
     url: jdbc:h2:mem:psql;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;INIT=DROP SCHEMA IF EXISTS p_order CASCADE\;CREATE SCHEMA p_order\;DROP SCHEMA IF EXISTS customer CASCADE\;CREATE SCHEMA customer\;DROP SCHEMA IF EXISTS restaurant CASCADE\;CREATE SCHEMA restaurant
     username: sa
 
+
 order-service:
   payment-request-topic-name: payment-request
   payment-response-topic-name: payment-response

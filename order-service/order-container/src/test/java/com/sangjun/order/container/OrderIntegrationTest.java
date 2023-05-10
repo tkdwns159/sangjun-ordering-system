@@ -5,6 +5,7 @@ import com.sangjun.common.dataaccess.restaurant.repository.RestaurantJpaReposito
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.OrderApprovalStatus;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
+import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
 import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.dataaccess.customer.entity.CustomerEntity;
 import com.sangjun.order.dataaccess.customer.repository.CustomerJpaRepository;
@@ -24,15 +25,14 @@ import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.ActiveProfiles;
@@ -46,7 +46,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static com.sangjun.order.domain.service.mapper.OrderMapstructMapper.MAPPER;
@@ -55,7 +54,7 @@ import static org.mockito.Mockito.when;
 
 
 @ActiveProfiles("test")
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = OrderIntegrationTestConfig.class,
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @EmbeddedKafka(
@@ -63,18 +62,19 @@ import static org.mockito.Mockito.when;
         partitions = 3,
         bootstrapServersProperty = "kafka-config.bootstrap-servers",
         zookeeperPort = 2182,
-        zkSessionTimeout = 3000,
-        zkConnectionTimeout = 3000
+        zkSessionTimeout = 1000,
+        zkConnectionTimeout = 1000
 )
+@TestMethodOrder(value = MethodOrderer.Random.class)
 @Transactional
 @Slf4j
 public class OrderIntegrationTest {
-    private static final UUID CUSTOMER_ID = UUID.randomUUID();
-    private static final UUID RESTAURANT_ID = UUID.randomUUID();
-    private static final UUID ORDER_ID = UUID.randomUUID();
-    private static final UUID ORDER_TRACKING_ID = UUID.randomUUID();
-    private static final UUID PRODUCT_ID_1 = UUID.randomUUID();
-    private static final UUID PRODUCT_ID_2 = UUID.randomUUID();
+    private static final UUID CUSTOMER_ID = UUID.fromString("f6316e90-1837-4940-b5db-a3c49a9a10ca");
+    private static final UUID RESTAURANT_ID = UUID.fromString("ad68afcc-e55e-4e6a-bc6d-95a26a5410ff");
+    private static final UUID ORDER_ID = UUID.fromString("f3b19e90-b5f3-4f68-bbfa-6aa1101ae3e1");
+    private static final UUID ORDER_TRACKING_ID = UUID.fromString("4d510cac-290c-408a-a7fc-abc2f3c0efbb");
+    private static final UUID PRODUCT_ID_1 = UUID.fromString("cb48e255-cc1c-4fc3-b80c-c4d73ca187dd");
+    private static final UUID PRODUCT_ID_2 = UUID.fromString("d9e55ab9-68dc-4af5-b66f-a875b2df95fd");
     private static final Product PRODUCT_1 = Product.builder()
             .id(new ProductId(PRODUCT_ID_1))
             .name("product1")
@@ -152,7 +152,13 @@ public class OrderIntegrationTest {
     private EntityManager entityManager;
 
     @Autowired
-    private ConsumerFactory<String, PaymentRequestAvroModel> consumerFactory;
+    private EmbeddedKafkaBroker embeddedKafka;
+
+    @Autowired
+    private ConsumerFactory<String, PaymentRequestAvroModel> paymentCf;
+
+    @Autowired
+    private ConsumerFactory<String, RestaurantApprovalRequestAvroModel> restaurantCf;
 
     @Autowired
     private KafkaTemplate<String, PaymentResponseAvroModel> paymentResponseKt;
@@ -169,6 +175,37 @@ public class OrderIntegrationTest {
     @Value("${order-service.restaurant-approval-response-topic-name}")
     private String restaurantResponseTopic;
 
+    @Value("${order-service.restaurant-approval-request-topic-name}")
+    private String restaurantRequestTopic;
+
+    private Consumer<String, PaymentRequestAvroModel> paymentRequestConsumer;
+    private Consumer<String, RestaurantApprovalRequestAvroModel> restaurantRequestConsumer;
+
+    @BeforeAll
+    void setUp() throws Exception {
+        paymentRequestConsumer = paymentCf.createConsumer("test-payment-request", "1");
+        paymentRequestConsumer.subscribe(List.of(paymentRequestTopic));
+
+        restaurantRequestConsumer = restaurantCf.createConsumer("test-restaurant-request", "1");
+        restaurantRequestConsumer.subscribe(List.of(restaurantRequestTopic));
+
+        Thread.sleep(1000);
+    }
+
+    @AfterAll
+    void tearDown() {
+        paymentRequestConsumer.close();
+        restaurantRequestConsumer.close();
+    }
+
+    @AfterEach
+    void cleanAfter() {
+        readPaymentRequestRecords();
+        readRestaurantRequestRecords();
+        restaurantRequestConsumer.commitSync();
+        paymentRequestConsumer.commitSync();
+    }
+
     @BeforeEach
     void cleanUp() {
         // transaction 자동시작
@@ -176,8 +213,8 @@ public class OrderIntegrationTest {
         truncateAllTables();
         TestTransaction.end();
 
-        TestTransaction.start();
         // 다음 수행할 함수를 위해 transaction 재시작
+        TestTransaction.start();
     }
 
     private void truncateAllTables() {
@@ -197,6 +234,7 @@ public class OrderIntegrationTest {
         query = entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE");
         query.executeUpdate();
     }
+
 
     @Test
     void 주문이_성공하면_추적번호가_발급된다() {
@@ -227,7 +265,7 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    void 주문이_성공하면_주문상태가_PENDING이다() {
+    void 주문이_성공하면_주문상태가_PENDING이다() throws InterruptedException {
         //given
         List<OrderItem> items = new ArrayList<>();
         OrderItem item1 = getOrderItem(PRODUCT_1, 2);
@@ -246,6 +284,7 @@ public class OrderIntegrationTest {
         mockCustomerFindById();
         mockFindByRestaurantIdAndProductIdIn();
         CreateOrderResponse response = orderApplicationService.createOrder(createOrderCommand);
+        Thread.sleep(100);
 
         //then
         Order order = assertDoesNotThrow(() -> orderRepository.findByTrackingId(response.getOrderTrackingId())
@@ -254,12 +293,8 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    void 주문이_성공하면_결제요청_메세지가_날아간다() {
+    void 주문이_성공하면_결제요청_메세지가_날아간다() throws InterruptedException {
         //given
-        Consumer<String, PaymentRequestAvroModel> consumer =
-                consumerFactory.createConsumer("test-payment-request", "1");
-        consumer.subscribe(List.of(paymentRequestTopic));
-
         List<OrderItem> items = new ArrayList<>();
         OrderItem item1 = getOrderItem(PRODUCT_1, 2);
         OrderItem item2 = getOrderItem(PRODUCT_2, 1);
@@ -277,21 +312,21 @@ public class OrderIntegrationTest {
         mockCustomerFindById();
         mockFindByRestaurantIdAndProductIdIn();
         CreateOrderResponse response = orderApplicationService.createOrder(createOrderCommand);
+        Thread.sleep(100);
 
         //then
         Order order = assertDoesNotThrow(() -> orderRepository.findByTrackingId(response.getOrderTrackingId())
                 .orElseThrow(() -> new OrderNotFoundException("Order not found")));
 
-        Map<String, PaymentRequestAvroModel> resultTable = consumeFromAllPartitions(consumer);
-
+        Map<String, PaymentRequestAvroModel> resultTable = readPaymentRequestRecords();
         assertTrue(resultTable.containsKey(order.getId().getValue().toString()));
-    }
 
-    private static Map<String, PaymentRequestAvroModel> consumeFromAllPartitions(Consumer<String, PaymentRequestAvroModel> consumer) {
-        ConsumerRecords<String, PaymentRequestAvroModel> result = KafkaTestUtils.getRecords(consumer, 1000);
-        Map<String, PaymentRequestAvroModel> resultTable = new HashMap<>();
-        result.forEach(rec -> resultTable.put(rec.key(), rec.value()));
-        return resultTable;
+        PaymentRequestAvroModel record = resultTable.get(order.getId().getValue().toString());
+        assertEquals(order.getId().getValue().toString(), record.getOrderId());
+        assertEquals(PaymentOrderStatus.PENDING, record.getPaymentOrderStatus());
+        assertEquals(order.getCustomerId().getValue().toString(), record.getCustomerId());
+        assertEquals(order.getPrice().getAmount(), record.getPrice());
+
     }
 
     private void mockCustomerFindById() {
@@ -333,14 +368,78 @@ public class OrderIntegrationTest {
     @Test
     void 결제완료시_주문상태가_PAID로_변한다() throws ExecutionException, InterruptedException, TimeoutException {
         //given
-        TestTransaction.flagForCommit();
-        orderRepository.save(ORDER);
-        entityManager.flush();
-        TestTransaction.end();
+        savePendingOrder();
 
         UUID paymentId = UUID.randomUUID();
         BigDecimal price = new BigDecimal("1200.00");
 
+        PaymentResponseAvroModel response = getPaymentResponseAvroModel(paymentId, price);
+
+        //when
+        TestTransaction.start();
+        paymentResponseKt.send(
+                        paymentResponseTopic,
+                        ORDER.getId().getValue().toString(),
+                        response)
+                .get();
+
+        //then
+        Thread.sleep(100);
+        Order order = assertDoesNotThrow(() -> orderRepository.findById(ORDER.getId())
+                .orElseThrow(() -> new OrderNotFoundException("Order Not found")));
+
+        assertEquals(OrderStatus.PAID, order.getOrderStatus());
+    }
+
+
+    @Test
+    void 결제완료시_식당승인요청_메세지를_전송한다() throws ExecutionException, InterruptedException, TimeoutException {
+        //given
+        savePendingOrder();
+
+        UUID paymentId = UUID.randomUUID();
+        BigDecimal price = new BigDecimal("1200.00");
+
+        PaymentResponseAvroModel response = getPaymentResponseAvroModel(paymentId, price);
+
+        //when
+        TestTransaction.start();
+        paymentResponseKt.send(
+                        paymentResponseTopic,
+                        ORDER_ID.toString(),
+                        response)
+                .get();
+
+        //then
+        Thread.sleep(100);
+        Map<String, RestaurantApprovalRequestAvroModel> resultTable = readRestaurantRequestRecords();
+        assertTrue(resultTable.containsKey(ORDER_ID.toString()));
+
+        RestaurantApprovalRequestAvroModel record = resultTable.get(ORDER_ID.toString());
+        assertEquals(ORDER_ID.toString(), record.getOrderId());
+        assertEquals(ORDER.getPrice().getAmount(), record.getPrice());
+        assertEquals(ORDER.getRestaurantId().getValue().toString(), record.getRestaurantId());
+        ORDER.getItems().stream()
+                .map(com.sangjun.order.domain.entity.OrderItem::getProduct)
+                .map(Product::getId)
+                .map(ProductId::getValue)
+                .map(UUID::toString)
+                .forEach(id ->
+                        assertDoesNotThrow(() -> record.getProducts().stream()
+                                .filter(p -> p.getId().equals(id))
+                                .findFirst().orElseThrow()));
+        assertEquals(RestaurantOrderStatus.PAID, record.getRestaurantOrderStatus());
+
+    }
+
+    private void savePendingOrder() {
+        TestTransaction.flagForCommit();
+        orderRepository.save(ORDER);
+        entityManager.flush();
+        TestTransaction.end();
+    }
+
+    private PaymentResponseAvroModel getPaymentResponseAvroModel(UUID paymentId, BigDecimal price) {
         PaymentResponseAvroModel response = PaymentResponseAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setOrderId(ORDER_ID.toString())
@@ -352,44 +451,16 @@ public class OrderIntegrationTest {
                 .setPrice(price)
                 .setPaymentStatus(PaymentStatus.COMPLETED)
                 .build();
-
-        //when
-        TestTransaction.start();
-        paymentResponseKt.send(
-                        paymentResponseTopic,
-                        ORDER.getId().getValue().toString(),
-                        response)
-                .get(1, TimeUnit.SECONDS);
-
-        //then
-        Thread.sleep(500);
-        Order order = assertDoesNotThrow(() -> orderRepository.findById(ORDER.getId())
-                .orElseThrow(() -> new OrderNotFoundException("Order Not found")));
-
-        assertEquals(OrderStatus.PAID, order.getOrderStatus());
+        return response;
     }
 
     @Test
     void 식당승인완료시_주문상태가_APPROVED로_변한다() throws ExecutionException, InterruptedException, TimeoutException {
         //given
-        TestTransaction.flagForCommit();
+        savePaidOrder();
 
-        Order savedOrder = orderRepository.save(ORDER);
-        savedOrder.setOrderStatus(OrderStatus.PAID);
-        orderRepository.save(savedOrder);
-        entityManager.flush();
-
-        TestTransaction.end();
-
-        RestaurantApprovalResponseAvroModel response = RestaurantApprovalResponseAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
-                .setCreatedAt(Instant.now())
-                .setSagaId("")
-                .setFailureMessages(new ArrayList<>())
-                .setOrderApprovalStatus(OrderApprovalStatus.APPROVED)
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .build();
+        RestaurantApprovalResponseAvroModel response =
+                getRestaurantApprovalResponseAvroModel(OrderApprovalStatus.APPROVED);
 
         //when
         TestTransaction.start();
@@ -398,14 +469,109 @@ public class OrderIntegrationTest {
                 restaurantResponseTopic,
                 ORDER_ID.toString(),
                 response
-        ).get(500, TimeUnit.MILLISECONDS);
+        ).get();
 
         //then
-        Thread.sleep(500);
+        Thread.sleep(100);
         Order order = assertDoesNotThrow(() -> orderRepository.findById(ORDER.getId())
                 .orElseThrow(() -> new OrderNotFoundException("Order Not found")));
 
         assertEquals(OrderStatus.APPROVED, order.getOrderStatus());
+    }
+
+    private static RestaurantApprovalResponseAvroModel getRestaurantApprovalResponseAvroModel(OrderApprovalStatus approved) {
+        return RestaurantApprovalResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(ORDER_ID.toString())
+                .setCreatedAt(Instant.now())
+                .setSagaId("")
+                .setFailureMessages(new ArrayList<>())
+                .setOrderApprovalStatus(approved)
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .build();
+    }
+
+    @Test
+    void 식당승인취소시_주문상태가_CANCELLING으로_변한다() throws ExecutionException, InterruptedException, TimeoutException {
+        //given
+        savePaidOrder();
+
+        RestaurantApprovalResponseAvroModel response =
+                getRestaurantApprovalResponseAvroModel(OrderApprovalStatus.REJECTED);
+
+        //when
+        TestTransaction.start();
+
+        restaurantResponseKt.send(
+                restaurantResponseTopic,
+                ORDER_ID.toString(),
+                response
+        ).get();
+
+        //then
+        Thread.sleep(100);
+
+        Order order = assertDoesNotThrow(() -> orderRepository.findById(ORDER.getId())
+                .orElseThrow(() -> new OrderNotFoundException("Order Not found")));
+
+        assertEquals(OrderStatus.CANCELLING, order.getOrderStatus());
+    }
+
+    @Test
+    void 식당주문취소시_결제취소_메세지가_날아간다() throws InterruptedException, ExecutionException {
+        //given
+        savePaidOrder();
+
+        RestaurantApprovalResponseAvroModel response =
+                getRestaurantApprovalResponseAvroModel(OrderApprovalStatus.REJECTED);
+
+        //when
+        TestTransaction.start();
+
+        restaurantResponseKt.send(
+                restaurantResponseTopic,
+                ORDER_ID.toString(),
+                response
+        ).get();
+
+        //then
+        Thread.sleep(100);
+
+        Map<String, PaymentRequestAvroModel> resultTable = readPaymentRequestRecords();
+        assertTrue(resultTable.containsKey(ORDER_ID.toString()));
+
+        PaymentRequestAvroModel record = resultTable.get(ORDER_ID.toString());
+        assertEquals(PaymentOrderStatus.CANCELLED, record.getPaymentOrderStatus());
+        assertEquals(ORDER_ID.toString(), record.getOrderId());
+        assertEquals(ORDER.getPrice().getAmount(), record.getPrice());
+        assertEquals(ORDER.getCustomerId().getValue().toString(), record.getCustomerId());
+    }
+
+    private void savePaidOrder() {
+        TestTransaction.flagForCommit();
+
+        Order savedOrder = orderRepository.save(ORDER);
+        savedOrder.setOrderStatus(OrderStatus.PAID);
+        orderRepository.save(savedOrder);
+        entityManager.flush();
+
+        TestTransaction.end();
+    }
+
+    private Map<String, PaymentRequestAvroModel> readPaymentRequestRecords() {
+        ConsumerRecords<String, PaymentRequestAvroModel> result = KafkaTestUtils.getRecords(paymentRequestConsumer, 100);
+        Map<String, PaymentRequestAvroModel> resultTable = new HashMap<>();
+        result.forEach(rec -> resultTable.put(rec.key(), rec.value()));
+        paymentRequestConsumer.commitSync();
+        return resultTable;
+    }
+
+    private Map<String, RestaurantApprovalRequestAvroModel> readRestaurantRequestRecords() {
+        ConsumerRecords<String, RestaurantApprovalRequestAvroModel> result = KafkaTestUtils.getRecords(restaurantRequestConsumer, 100);
+        Map<String, RestaurantApprovalRequestAvroModel> resultTable = new HashMap<>();
+        result.forEach(rec -> resultTable.put(rec.key(), rec.value()));
+        restaurantRequestConsumer.commitSync();
+        return resultTable;
     }
 
 }

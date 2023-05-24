@@ -6,6 +6,7 @@ import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.PaymentStatus;
+import com.sangjun.payment.domain.exception.PaymentDomainException;
 import com.sangjun.payment.domain.valueobject.PaymentId;
 
 import java.time.ZoneId;
@@ -42,6 +43,7 @@ public class Payment extends AggregateRoot<PaymentId> {
     public void validatePayment(List<String> failureMessages) {
         if (this.price == null || !price.isGreaterThanZero()) {
             failureMessages.add("Total price must be greater than zero!");
+            throw new PaymentDomainException("Total price must be greater than zero!");
         }
     }
 

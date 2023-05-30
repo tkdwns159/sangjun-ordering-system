@@ -13,16 +13,16 @@ import java.util.List;
 
 public interface PaymentDomainService {
 
-    void validatePaymentInitiation(Payment payment,
-                                   CreditEntry creditEntry,
-                                   List<CreditHistory> histories,
-                                   List<String> failureMessages);
-
 
     PaymentEvent initiatePayment(Payment payment,
-                                 List<String> failureMessages,
-                                 DomainEventPublisher<PaymentCompletedEvent> paymentFailedEventDomainEventPublisher,
-                                 DomainEventPublisher<PaymentFailedEvent> paymentCancelledEventDomainEventPublisher);
+                                 CreditEntry creditEntry,
+                                 List<CreditHistory> creditHistoryList,
+                                 List<String> failureMessages);
+
+    PaymentEvent cancelPayment(Payment payment,
+                               CreditEntry creditEntry,
+                               List<CreditHistory> histories,
+                               List<String> failureMessages);
 
     @Deprecated
     PaymentEvent validateAndInitiatePayment(Payment payment,
@@ -32,6 +32,7 @@ public interface PaymentDomainService {
                                             DomainEventPublisher<PaymentCompletedEvent> paymentCompletedEventDomainEventPublisher,
                                             DomainEventPublisher<PaymentFailedEvent> paymentFailedEventDomainEventPublisher);
 
+    @Deprecated
     PaymentEvent validateAndCancelPayment(Payment payment,
                                           CreditEntry creditEntry,
                                           List<CreditHistory> histories,

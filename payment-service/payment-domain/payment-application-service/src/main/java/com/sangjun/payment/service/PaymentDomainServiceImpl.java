@@ -27,15 +27,35 @@ import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 @Slf4j
 public class PaymentDomainServiceImpl implements PaymentDomainService {
 
-    private static final ThreadLocal<UUID> INIT_VALIDATION_TRIED_UUID_STAMP = new ThreadLocal<>();
 
     @Override
-    public void validatePaymentInitiation(Payment payment,
-                                          CreditEntry creditEntry,
-                                          List<CreditHistory> histories,
-                                          List<String> failureMessages) {
+    public PaymentEvent initiatePayment(Payment payment,
+                                        CreditEntry creditEntry,
+                                        List<CreditHistory> creditHistoryList,
+                                        List<String> failureMessages) {
+        validatePaymentInitiation(payment, creditEntry, creditHistoryList, failureMessages);
+
+        if (!failureMessages.isEmpty()) {
+            log.error("Payment initiation is failed for order id: {}", payment.getOrderId().getValue());
+            payment.updateStatus(PaymentStatus.FAILED);
+            return new PaymentFailedEvent(
+                    payment,
+                    ZonedDateTime.now(ZoneId.of(ZONE_ID)),
+                    failureMessages);
+        }
+
+        payment.initializePayment();
+        log.info("Payment is initiated with id: {}", payment.getId().getValue());
+        payment.updateStatus(PaymentStatus.COMPLETED);
+        return new PaymentCompletedEvent(payment, ZonedDateTime.now(ZoneId.of(ZONE_ID)), failureMessages);
+    }
+
+
+    private void validatePaymentInitiation(Payment payment,
+                                           CreditEntry creditEntry,
+                                           List<CreditHistory> histories,
+                                           List<String> failureMessages) {
         try {
-            INIT_VALIDATION_TRIED_UUID_STAMP.set(UUID.randomUUID());
             payment.validatePayment(failureMessages);
             checkIfCustomerHasEnoughCredit(payment, creditEntry, failureMessages);
 
@@ -47,9 +67,9 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
 
         } catch (PaymentDomainException e) {
             log.error(e.getMessage());
-            INIT_VALIDATION_TRIED_UUID_STAMP.remove();
         }
     }
+
 
     private void checkIfCustomerHasEnoughCredit(Payment payment, CreditEntry creditEntry, List<String> failureMessages) {
         if (payment.getPrice().isGreaterThan(creditEntry.getTotalCreditAmount())) {
@@ -103,22 +123,11 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
     }
 
     @Override
-    public PaymentEvent initiatePayment(Payment payment,
-                                        List<String> failureMessages,
-                                        DomainEventPublisher<PaymentCompletedEvent> paymentCompletedEventDomainEventPublisher,
-                                        DomainEventPublisher<PaymentFailedEvent> paymentFailedEventDomainEventPublisher) {
-        UUID stamp = INIT_VALIDATION_TRIED_UUID_STAMP.get();
-        INIT_VALIDATION_TRIED_UUID_STAMP.remove();
-
-        if (stamp == null) {
-            log.error("Payment of order id: {} has not been validated", payment.getOrderId().getValue());
-            payment.updateStatus(PaymentStatus.FAILED);
-            return new PaymentFailedEvent(
-                    payment,
-                    ZonedDateTime.now(ZoneId.of(ZONE_ID)),
-                    failureMessages,
-                    paymentFailedEventDomainEventPublisher);
-        }
+    public PaymentEvent cancelPayment(Payment payment,
+                                      CreditEntry creditEntry,
+                                      List<CreditHistory> histories,
+                                      List<String> failureMessages) {
+        validatePaymentCancel(payment, failureMessages);
 
         if (!failureMessages.isEmpty()) {
             log.error("Payment initiation is failed for order id: {}", payment.getOrderId().getValue());
@@ -126,17 +135,24 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
             return new PaymentFailedEvent(
                     payment,
                     ZonedDateTime.now(ZoneId.of(ZONE_ID)),
-                    failureMessages,
-                    paymentFailedEventDomainEventPublisher);
+                    failureMessages);
         }
 
-        payment.initializePayment();
-        log.info("Payment is initiated with id: {}", payment.getId().getValue());
+        addCreditEntry(payment, creditEntry);
+        addCreditHistory(payment, histories, TransactionType.CREDIT);
         payment.updateStatus(PaymentStatus.COMPLETED);
-        return new PaymentCompletedEvent(payment,
-                ZonedDateTime.now(ZoneId.of(ZONE_ID)),
-                paymentCompletedEventDomainEventPublisher);
+
+        return null;
     }
+
+    private void validatePaymentCancel(Payment payment, List<String> failureMessages) {
+        try {
+            payment.validatePayment(failureMessages);
+        } catch (PaymentDomainException e) {
+            log.error(e.getMessage());
+        }
+    }
+
 
     @Override
     public PaymentEvent validateAndInitiatePayment(

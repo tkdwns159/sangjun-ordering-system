@@ -176,7 +176,7 @@ public class PaymentDomainServiceTest {
         creditHistoryList.add(CreditHistory.builder(
                         new CustomerId(CUSTOMER_ID),
                         Money.of(new BigDecimal("2300")),
-                        TransactionType.CREDIT)
+                        TransactionType.DEBIT)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());
 
@@ -215,7 +215,7 @@ public class PaymentDomainServiceTest {
         creditHistoryList.add(CreditHistory.builder(
                         new CustomerId(CUSTOMER_ID),
                         Money.of(new BigDecimal("1000")),
-                        TransactionType.CREDIT)
+                        TransactionType.DEBIT)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());
 
@@ -254,7 +254,7 @@ public class PaymentDomainServiceTest {
         creditHistoryList.add(CreditHistory.builder(
                         new CustomerId(CUSTOMER_ID),
                         Money.of(new BigDecimal("2500")),
-                        TransactionType.CREDIT)
+                        TransactionType.DEBIT)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());
 
@@ -292,7 +292,7 @@ public class PaymentDomainServiceTest {
         creditHistoryList.add(CreditHistory.builder(
                         new CustomerId(CUSTOMER_ID),
                         Money.of(new BigDecimal("2500")),
-                        TransactionType.CREDIT)
+                        TransactionType.DEBIT)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());
 

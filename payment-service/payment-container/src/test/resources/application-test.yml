@@ -14,14 +14,21 @@ spring:
     url: jdbc:h2:mem:psql;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;INIT=DROP SCHEMA IF EXISTS payment CASCADE\;CREATE SCHEMA payment\;DROP SCHEMA IF EXISTS restaurant CASCADE\;CREATE SCHEMA restaurant
     username: sa
 
+logging:
+  level:
+    com.sangjun: DEBUG
+
 payment-service:
   payment-request-topic-name: payment-request
   payment-response-topic-name: payment-response
 
 kafka-config:
-  bootstrap-servers: localhost:19092, localhost:29092, localhost:39092
+  bootstrap-servers:
+    - localhost:19092
+    - localhost:29092
+    - localhost:39092
   schema-registry-url-key: schema.registry.url
-  schema-registry-url: http://localhost:8081
+  schema-registry-url: mock://localhost:8081
   num-of-partitions: 3
   replication-factor: 3
 

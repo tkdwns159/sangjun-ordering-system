@@ -60,9 +60,10 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
             checkIfCustomerHasEnoughCredit(payment, creditEntry, failureMessages);
 
             subtractCreditEntry(payment, creditEntry);
-            addCreditHistory(payment, histories, TransactionType.DEBIT);
+            addCreditHistory(payment, histories, TransactionType.CREDIT);
             Money creditSum = getCreditSumFromCreditHistories(histories);
-            checkIfCreditHistorySumIsGreaterThanZero(creditSum, creditEntry.getCustomerId(), failureMessages);
+            log.info("creditSum = {}", creditSum.getAmount());
+            checkIfCreditHistorySumIsNotMinus(creditSum, creditEntry.getCustomerId(), failureMessages);
             checkIfCreditHistorySumEqualsCredit(creditSum, creditEntry, failureMessages);
 
         } catch (PaymentDomainException e) {
@@ -94,10 +95,10 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
                 .build());
     }
 
-    private void checkIfCreditHistorySumIsGreaterThanZero(Money creditSum,
-                                                          CustomerId customerId,
-                                                          List<String> failureMessages) {
-        if (!creditSum.isGreaterThanZero()) {
+    private void checkIfCreditHistorySumIsNotMinus(Money creditSum,
+                                                   CustomerId customerId,
+                                                   List<String> failureMessages) {
+        if (!creditSum.isGreaterThanZero() && !creditSum.equals(Money.ZERO)) {
             failureMessages.add("Customer with id=" + customerId.getValue() +
                     " doesn't have enough credit according to credit history");
             throw new PaymentDomainException("Customer with id=" + customerId.getValue() +
@@ -119,7 +120,7 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
     private Money getCreditSumFromCreditHistories(List<CreditHistory> histories) {
         Money totalCreditAmount = getTotalAmountFromHistory(histories, TransactionType.CREDIT);
         Money totalDebitAmount = getTotalAmountFromHistory(histories, TransactionType.DEBIT);
-        return totalCreditAmount.subtract(totalDebitAmount);
+        return totalDebitAmount.subtract(totalCreditAmount);
     }
 
     @Override

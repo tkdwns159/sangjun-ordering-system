@@ -44,13 +44,11 @@ public class PaymentRequestHelper {
         Payment payment = paymentDataMapper.paymentRequestToPayment(paymentRequest);
         PaymentDetails paymentDetails = getPaymentDetails(payment);
 
-        PaymentEvent paymentEvent = paymentDomainService.validateAndInitiatePayment(
+        PaymentEvent paymentEvent = paymentDomainService.initiatePayment(
                 payment,
                 paymentDetails.creditEntry,
                 paymentDetails.creditHistories,
-                paymentDetails.failureMessages,
-                paymentCompletedEventDomainEventPublisher,
-                paymentFailedEventDomainEventPublisher);
+                paymentDetails.failureMessages);
 
         persistData(payment, paymentDetails);
 
@@ -63,7 +61,7 @@ public class PaymentRequestHelper {
         Optional<Payment> foundPayment = paymentRepository.findByOrderId(UUID.fromString(paymentRequest.getOrderId()));
         Payment payment = foundPayment.orElseThrow(() -> {
             log.error("Payment with order id: {} could not be found", paymentRequest.getOrderId());
-            throw new PaymentApplicationServiceException("Payment with order id: " + paymentRequest.getOrderId()
+            return new PaymentApplicationServiceException("Payment with order id: " + paymentRequest.getOrderId()
                     + " could not be found");
         });
         PaymentDetails paymentDetails = getPaymentDetails(payment);

@@ -12,11 +12,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PaymentRequestMessageListenerImpl implements PaymentRequestMessageListener {
     private final PaymentRequestHelper paymentRequestHelper;
+    private final PaymentEventShooter paymentEventShooter;
 
     @Override
     public void completePayment(PaymentRequest paymentRequest) {
         PaymentEvent paymentEvent = paymentRequestHelper.persistPayment(paymentRequest);
-        fireEvent(paymentEvent);
+        paymentEventShooter.fire(paymentEvent);
     }
 
     @Override

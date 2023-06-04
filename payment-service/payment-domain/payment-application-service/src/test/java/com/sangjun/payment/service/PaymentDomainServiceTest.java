@@ -176,7 +176,7 @@ public class PaymentDomainServiceTest {
         creditHistoryList.add(CreditHistory.builder(
                         new CustomerId(CUSTOMER_ID),
                         Money.of(new BigDecimal("2300")),
-                        TransactionType.CREDIT)
+                        TransactionType.DEBIT)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());
 
@@ -215,7 +215,7 @@ public class PaymentDomainServiceTest {
         creditHistoryList.add(CreditHistory.builder(
                         new CustomerId(CUSTOMER_ID),
                         Money.of(new BigDecimal("1000")),
-                        TransactionType.CREDIT)
+                        TransactionType.DEBIT)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());
 
@@ -254,7 +254,7 @@ public class PaymentDomainServiceTest {
         creditHistoryList.add(CreditHistory.builder(
                         new CustomerId(CUSTOMER_ID),
                         Money.of(new BigDecimal("2500")),
-                        TransactionType.CREDIT)
+                        TransactionType.DEBIT)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());
 
@@ -292,7 +292,7 @@ public class PaymentDomainServiceTest {
         creditHistoryList.add(CreditHistory.builder(
                         new CustomerId(CUSTOMER_ID),
                         Money.of(new BigDecimal("2500")),
-                        TransactionType.CREDIT)
+                        TransactionType.DEBIT)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());
 
@@ -493,7 +493,7 @@ public class PaymentDomainServiceTest {
     }
 
     @Test
-    void payment_status_becomes_COMPLETED_after_payment_cancel_success() {
+    void payment_status_becomes_CANCELLED_after_payment_cancel_success() {
         //given
         Payment payment = Payment.builder(
                         new OrderId(ORDER_ID),
@@ -524,6 +524,6 @@ public class PaymentDomainServiceTest {
 
         //then
         assertThat(payment.getPaymentStatus())
-                .isEqualTo(PaymentStatus.COMPLETED);
+                .isEqualTo(PaymentStatus.CANCELLED);
     }
 }

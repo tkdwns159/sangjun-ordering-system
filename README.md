@@ -12,6 +12,7 @@ SQL로 mocking 데이터를 생성하여 해당 데이터로만 실행 테스트
 ### 리팩토링 완료
 
 - order-service
+- payment-service
 
 ## 사용 기술
 

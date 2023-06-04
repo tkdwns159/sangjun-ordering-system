@@ -66,13 +66,11 @@ public class PaymentRequestHelper {
         });
         PaymentDetails paymentDetails = getPaymentDetails(payment);
 
-        PaymentEvent paymentEvent = paymentDomainService.validateAndCancelPayment(
+        PaymentEvent paymentEvent = paymentDomainService.cancelPayment(
                 payment,
                 paymentDetails.creditEntry,
                 paymentDetails.creditHistories,
-                paymentDetails.failureMessages,
-                paymentCancelledMessagePublisher,
-                paymentFailedEventDomainEventPublisher);
+                paymentDetails.failureMessages);
 
         persistData(payment, paymentDetails);
 
@@ -93,12 +91,11 @@ public class PaymentRequestHelper {
 
     private void persistData(Payment payment, PaymentDetails paymentDetails) {
         paymentRepository.save(payment);
-        CreditEntry creditEntry = paymentDetails.creditEntry;
-        List<CreditHistory> creditHistories = paymentDetails.creditHistories;
-        List<String> failureMessages = paymentDetails.failureMessages;
 
-        if (failureMessages.isEmpty()) {
-            creditEntryRepository.save(creditEntry);
+        if (paymentDetails.failureMessages.isEmpty()) {
+            List<CreditHistory> creditHistories = paymentDetails.creditHistories;
+
+            creditEntryRepository.save(paymentDetails.creditEntry);
             creditHistoryRepository.save(creditHistories.get(creditHistories.size() - 1));
         }
     }

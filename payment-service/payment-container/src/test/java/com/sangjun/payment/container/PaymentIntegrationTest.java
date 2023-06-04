@@ -68,7 +68,6 @@ public class PaymentIntegrationTest {
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
     private static final UUID PAYMENT_ID = UUID.randomUUID();
 
-
     @Autowired
     private KafkaTemplate<String, PaymentRequestAvroModel> paymentRequestKt;
 
@@ -120,11 +119,6 @@ public class PaymentIntegrationTest {
         TestTransaction.start();
     }
 
-    @AfterEach
-    void cleanKafkaEvents() {
-        consumePaymentResponseTopic();
-    }
-
     private void truncateAllTables() {
         Query query = entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE");
         query.executeUpdate();
@@ -142,6 +136,12 @@ public class PaymentIntegrationTest {
         query = entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE");
         query.executeUpdate();
     }
+
+    @AfterEach
+    void cleanKafkaEvents() {
+        consumePaymentResponseTopic();
+    }
+
 
     @Test
     void contextLoads() {

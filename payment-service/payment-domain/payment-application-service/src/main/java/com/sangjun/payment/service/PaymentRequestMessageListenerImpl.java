@@ -25,10 +25,4 @@ public class PaymentRequestMessageListenerImpl implements PaymentRequestMessageL
         PaymentEvent paymentEvent = paymentRequestHelper.persistCancelPayment(paymentRequest);
         paymentEventShooter.fire(paymentEvent);
     }
-
-    private void fireEvent(PaymentEvent paymentEvent) {
-        log.info("Publishing payment event with payment id: {} and order id: {}",
-                paymentEvent.getPayment().getId().getValue(),
-                paymentEvent.getPayment().getOrderId().getValue());
-    }
 }

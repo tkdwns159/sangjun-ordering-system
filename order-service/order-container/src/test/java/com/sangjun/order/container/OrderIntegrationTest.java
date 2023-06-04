@@ -202,8 +202,6 @@ public class OrderIntegrationTest {
     void cleanAfter() {
         readPaymentRequestRecords();
         readRestaurantRequestRecords();
-        restaurantRequestConsumer.commitSync();
-        paymentRequestConsumer.commitSync();
     }
 
     @BeforeEach
@@ -472,7 +470,7 @@ public class OrderIntegrationTest {
         ).get();
 
         //then
-        Thread.sleep(100);
+        Thread.sleep(300);
         Order order = assertDoesNotThrow(() -> orderRepository.findById(ORDER.getId())
                 .orElseThrow(() -> new OrderNotFoundException("Order Not found")));
 

@@ -12,23 +12,23 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PaymentRequestMessageListenerImpl implements PaymentRequestMessageListener {
     private final PaymentRequestHelper paymentRequestHelper;
+    private final PaymentEventShooter paymentEventShooter;
 
     @Override
     public void completePayment(PaymentRequest paymentRequest) {
         PaymentEvent paymentEvent = paymentRequestHelper.persistPayment(paymentRequest);
-        fireEvent(paymentEvent);
+        paymentEventShooter.fire(paymentEvent);
     }
 
     @Override
     public void cancelPayment(PaymentRequest paymentRequest) {
         PaymentEvent paymentEvent = paymentRequestHelper.persistCancelPayment(paymentRequest);
-        fireEvent(paymentEvent);
+        paymentEventShooter.fire(paymentEvent);
     }
 
     private void fireEvent(PaymentEvent paymentEvent) {
         log.info("Publishing payment event with payment id: {} and order id: {}",
                 paymentEvent.getPayment().getId().getValue(),
                 paymentEvent.getPayment().getOrderId().getValue());
-        paymentEvent.fire();
     }
 }

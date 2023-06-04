@@ -9,9 +9,6 @@ import com.sangjun.payment.domain.event.PaymentEvent;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.exception.PaymentApplicationServiceException;
 import com.sangjun.payment.service.mapper.PaymentDataMapper;
-import com.sangjun.payment.service.ports.output.message.publisher.PaymentCancelledMessagePublisher;
-import com.sangjun.payment.service.ports.output.message.publisher.PaymentCompletedMessagePublisher;
-import com.sangjun.payment.service.ports.output.message.publisher.PaymentFailedMessagePublisher;
 import com.sangjun.payment.service.ports.output.repository.CreditEntryRepository;
 import com.sangjun.payment.service.ports.output.repository.CreditHistoryRepository;
 import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
@@ -34,9 +31,6 @@ public class PaymentRequestHelper {
     private final PaymentRepository paymentRepository;
     private final CreditEntryRepository creditEntryRepository;
     private final CreditHistoryRepository creditHistoryRepository;
-    private final PaymentCompletedMessagePublisher paymentCompletedEventDomainEventPublisher;
-    private final PaymentFailedMessagePublisher paymentFailedEventDomainEventPublisher;
-    private final PaymentCancelledMessagePublisher paymentCancelledMessagePublisher;
 
     @Transactional
     public PaymentEvent persistPayment(PaymentRequest paymentRequest) {
@@ -46,9 +40,9 @@ public class PaymentRequestHelper {
 
         PaymentEvent paymentEvent = paymentDomainService.initiatePayment(
                 payment,
-                paymentDetails.creditEntry,
-                paymentDetails.creditHistories,
-                paymentDetails.failureMessages);
+                paymentDetails.getCreditEntry(),
+                paymentDetails.getCreditHistories(),
+                paymentDetails.getFailureMessages());
 
         persistData(payment, paymentDetails);
 
@@ -68,9 +62,9 @@ public class PaymentRequestHelper {
 
         PaymentEvent paymentEvent = paymentDomainService.cancelPayment(
                 payment,
-                paymentDetails.creditEntry,
-                paymentDetails.creditHistories,
-                paymentDetails.failureMessages);
+                paymentDetails.getCreditEntry(),
+                paymentDetails.getCreditHistories(),
+                paymentDetails.getFailureMessages());
 
         persistData(payment, paymentDetails);
 
@@ -92,10 +86,10 @@ public class PaymentRequestHelper {
     private void persistData(Payment payment, PaymentDetails paymentDetails) {
         paymentRepository.save(payment);
 
-        if (paymentDetails.failureMessages.isEmpty()) {
-            List<CreditHistory> creditHistories = paymentDetails.creditHistories;
+        if (paymentDetails.getFailureMessages().isEmpty()) {
+            List<CreditHistory> creditHistories = paymentDetails.getCreditHistories();
 
-            creditEntryRepository.save(paymentDetails.creditEntry);
+            creditEntryRepository.save(paymentDetails.getCreditEntry());
             creditHistoryRepository.save(creditHistories.get(creditHistories.size() - 1));
         }
     }

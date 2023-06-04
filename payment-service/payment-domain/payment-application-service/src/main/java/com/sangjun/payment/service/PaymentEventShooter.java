@@ -21,7 +21,6 @@ public class PaymentEventShooter {
     private final PaymentFailedMessagePublisher paymentFailedMessagePublisher;
     private final PaymentCancelledMessagePublisher paymentCancelledMessagePublisher;
 
-
     public void fire(PaymentEvent event) {
         if (event instanceof PaymentCompletedEvent) {
             paymentCompletedMessagePublisher.publish((PaymentCompletedEvent) event);

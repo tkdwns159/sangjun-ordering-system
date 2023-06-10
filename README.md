@@ -13,6 +13,7 @@ SQL로 mocking 데이터를 생성하여 해당 데이터로만 실행 테스트
 
 - order-service
 - payment-service
+- restaurant-service
 
 ## 사용 기술
 

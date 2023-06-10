@@ -1,7 +1,5 @@
 package com.sangjun.restaurant.application;
 
-import com.sangjun.common.domain.valueobject.OrderId;
-import com.sangjun.common.domain.valueobject.ProductId;
 import com.sangjun.restaurant.application.dto.RestaurantApprovalRequest;
 import com.sangjun.restaurant.application.mapper.RestaurantDataMapper;
 import com.sangjun.restaurant.application.ports.output.message.publisher.OrderApprovedMessagePublisher;
@@ -9,7 +7,6 @@ import com.sangjun.restaurant.application.ports.output.message.publisher.OrderRe
 import com.sangjun.restaurant.application.ports.output.message.repository.OrderApprovalRepository;
 import com.sangjun.restaurant.application.ports.output.message.repository.RestaurantRepository;
 import com.sangjun.restaurant.domain.RestaurantDomainService;
-import com.sangjun.restaurant.domain.entity.OrderDetail;
 import com.sangjun.restaurant.domain.entity.Product;
 import com.sangjun.restaurant.domain.entity.Restaurant;
 import com.sangjun.restaurant.domain.event.OrderApprovalEvent;
@@ -19,7 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -39,9 +37,7 @@ public class RestaurantApprovalRequestHelper {
         Restaurant restaurant = findRestaurant(restaurantApprovalRequest);
         OrderApprovalEvent orderApprovalEvent = restaurantDomainService.validateOrder(
                 restaurant,
-                failureMessages,
-                orderApprovedMessagePublisher,
-                orderRejectedMessagedPublisher);
+                failureMessages);
 
         orderApprovalRepository.save(restaurant.getOrderApproval());
         return orderApprovalEvent;

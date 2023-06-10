@@ -1,6 +1,5 @@
 package com.sangjun.restaurant.application;
 
-import com.sangjun.common.domain.event.publisher.DomainEventPublisher;
 import com.sangjun.common.domain.valueobject.OrderApprovalStatus;
 import com.sangjun.restaurant.domain.RestaurantDomainService;
 import com.sangjun.restaurant.domain.entity.Restaurant;
@@ -18,38 +17,35 @@ import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 @Slf4j
 public class RestaurantDomainServiceImpl implements RestaurantDomainService {
     @Override
-    public OrderApprovalEvent validateOrder(Restaurant restaurant, List<String> failureMessages, DomainEventPublisher<OrderApprovedEvent> orderApprovedEventDomainEventPublisher, DomainEventPublisher<OrderRejectedEvent> orderRejectedEventDomainEventPublisher) {
+    public OrderApprovalEvent validateOrder(Restaurant restaurant,
+                                            List<String> failureMessages) {
         log.info("Validating order with id: {}", restaurant.getOrderDetail().getId().getValue());
         restaurant.validateOrder(failureMessages);
 
         if (!failureMessages.isEmpty()) {
-            return getOrderRejectedEvent(restaurant, failureMessages, orderRejectedEventDomainEventPublisher);
+            return getOrderRejectedEvent(restaurant, failureMessages);
         }
 
-        return getOrderApprovedEvent(restaurant, failureMessages, orderApprovedEventDomainEventPublisher);
+        return getOrderApprovedEvent(restaurant, failureMessages);
     }
 
-    private static OrderRejectedEvent getOrderRejectedEvent(Restaurant restaurant, List<String> failureMessages, DomainEventPublisher<OrderRejectedEvent> orderRejectedEventDomainEventPublisher) {
+    private static OrderRejectedEvent getOrderRejectedEvent(Restaurant restaurant, List<String> failureMessages) {
         log.info("Order is rejected for order id: {}", restaurant.getOrderDetail().getId().getValue());
         restaurant.setOrderApproval(OrderApprovalStatus.REJECTED);
         return new OrderRejectedEvent(
                 restaurant.getOrderApproval(),
                 restaurant.getId(),
                 failureMessages,
-                ZonedDateTime.now(ZoneId.of(ZONE_ID)),
-                orderRejectedEventDomainEventPublisher
-        );
+                ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
 
-    private static OrderApprovedEvent getOrderApprovedEvent(Restaurant restaurant, List<String> failureMessages, DomainEventPublisher<OrderApprovedEvent> orderApprovedEventDomainEventPublisher) {
+    private static OrderApprovedEvent getOrderApprovedEvent(Restaurant restaurant, List<String> failureMessages) {
         log.info("Order is approved for order id: {}", restaurant.getOrderDetail().getId().getValue());
         restaurant.setOrderApproval(OrderApprovalStatus.APPROVED);
         return new OrderApprovedEvent(
                 restaurant.getOrderApproval(),
                 restaurant.getId(),
                 failureMessages,
-                ZonedDateTime.now(ZoneId.of(ZONE_ID)),
-                orderApprovedEventDomainEventPublisher
-        );
+                ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
 }

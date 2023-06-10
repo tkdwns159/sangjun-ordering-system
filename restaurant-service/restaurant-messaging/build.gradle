@@ -9,6 +9,7 @@ dependencies {
     implementation 'com.sangjun.kafka:kafka-consumer'
     implementation 'com.sangjun.kafka:kafka-producer'
     implementation 'com.sangjun.kafka:kafka-model'
+    implementation 'com.sangjun.kafka:kafka-admin'
     implementation 'com.sangjun.common:common-domain'
 
     implementation 'org.springframework.kafka:spring-kafka'

@@ -58,7 +58,7 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
             payment.validatePayment(failureMessages);
             checkIfCustomerHasEnoughCredit(payment, creditEntry, failureMessages);
 
-            subtractCreditEntry(payment, creditEntry);
+            creditEntry.subtractCreditAmount(payment.getPrice());
             addCreditHistory(payment.getCustomerId(), payment.getPrice(), histories, TransactionType.CREDIT);
             Money creditSum = getCreditSumFromCreditHistories(histories);
             checkIfCreditHistorySumIsNotMinus(creditSum, creditEntry.getCustomerId(), failureMessages);
@@ -79,11 +79,6 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
                     " doesn't have enough credit for payment!");
         }
     }
-
-    private void subtractCreditEntry(Payment payment, CreditEntry creditEntry) {
-        creditEntry.subtractCreditAmount(payment.getPrice());
-    }
-
 
     private void checkIfCreditHistorySumIsNotMinus(Money creditSum,
                                                    CustomerId customerId,
@@ -130,8 +125,7 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
         }
 
         Money refundMoney = Money.of(payment.getPrice().getAmount().negate());
-
-        addCreditEntry(refundMoney, creditEntry);
+        creditEntry.addCreditAmount(payment.getPrice());
         addCreditHistory(payment.getCustomerId(), refundMoney, histories, TransactionType.DEBIT);
         payment.updateStatus(PaymentStatus.CANCELLED);
 
@@ -144,10 +138,6 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
         } catch (PaymentDomainException e) {
             log.error(e.getMessage());
         }
-    }
-
-    private void addCreditEntry(Money money, CreditEntry creditEntry) {
-        creditEntry.addCreditAmount(money);
     }
 
     private void addCreditHistory(CustomerId customerId,

@@ -7,8 +7,6 @@ https://www.udemy.com/course/microservices-clean-architecture-ddd-saga-outbox-ka
 SQL로 mocking 데이터를 생성하여 해당 데이터로만 실행 테스트를 진행했습니다. 또한, 코어 서비스가 아닌 customer-service 및 식당/음식 CRUD API의
 구현은 생략했습니다. 주문에 관련된 2개의 REST API만 구현하여, 아직은 mocking 데이터를 활용하여 주문 및 주문 확인만 가능한 상태입니다.
 
-추후 리팩토링과 테스트를 추가하고 customer-service를 구현하여 더욱 완성도 있는 프로젝트로 만들 예정입니다.
-
 ### 리팩토링 완료
 
 - order-service

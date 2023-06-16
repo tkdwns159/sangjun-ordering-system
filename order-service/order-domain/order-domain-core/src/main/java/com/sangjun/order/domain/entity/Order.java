@@ -9,8 +9,10 @@ import com.sangjun.order.domain.valueobject.TrackingId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 public class Order extends AggregateRoot<OrderId> {
 
@@ -197,28 +199,22 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     private void updateFailureMessages(List<String> failureMessages) {
-        if (this.failureMessages != null && failureMessages != null) {
-            this.failureMessages.addAll(failureMessages
-                    .stream()
-                    .filter(String::isBlank)
-                    .toList());
-            return;
-        }
+        this.failureMessages = new ArrayList<>();
 
-        if (this.failureMessages == null) {
-            this.failureMessages = failureMessages;
-        }
+        this.failureMessages.addAll(failureMessages.stream()
+                .filter(Predicate.not(String::isBlank))
+                .toList());
     }
 
     public void cancel(List<String> failureMessages) {
-        if (orderStatus == OrderStatus.CANCELLING || orderStatus == OrderStatus.PENDING) {
-            log.error("Order must be in PAID or CANCELLED state for cancel operation! Order Status: {}",
+        if (orderStatus == OrderStatus.APPROVED || orderStatus == OrderStatus.CANCELLED) {
+            log.error("Order must be in PAID or CANCELLING or PENDING for cancel operation! Order Status: {}",
                     this.orderStatus);
-            throw new OrderDomainException("Order must be in PAID or CANCELLED state " +
+            throw new OrderDomainException("Order must be in PAID or CANCELLING or PENDING state " +
                     "for cancel operation! Order Status: " + this.orderStatus);
         }
 
-        this.orderStatus = OrderStatus.CANCELED;
+        this.orderStatus = OrderStatus.CANCELLED;
         updateFailureMessages(failureMessages);
     }
 

@@ -59,7 +59,7 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
             checkIfCustomerHasEnoughCredit(payment, creditEntry, failureMessages);
 
             subtractCreditEntry(payment, creditEntry);
-            addCreditHistory(payment, histories, TransactionType.CREDIT);
+            addCreditHistory(payment.getCustomerId(), payment.getPrice(), histories, TransactionType.CREDIT);
             Money creditSum = getCreditSumFromCreditHistories(histories);
             checkIfCreditHistorySumIsNotMinus(creditSum, creditEntry.getCustomerId(), failureMessages);
             checkIfCreditHistorySumEqualsCredit(creditSum, creditEntry, failureMessages);
@@ -88,7 +88,7 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
     private void checkIfCreditHistorySumIsNotMinus(Money creditSum,
                                                    CustomerId customerId,
                                                    List<String> failureMessages) {
-        if (!creditSum.isGreaterThanZero() && !creditSum.equals(Money.ZERO)) {
+        if (creditSum.isLessThan(Money.ZERO)) {
             failureMessages.add("Customer with id=" + customerId.getValue() +
                     " doesn't have enough credit according to credit history");
             throw new PaymentDomainException("Customer with id=" + customerId.getValue() +
@@ -129,8 +129,10 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
                     failureMessages);
         }
 
-        addCreditEntry(payment, creditEntry);
-        addCreditHistory(payment, histories, TransactionType.CREDIT);
+        Money refundMoney = Money.of(payment.getPrice().getAmount().negate());
+
+        addCreditEntry(refundMoney, creditEntry);
+        addCreditHistory(payment.getCustomerId(), refundMoney, histories, TransactionType.DEBIT);
         payment.updateStatus(PaymentStatus.CANCELLED);
 
         return new PaymentCancelledEvent(payment, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
@@ -144,14 +146,16 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
         }
     }
 
-    private void addCreditEntry(Payment payment, CreditEntry creditEntry) {
-        creditEntry.addCreditAmount(payment.getPrice());
+    private void addCreditEntry(Money money, CreditEntry creditEntry) {
+        creditEntry.addCreditAmount(money);
     }
 
-    private void addCreditHistory(Payment payment, List<CreditHistory> histories, TransactionType transactionType) {
-        histories.add(CreditHistory.builder(
-                        payment.getCustomerId(),
-                        payment.getPrice(),
+    private void addCreditHistory(CustomerId customerId,
+                                  Money money,
+                                  List<CreditHistory> histories,
+                                  TransactionType transactionType) {
+        histories.add(CreditHistory.builder(customerId,
+                        money,
                         transactionType)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());

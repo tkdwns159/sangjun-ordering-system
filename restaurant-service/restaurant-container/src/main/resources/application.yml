@@ -47,6 +47,11 @@ kafka-consumer-config:
   poll-timeout-ms: 150
 
 ---
+spring:
+  profiles:
+    active: prod
+
+---
 
 spring:
   config:

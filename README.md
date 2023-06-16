@@ -5,7 +5,7 @@ Hexagonal 아키텍처와 Choreography Saga 패턴을 활용하여 구현한 모
 https://www.udemy.com/course/microservices-clean-architecture-ddd-saga-outbox-kafka-kubernetes/
 
 SQL로 mocking 데이터를 생성하여 해당 데이터로만 실행 테스트를 진행했습니다. 또한, 코어 서비스가 아닌 customer-service 및 식당/음식 CRUD API의
-구현은 생략했습니다. 주문에 관련된 2개의 REST API만 구현하여, 아직은 mocking 데이터를 활용하여 주문 및 주문 확인만 가능한 상태입니다.
+구현은 생략했습니다. 주문에 관련된 2개의 REST API만 구현하여, sql로 생성된 mocking 데이터를 활용해 테스트해 볼 수 있습니다.
 
 ### 리팩토링 완료
 

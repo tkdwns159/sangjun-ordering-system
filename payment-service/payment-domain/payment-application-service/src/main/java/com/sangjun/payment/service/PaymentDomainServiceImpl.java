@@ -88,7 +88,7 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
     private void checkIfCreditHistorySumIsNotMinus(Money creditSum,
                                                    CustomerId customerId,
                                                    List<String> failureMessages) {
-        if (!creditSum.isGreaterThanZero() && !creditSum.equals(Money.ZERO)) {
+        if (creditSum.isLessThan(Money.ZERO)) {
             failureMessages.add("Customer with id=" + customerId.getValue() +
                     " doesn't have enough credit according to credit history");
             throw new PaymentDomainException("Customer with id=" + customerId.getValue() +

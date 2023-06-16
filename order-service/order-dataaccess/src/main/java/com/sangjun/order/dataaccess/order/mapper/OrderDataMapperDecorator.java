@@ -17,7 +17,8 @@ public abstract class OrderDataMapperDecorator implements OrderDataMapstructMapp
         OrderEntity orderEntity = delegate.toOrderEntity(order);
         orderEntity.getItems()
                 .forEach(item -> item.setOrder(orderEntity));
-
+        orderEntity.getAddress().setOrder(orderEntity);
+        
         return orderEntity;
     }
 }

@@ -1,4 +1,10 @@
 version: '3.9'
+
+networks:
+  food-ordering-system:
+    driver: bridge
+    name: food-ordering-system
+
 services:
   schema-registry:
     image: confluentinc/cp-schema-registry:${KAFKA_VERSION}
@@ -87,3 +93,14 @@ services:
       - ${GLOBAL_NETWORK:-kafka}
     env_file:
       - ".env"
+  postgresql:
+    image: postgres:15-alpine
+    hostname: ordering-system-db
+    ports:
+      - "5000:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      COMPOSE_PROJECT_NAME: postgres
+    volumes:
+      - "./volumes/postgres/data:/var/lib/postgresql/data"

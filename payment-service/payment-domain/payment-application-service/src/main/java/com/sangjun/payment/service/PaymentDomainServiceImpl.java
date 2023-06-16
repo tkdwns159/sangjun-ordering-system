@@ -59,7 +59,7 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
             checkIfCustomerHasEnoughCredit(payment, creditEntry, failureMessages);
 
             creditEntry.subtractCreditAmount(payment.getPrice());
-            addCreditHistory(payment.getCustomerId(), payment.getPrice(), histories, TransactionType.CREDIT);
+            addCreditHistory(payment, histories, TransactionType.CREDIT);
             Money creditSum = getCreditSumFromCreditHistories(histories);
             checkIfCreditHistorySumIsNotMinus(creditSum, creditEntry.getCustomerId(), failureMessages);
             checkIfCreditHistorySumEqualsCredit(creditSum, creditEntry, failureMessages);
@@ -124,9 +124,8 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
                     failureMessages);
         }
 
-        Money refundMoney = Money.of(payment.getPrice().getAmount().negate());
         creditEntry.addCreditAmount(payment.getPrice());
-        addCreditHistory(payment.getCustomerId(), refundMoney, histories, TransactionType.DEBIT);
+        addCreditHistory(payment, histories, TransactionType.DEBIT);
         payment.updateStatus(PaymentStatus.CANCELLED);
 
         return new PaymentCancelledEvent(payment, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
@@ -140,12 +139,11 @@ public class PaymentDomainServiceImpl implements PaymentDomainService {
         }
     }
 
-    private void addCreditHistory(CustomerId customerId,
-                                  Money money,
+    private void addCreditHistory(Payment payment,
                                   List<CreditHistory> histories,
                                   TransactionType transactionType) {
-        histories.add(CreditHistory.builder(customerId,
-                        money,
+        histories.add(CreditHistory.builder(payment.getCustomerId(),
+                        payment.getPrice(),
                         transactionType)
                 .id(new CreditHistoryId(UUID.randomUUID()))
                 .build());

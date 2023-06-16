@@ -207,10 +207,10 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     public void cancel(List<String> failureMessages) {
-        if (orderStatus == OrderStatus.CANCELLING || orderStatus == OrderStatus.APPROVED) {
-            log.error("Order must be in PAID or PENDING for cancel operation! Order Status: {}",
+        if (orderStatus == OrderStatus.APPROVED || orderStatus == OrderStatus.CANCELLED) {
+            log.error("Order must be in PAID or CANCELLING or PENDING for cancel operation! Order Status: {}",
                     this.orderStatus);
-            throw new OrderDomainException("Order must be in PAID or PENDING state " +
+            throw new OrderDomainException("Order must be in PAID or CANCELLING or PENDING state " +
                     "for cancel operation! Order Status: " + this.orderStatus);
         }
 

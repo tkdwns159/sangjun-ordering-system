@@ -1,6 +1,6 @@
 package com.sangjun.payment.service.dto;
 
-import com.sangjun.payment.domain.valueobject.PaymentOrderStatus;
+import com.sangjun.payment.domain.valueobject.payment.PaymentOrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

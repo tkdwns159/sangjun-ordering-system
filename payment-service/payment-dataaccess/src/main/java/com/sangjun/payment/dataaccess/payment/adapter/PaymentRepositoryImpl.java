@@ -2,7 +2,7 @@ package com.sangjun.payment.dataaccess.payment.adapter;
 
 import com.sangjun.payment.dataaccess.payment.mapper.PaymentDataAccessMapper;
 import com.sangjun.payment.dataaccess.payment.repository.PaymentJpaRepository;
-import com.sangjun.payment.domain.entity.Payment;
+import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
 import org.springframework.stereotype.Component;
 

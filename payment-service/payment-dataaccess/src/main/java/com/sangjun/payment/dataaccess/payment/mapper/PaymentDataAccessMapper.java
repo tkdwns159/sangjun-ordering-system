@@ -5,8 +5,8 @@ import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.payment.dataaccess.payment.entity.PaymentEntity;
-import com.sangjun.payment.domain.entity.Payment;
-import com.sangjun.payment.domain.valueobject.PaymentId;
+import com.sangjun.payment.domain.entity.payment.Payment;
+import com.sangjun.payment.domain.valueobject.payment.PaymentId;
 import org.springframework.stereotype.Component;
 
 @Component

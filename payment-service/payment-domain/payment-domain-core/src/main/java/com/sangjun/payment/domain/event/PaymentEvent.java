@@ -1,7 +1,7 @@
 package com.sangjun.payment.domain.event;
 
 import com.sangjun.common.domain.event.DomainEvent;
-import com.sangjun.payment.domain.entity.Payment;
+import com.sangjun.payment.domain.entity.payment.Payment;
 
 import java.time.ZonedDateTime;
 import java.util.List;

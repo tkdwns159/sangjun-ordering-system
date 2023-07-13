@@ -4,7 +4,7 @@ import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.payment.domain.PaymentDomainService;
 import com.sangjun.payment.domain.entity.CreditEntry;
 import com.sangjun.payment.domain.entity.CreditHistory;
-import com.sangjun.payment.domain.entity.Payment;
+import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.event.PaymentEvent;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.exception.PaymentApplicationServiceException;

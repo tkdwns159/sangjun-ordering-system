@@ -1,6 +1,6 @@
 package com.sangjun.payment.service.ports.output.repository;
 
-import com.sangjun.payment.domain.entity.Payment;
+import com.sangjun.payment.domain.entity.payment.Payment;
 
 import java.util.Optional;
 import java.util.UUID;

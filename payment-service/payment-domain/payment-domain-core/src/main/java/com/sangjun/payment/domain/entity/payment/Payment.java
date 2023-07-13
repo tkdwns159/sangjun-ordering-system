@@ -1,4 +1,4 @@
-package com.sangjun.payment.domain.entity;
+package com.sangjun.payment.domain.entity.payment;
 
 
 import com.sangjun.common.domain.entity.AggregateRoot;
@@ -7,7 +7,7 @@ import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.PaymentStatus;
 import com.sangjun.payment.domain.exception.PaymentDomainException;
-import com.sangjun.payment.domain.valueobject.PaymentId;
+import com.sangjun.payment.domain.valueobject.payment.PaymentId;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;

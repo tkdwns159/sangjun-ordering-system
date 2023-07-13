@@ -1,9 +1,8 @@
-package com.sangjun.payment.service;
+package com.sangjun.payment.domain;
 
 import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.PaymentStatus;
-import com.sangjun.payment.domain.PaymentDomainService;
 import com.sangjun.payment.domain.entity.CreditEntry;
 import com.sangjun.payment.domain.entity.CreditHistory;
 import com.sangjun.payment.domain.entity.Payment;
@@ -14,7 +13,8 @@ import com.sangjun.payment.domain.event.PaymentFailedEvent;
 import com.sangjun.payment.domain.exception.PaymentDomainException;
 import com.sangjun.payment.domain.valueobject.CreditHistoryId;
 import com.sangjun.payment.domain.valueobject.TransactionType;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -23,9 +23,9 @@ import java.util.UUID;
 
 import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 
-@Slf4j
 public class PaymentDomainServiceImpl implements PaymentDomainService {
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentDomainServiceImpl.class);
 
     @Override
     public PaymentEvent initiatePayment(Payment payment,

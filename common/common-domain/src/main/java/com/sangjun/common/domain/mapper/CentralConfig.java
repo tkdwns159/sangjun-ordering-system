@@ -1,4 +1,4 @@
-package com.sangjun.common.utils;
+package com.sangjun.common.domain.mapper;
 
 import org.mapstruct.MapperConfig;
 import org.mapstruct.MappingInheritanceStrategy;

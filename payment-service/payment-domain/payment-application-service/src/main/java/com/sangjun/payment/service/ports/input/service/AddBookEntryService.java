@@ -13,10 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AddBookEntryService {
     private final BookRepository bookRepository;
+    private final BookServiceHelper bookServiceHelper;
 
     @Transactional
     public BookEntry addBookEntry(BookEntryCreateRequest request) {
-        Book book = bookRepository.findById(request.getBookId());
+        Book book = bookServiceHelper.findBookById(bookRepository, request.getBookId());
         TransactionValue transactionValue =
                 new TransactionValue(request.getTransactionValueType(), request.getTransactionValueAmount());
         return book.addBookEntry(transactionValue, request.getDescription());

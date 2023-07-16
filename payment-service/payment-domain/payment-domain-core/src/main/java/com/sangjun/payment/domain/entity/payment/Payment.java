@@ -9,16 +9,24 @@ import com.sangjun.common.domain.valueobject.PaymentStatus;
 import com.sangjun.payment.domain.exception.PaymentDomainException;
 import com.sangjun.payment.domain.valueobject.payment.PaymentId;
 
+import javax.persistence.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Entity
+@Table(name = "payments", schema = "payment")
+@Access(AccessType.FIELD)
+@AttributeOverride(name = "value", column = @Column(name = "id"))
 public class Payment extends AggregateRoot<PaymentId> {
+    @Embedded
     private final OrderId orderId;
+    @Embedded
     private final CustomerId customerId;
+    @Embedded
     private final Money price;
-
+    @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
     private ZonedDateTime createdAt;
 

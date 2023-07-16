@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import static com.sangjun.common.utils.CommonMapstructMapper.MAPPER;
+import static com.sangjun.common.domain.mapper.CommonMapstructMapper.MAPPER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CommonMapstructTest {

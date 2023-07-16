@@ -1,17 +1,17 @@
 package com.sangjun.payment.dataaccess.credithistory.repository;
 
-import com.sangjun.payment.dataaccess.credithistory.entity.CreditHistoryEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import com.sangjun.payment.domain.entity.CreditHistory;
+import com.sangjun.payment.service.ports.output.repository.CreditHistoryRepository;
+import org.springframework.data.repository.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@Repository
-public interface CreditHistoryJpaRepository extends JpaRepository<CreditHistoryEntity, UUID> {
+public interface CreditHistoryJpaRepository extends CreditHistoryRepository, Repository<CreditHistory, UUID> {
+    @Override
+    CreditHistory save(CreditHistory creditHistory);
 
-    Optional<List<CreditHistoryEntity>> findByCustomerId(UUID customerId);
-
-
+    @Override
+    Optional<List<CreditHistory>> findByCustomerId(UUID customerId);
 }

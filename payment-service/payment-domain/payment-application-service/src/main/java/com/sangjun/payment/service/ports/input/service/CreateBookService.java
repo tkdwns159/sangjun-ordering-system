@@ -19,7 +19,7 @@ public class CreateBookService {
     @Transactional
     public Book createBook(BookCreateRequest request) {
         BookShelve bookShelve = bookShelveRepository.findById(request.getShelveId());
-        BookOwner bookOwner = Book.createBookOwner(bookShelve.getIdType(), request.getOwnerId());
+        BookOwner bookOwner = Book.createBookOwner(bookShelve.getEntryIdType(), request.getOwnerId());
 
         Book book = new Book(bookOwner, bookShelve);
         return bookRepository.save(book);

@@ -1,13 +1,22 @@
 package com.sangjun.payment.domain.entity.book;
 
 import com.sangjun.common.domain.entity.BaseEntity;
-import com.sangjun.payment.domain.valueobject.book.IdType;
+import com.sangjun.payment.domain.valueobject.book.BookShelveId;
+import com.sangjun.payment.domain.valueobject.book.EntryIdType;
 
-public class BookShelve extends BaseEntity<BookShelve> {
+import javax.persistence.*;
+
+@Entity
+@Table(name = "book_shelve", schema = "payment")
+@Access(AccessType.FIELD)
+public class BookShelve extends BaseEntity<BookShelveId> {
     private String name;
-    private IdType idType;
 
-    public IdType getIdType() {
-        return idType;
+    @Embedded
+    @AttributeOverride(name = "value", column = @Column(name = "entry_id_type"))
+    private EntryIdType entryIdType;
+
+    public EntryIdType getEntryIdType() {
+        return entryIdType;
     }
 }

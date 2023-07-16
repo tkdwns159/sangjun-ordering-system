@@ -1,7 +1,9 @@
 package com.sangjun.payment.domain.valueobject.book;
 
+import javax.persistence.Embeddable;
 import java.util.UUID;
 
+@Embeddable
 public class BookOwner {
 
     private UUID ownerUuid;

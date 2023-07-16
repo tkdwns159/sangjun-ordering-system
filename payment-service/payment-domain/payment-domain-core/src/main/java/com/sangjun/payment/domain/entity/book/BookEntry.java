@@ -4,10 +4,15 @@ import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.payment.domain.valueobject.book.BookEntryId;
 import com.sangjun.payment.domain.valueobject.book.TransactionValue;
 
+import javax.persistence.*;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+@Entity
+@Table(name = "book_entry", schema = "payment")
+@Access(AccessType.FIELD)
 public class BookEntry extends BaseEntity<BookEntryId> {
+    @Embedded
     private final TransactionValue transactionValue;
     private final ZonedDateTime createdTime;
     private final String description;

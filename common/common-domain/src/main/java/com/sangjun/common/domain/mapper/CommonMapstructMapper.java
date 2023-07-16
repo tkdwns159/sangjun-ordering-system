@@ -1,4 +1,4 @@
-package com.sangjun.common.utils;
+package com.sangjun.common.domain.mapper;
 
 import com.sangjun.common.domain.valueobject.*;
 import org.mapstruct.Mapper;

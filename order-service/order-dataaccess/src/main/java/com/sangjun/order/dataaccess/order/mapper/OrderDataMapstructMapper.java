@@ -1,8 +1,8 @@
 package com.sangjun.order.dataaccess.order.mapper;
 
-import com.sangjun.common.utils.CentralConfig;
+import com.sangjun.common.domain.mapper.CentralConfig;
+import com.sangjun.common.domain.mapper.CommonMapstructMapper;
 import com.sangjun.common.utils.CommonConstants;
-import com.sangjun.common.utils.CommonMapstructMapper;
 import com.sangjun.order.dataaccess.order.entity.OrderEntity;
 import com.sangjun.order.dataaccess.order.entity.OrderItemEntity;
 import com.sangjun.order.domain.entity.Order;
@@ -23,7 +23,7 @@ import java.util.UUID;
         builder = @Builder(disableBuilder = true))
 @DecoratedWith(OrderDataMapperDecorator.class)
 public interface OrderDataMapstructMapper {
-    
+
     OrderDataMapstructMapper MAPPER = Mappers.getMapper(OrderDataMapstructMapper.class);
 
     default UUID toUUID(TrackingId trackingId) {

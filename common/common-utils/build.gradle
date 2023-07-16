@@ -10,7 +10,6 @@ repositories {
 
 dependencies {
     implementation platform('com.sangjun.platform:product-platform')
-    implementation project(":common-domain")
 
     def mapstructDep = implementation 'org.mapstruct:mapstruct:1.5.3.Final'
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructDep.getVersion()}"

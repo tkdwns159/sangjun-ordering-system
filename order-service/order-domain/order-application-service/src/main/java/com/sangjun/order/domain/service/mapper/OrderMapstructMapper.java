@@ -1,7 +1,7 @@
 package com.sangjun.order.domain.service.mapper;
 
-import com.sangjun.common.utils.CentralConfig;
-import com.sangjun.common.utils.CommonMapstructMapper;
+import com.sangjun.common.domain.mapper.CentralConfig;
+import com.sangjun.common.domain.mapper.CommonMapstructMapper;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.entity.Restaurant;

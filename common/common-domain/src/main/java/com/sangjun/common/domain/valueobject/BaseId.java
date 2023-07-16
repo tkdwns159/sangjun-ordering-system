@@ -1,8 +1,11 @@
 package com.sangjun.common.domain.valueobject;
 
+import javax.persistence.MappedSuperclass;
+import java.io.Serializable;
 import java.util.Objects;
 
-public abstract class BaseId<T> {
+@MappedSuperclass
+public abstract class BaseId<T> implements Serializable {
 
     private final T value;
 

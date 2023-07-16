@@ -1,16 +1,16 @@
 package com.sangjun.payment.dataaccess.payment.repository;
 
-import com.sangjun.payment.dataaccess.payment.entity.PaymentEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import com.sangjun.payment.domain.entity.payment.Payment;
+import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
+import org.springframework.data.repository.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
-@Repository
-public interface PaymentJpaRepository extends JpaRepository<PaymentEntity, UUID> {
+public interface PaymentJpaRepository extends PaymentRepository, Repository<Payment, UUID> {
+    @Override
+    Payment save(Payment payment);
 
-    Optional<PaymentEntity> findByOrderId(UUID orderId);
-
-
+    @Override
+    Optional<Payment> findByOrderId(UUID orderId);
 }

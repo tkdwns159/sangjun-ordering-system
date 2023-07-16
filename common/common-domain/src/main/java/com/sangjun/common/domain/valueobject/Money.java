@@ -1,10 +1,15 @@
 package com.sangjun.common.domain.valueobject;
 
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
 
+@Embeddable
 public class Money {
+
+    @Column(name = "amount")
     private final BigDecimal amount;
     public static final Money ZERO = new Money(BigDecimal.ZERO);
 

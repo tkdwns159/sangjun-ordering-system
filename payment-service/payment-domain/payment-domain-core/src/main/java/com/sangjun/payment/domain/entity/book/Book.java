@@ -4,16 +4,26 @@ import com.sangjun.common.domain.entity.AggregateRoot;
 import com.sangjun.common.utils.CommonConstants;
 import com.sangjun.payment.domain.valueobject.book.*;
 
+import javax.persistence.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
+@Entity
+@Table(name = "books", schema = "payment")
+@Access(AccessType.FIELD)
 public class Book extends AggregateRoot<BookId> {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_shelve_id")
     private BookShelve bookShelve;
+    @Embedded
     private BookOwner bookOwner;
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id")
     private List<BookEntry> bookEntries;
+    @Embedded
     private TotalBalance totalBalance;
 
     public Book(BookOwner owner, BookShelve bookShelve) {
@@ -51,11 +61,7 @@ public class Book extends AggregateRoot<BookId> {
         };
     }
 
-    public static BookOwner createBookOwner(IdType idType, String id) {
-        if (idType.isUUID()) {
-            return BookOwner.uuidOf(UUID.fromString(id));
-        }
-
-        return BookOwner.longOf(Long.valueOf(id));
+    public static BookOwner createBookOwner(EntryIdType entryIdType, String id) {
+        return entryIdType.createBookOwner(id);
     }
 }

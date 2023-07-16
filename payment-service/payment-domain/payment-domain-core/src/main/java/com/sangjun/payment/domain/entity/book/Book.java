@@ -17,9 +17,9 @@ public class Book extends AggregateRoot<BookId> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_shelve_id")
-    private BookShelve bookShelve;
+    private final BookShelve bookShelve;
     @Embedded
-    private BookOwner bookOwner;
+    private final BookOwner bookOwner;
     @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id")
     private List<BookEntry> bookEntries;

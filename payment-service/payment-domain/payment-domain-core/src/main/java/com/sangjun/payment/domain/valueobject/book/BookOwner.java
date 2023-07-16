@@ -6,15 +6,17 @@ import java.util.UUID;
 @Embeddable
 public class BookOwner {
 
-    private UUID ownerUuid;
-    private Long ownerId;
+    private final UUID ownerUuid;
+    private final Long ownerId;
 
     private BookOwner(UUID ownerUuid) {
         this.ownerUuid = ownerUuid;
+        this.ownerId = null;
     }
 
     private BookOwner(Long ownerId) {
         this.ownerId = ownerId;
+        this.ownerUuid = null;
     }
 
     public static BookOwner uuidOf(UUID id) {

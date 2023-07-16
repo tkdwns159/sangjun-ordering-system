@@ -11,10 +11,10 @@ public class TransactionValue {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type")
-    private TransactionValueType type;
+    private final TransactionValueType type;
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "transaction_amount"))
-    private Money amount;
+    private final Money amount;
 
     public TransactionValue(TransactionValueType type, Money amount) {
         this.type = Objects.requireNonNull(type, "Transaction value type must be non-null");

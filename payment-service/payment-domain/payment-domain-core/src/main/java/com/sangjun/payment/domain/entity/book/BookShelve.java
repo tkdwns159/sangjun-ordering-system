@@ -14,7 +14,12 @@ public class BookShelve extends BaseEntity<BookShelveId> {
 
     @Embedded
     @AttributeOverride(name = "value", column = @Column(name = "entry_id_type"))
-    private EntryIdType entryIdType;
+    private final EntryIdType entryIdType;
+
+    public BookShelve(String name, EntryIdType entryIdType) {
+        this.name = name;
+        this.entryIdType = entryIdType;
+    }
 
     public EntryIdType getEntryIdType() {
         return entryIdType;

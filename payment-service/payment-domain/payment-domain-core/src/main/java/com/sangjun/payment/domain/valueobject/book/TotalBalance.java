@@ -11,11 +11,11 @@ import javax.persistence.Embedded;
 public class TotalBalance {
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "total_credit_amount"))
-    private Money totalCreditAmount;
+    private final Money totalCreditAmount;
 
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "total_debit_amount"))
-    private Money totalDebitAmount;
+    private final Money totalDebitAmount;
 
     public TotalBalance() {
         this.totalCreditAmount = Money.ZERO;

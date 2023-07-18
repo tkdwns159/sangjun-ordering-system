@@ -21,6 +21,10 @@ public class Money {
         return new Money(amount);
     }
 
+    public static Money of(String amount) {
+        return new Money(new BigDecimal(amount));
+    }
+
     private static BigDecimal setScale(BigDecimal input) {
         return input.setScale(2, RoundingMode.HALF_EVEN);
     }

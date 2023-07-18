@@ -38,11 +38,12 @@ public class PaymentRequestHelper {
         Payment payment = paymentDataMapper.paymentRequestToPayment(paymentRequest);
         PaymentDetails paymentDetails = getPaymentDetails(payment);
 
-        PaymentEvent paymentEvent = paymentDomainService.initiatePayment(
-                payment,
-                paymentDetails.getCreditEntry(),
-                paymentDetails.getCreditHistories(),
-                paymentDetails.getFailureMessages());
+        PaymentEvent paymentEvent = null;
+//        paymentDomainService.initiatePayment(
+//                payment,
+//                paymentDetails.getCreditEntry(),
+//                paymentDetails.getCreditHistories(),
+//                paymentDetails.getFailureMessages());
 
         persistData(payment, paymentDetails);
 
@@ -60,11 +61,12 @@ public class PaymentRequestHelper {
         });
         PaymentDetails paymentDetails = getPaymentDetails(payment);
 
-        PaymentEvent paymentEvent = paymentDomainService.cancelPayment(
-                payment,
-                paymentDetails.getCreditEntry(),
-                paymentDetails.getCreditHistories(),
-                paymentDetails.getFailureMessages());
+        PaymentEvent paymentEvent = null;
+//        paymentDomainService.cancelPayment(
+//                payment,
+//                paymentDetails.getCreditEntry(),
+//                paymentDetails.getCreditHistories(),
+//                paymentDetails.getFailureMessages());
 
         persistData(payment, paymentDetails);
 

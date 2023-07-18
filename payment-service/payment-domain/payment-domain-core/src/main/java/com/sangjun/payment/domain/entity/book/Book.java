@@ -33,6 +33,14 @@ public class Book extends AggregateRoot<BookId> {
         this.totalBalance = new TotalBalance();
     }
 
+    public static Book from(BookShelve bookShelve, String bookOwnerId) {
+        return new Book(Book.createBookOwner(bookShelve.getEntryIdType(), bookOwnerId), bookShelve);
+    }
+
+    public TotalBalance getTotalBalance() {
+        return totalBalance;
+    }
+
     public BookEntry addBookEntry(TransactionValue transactionValue,
                                   String desc) {
         BookEntry bookEntry = createBookEntry(transactionValue, desc);

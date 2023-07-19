@@ -30,11 +30,19 @@ public class Payment extends AggregateRoot<PaymentId> {
     private PaymentStatus paymentStatus;
     private ZonedDateTime createdAt;
 
-    private Payment(Builder builder) {
-        orderId = requireNonNull(builder.orderId, "orderId");
-        restaurantId = requireNonNull(builder.restaurantId, "restaurantId");
-        customerId = requireNonNull(builder.customerId, "customerId");
-        price = requireNonNull(builder.price, "price");
+    private Payment(OrderId orderId, RestaurantId restaurantId, CustomerId customerId, Money price) {
+        this.orderId = orderId;
+        this.restaurantId = restaurantId;
+        this.customerId = customerId;
+        this.price = price;
+    }
+
+    public static Payment of(Builder builder) {
+        return new Payment(
+                requireNonNull(builder.orderId, "orderId"),
+                requireNonNull(builder.restaurantId, "restaurantId"),
+                requireNonNull(builder.customerId, "customerId"),
+                requireNonNull(builder.price, "price"));
     }
 
     public static Builder builder() {
@@ -133,7 +141,7 @@ public class Payment extends AggregateRoot<PaymentId> {
         }
 
         public Payment build() {
-            return new Payment(this);
+            return Payment.of(builder());
         }
     }
 }

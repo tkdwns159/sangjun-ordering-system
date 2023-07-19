@@ -19,7 +19,7 @@ public class AddBookEntryService {
     public BookEntry addBookEntry(BookEntryCreateRequest request) {
         Book book = bookServiceHelper.findBookById(bookRepository, request.getBookId());
         TransactionValue transactionValue =
-                new TransactionValue(request.getTransactionValueType(), request.getTransactionValueAmount());
+                TransactionValue.of(request.getTransactionValueType(), request.getTransactionValueAmount());
         return book.addBookEntry(transactionValue, request.getDescription());
     }
 }

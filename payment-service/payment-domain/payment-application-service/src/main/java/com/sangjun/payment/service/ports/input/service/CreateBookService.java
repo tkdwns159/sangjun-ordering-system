@@ -2,7 +2,6 @@ package com.sangjun.payment.service.ports.input.service;
 
 import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.book.BookShelve;
-import com.sangjun.payment.domain.valueobject.book.BookOwner;
 import com.sangjun.payment.service.ports.input.service.dto.BookCreateRequest;
 import com.sangjun.payment.service.ports.output.repository.BookRepository;
 import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
@@ -19,9 +18,8 @@ public class CreateBookService {
     @Transactional
     public Book createBook(BookCreateRequest request) {
         BookShelve bookShelve = bookShelveRepository.findById(request.getShelveId());
-        BookOwner bookOwner = Book.createBookOwner(bookShelve.getEntryIdType(), request.getOwnerId());
 
-        Book book = new Book(bookOwner, bookShelve);
+        Book book = Book.of(bookShelve, request.getOwnerId());
         return bookRepository.save(book);
     }
 }

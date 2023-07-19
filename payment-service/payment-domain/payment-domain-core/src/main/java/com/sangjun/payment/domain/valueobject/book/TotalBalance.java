@@ -34,4 +34,12 @@ public class TotalBalance {
     public TotalBalance addDebit(Money amount) {
         return new TotalBalance(this.totalCreditAmount, this.totalDebitAmount.add(amount));
     }
+
+    public Money getTotalCreditAmount() {
+        return totalCreditAmount;
+    }
+
+    public Money getTotalDebitAmount() {
+        return totalDebitAmount;
+    }
 }

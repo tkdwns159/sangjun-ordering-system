@@ -1,10 +1,10 @@
 package com.sangjun.payment.domain.valueobject.book;
 
 import com.sangjun.common.domain.valueobject.Money;
-import com.sangjun.payment.domain.exception.BookDomainException;
 
 import javax.persistence.*;
-import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 @Embeddable
 public class TransactionValue {
@@ -16,9 +16,26 @@ public class TransactionValue {
     @AttributeOverride(name = "amount", column = @Column(name = "transaction_amount"))
     private final Money amount;
 
-    public TransactionValue(TransactionValueType type, Money amount) {
-        this.type = Objects.requireNonNull(type, "Transaction value type must be non-null");
-        this.amount = Objects.requireNonNull(amount, "Transaction value amount must be non-null");
+    private TransactionValue(TransactionValueType type, Money amount) {
+        this.type = type;
+        this.amount = amount;
+    }
+
+    public static TransactionValue of(TransactionValueType type, Money amount) {
+        validate(type, amount);
+        return new TransactionValue(type, amount);
+    }
+
+    private static void validate(TransactionValueType type, Money amount) {
+        requireNonNull(type, "transactionValue");
+        requireNonNull(amount, "amount");
+        checkIfAmountIsPositive(amount);
+    }
+
+    private static void checkIfAmountIsPositive(Money amount) {
+        if (amount.equals(Money.ZERO)) {
+            throw new IllegalArgumentException("transaction value amount must be greater than zero");
+        }
     }
 
     public Money getAmount() {
@@ -29,14 +46,5 @@ public class TransactionValue {
         return type;
     }
 
-    public void validate() {
-        checkIfAmountIsPositive();
-    }
-
-    private void checkIfAmountIsPositive() {
-        if (amount.equals(Money.ZERO)) {
-            throw new BookDomainException("Transaction value amount must be greater than zero");
-        }
-    }
 
 }

@@ -5,8 +5,11 @@ import com.sangjun.payment.domain.valueobject.book.BookEntryId;
 import com.sangjun.payment.domain.valueobject.book.TransactionValue;
 
 import javax.persistence.*;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Objects;
+
+import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
+import static java.util.Objects.requireNonNull;
 
 @Entity
 @Table(name = "book_entry", schema = "payment")
@@ -17,20 +20,27 @@ public class BookEntry extends BaseEntity<BookEntryId> {
     private final ZonedDateTime createdTime;
     private final String description;
 
-    public BookEntry(TransactionValue transactionValue,
-                     ZonedDateTime createdTime,
-                     String description) {
-        this.transactionValue = Objects.requireNonNull(transactionValue, "transactionValue must be non-null");
-        this.createdTime = Objects.requireNonNull(createdTime, "createdTime must be non-null");
-        this.description = Objects.requireNonNull(description, "description must be non-null");
+    private BookEntry(TransactionValue transactionValue,
+                      ZonedDateTime createdTime,
+                      String description) {
+        this.transactionValue = transactionValue;
+        this.createdTime = createdTime;
+        this.description = description;
+    }
+
+    public static BookEntry of(TransactionValue transactionValue, String description) {
+        validate(transactionValue, description);
+        return new BookEntry(transactionValue, ZonedDateTime.now(ZoneId.of(ZONE_ID)), description);
+    }
+
+    private static void validate(TransactionValue transactionValue,
+                                 String description) {
+        requireNonNull(transactionValue, "transactionValue");
+        requireNonNull(description, "description");
     }
 
     public TransactionValue getTransactionValue() {
         return transactionValue;
-    }
-
-    public void validate() {
-        this.transactionValue.validate();
     }
 }
 

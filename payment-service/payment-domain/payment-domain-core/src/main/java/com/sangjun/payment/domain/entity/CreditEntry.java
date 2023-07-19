@@ -5,8 +5,18 @@ import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.payment.domain.valueobject.CreditEntryId;
 
+import javax.persistence.*;
+
+
+@Entity
+@Table(name = "credit_entry", schema = "payment")
+@Access(AccessType.FIELD)
+@AttributeOverride(name = "value", column = @Column(name = "id"))
 public class CreditEntry extends BaseEntity<CreditEntryId> {
+    @Embedded
     private final CustomerId customerId;
+
+    @Embedded
     private Money totalCreditAmount;
 
     private CreditEntry(Builder builder) {

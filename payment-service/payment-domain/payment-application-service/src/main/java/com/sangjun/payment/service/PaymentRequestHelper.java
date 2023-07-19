@@ -4,7 +4,7 @@ import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.payment.domain.PaymentDomainService;
 import com.sangjun.payment.domain.entity.CreditEntry;
 import com.sangjun.payment.domain.entity.CreditHistory;
-import com.sangjun.payment.domain.entity.Payment;
+import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.event.PaymentEvent;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.exception.PaymentApplicationServiceException;
@@ -38,11 +38,12 @@ public class PaymentRequestHelper {
         Payment payment = paymentDataMapper.paymentRequestToPayment(paymentRequest);
         PaymentDetails paymentDetails = getPaymentDetails(payment);
 
-        PaymentEvent paymentEvent = paymentDomainService.initiatePayment(
-                payment,
-                paymentDetails.getCreditEntry(),
-                paymentDetails.getCreditHistories(),
-                paymentDetails.getFailureMessages());
+        PaymentEvent paymentEvent = null;
+//        paymentDomainService.initiatePayment(
+//                payment,
+//                paymentDetails.getCreditEntry(),
+//                paymentDetails.getCreditHistories(),
+//                paymentDetails.getFailureMessages());
 
         persistData(payment, paymentDetails);
 
@@ -60,11 +61,12 @@ public class PaymentRequestHelper {
         });
         PaymentDetails paymentDetails = getPaymentDetails(payment);
 
-        PaymentEvent paymentEvent = paymentDomainService.cancelPayment(
-                payment,
-                paymentDetails.getCreditEntry(),
-                paymentDetails.getCreditHistories(),
-                paymentDetails.getFailureMessages());
+        PaymentEvent paymentEvent = null;
+//        paymentDomainService.cancelPayment(
+//                payment,
+//                paymentDetails.getCreditEntry(),
+//                paymentDetails.getCreditHistories(),
+//                paymentDetails.getFailureMessages());
 
         persistData(payment, paymentDetails);
 

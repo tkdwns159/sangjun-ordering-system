@@ -2,17 +2,15 @@ package com.sangjun.payment.container;
 
 import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.Money;
-import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.PaymentStatus;
 import com.sangjun.kafka.order.avro.model.PaymentOrderStatus;
 import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
 import com.sangjun.payment.domain.entity.CreditEntry;
 import com.sangjun.payment.domain.entity.CreditHistory;
-import com.sangjun.payment.domain.entity.Payment;
+import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.valueobject.CreditEntryId;
 import com.sangjun.payment.domain.valueobject.CreditHistoryId;
-import com.sangjun.payment.domain.valueobject.PaymentId;
 import com.sangjun.payment.domain.valueobject.TransactionType;
 import com.sangjun.payment.service.ports.output.repository.CreditEntryRepository;
 import com.sangjun.payment.service.ports.output.repository.CreditHistoryRepository;
@@ -36,8 +34,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +41,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
@@ -275,11 +270,12 @@ public class PaymentIntegrationTest {
 
         UUID paymentId = UUID.randomUUID();
 
-        Payment payment = Payment.builder(new OrderId(ORDER_ID), new CustomerId(CUSTOMER_ID), Money.of(new BigDecimal(3000)))
-                .id(new PaymentId(paymentId))
-                .createdAt(ZonedDateTime.now(ZoneId.of(ZONE_ID)))
-                .paymentStatus(PaymentStatus.COMPLETED)
-                .build();
+        Payment payment = null;
+//                Payment.builder(new OrderId(ORDER_ID), new CustomerId(CUSTOMER_ID), Money.of(new BigDecimal(3000)))
+//                .id(new PaymentId(paymentId))
+//                .createdAt(ZonedDateTime.now(ZoneId.of(ZONE_ID)))
+//                .paymentStatus(PaymentStatus.COMPLETED)
+//                .build();
 
         creditHistoryRepository.save(creditHistory);
         creditEntryRepository.save(creditEntry);
@@ -338,11 +334,12 @@ public class PaymentIntegrationTest {
                 .build();
 
 
-        Payment payment = Payment.builder(new OrderId(ORDER_ID), new CustomerId(CUSTOMER_ID), Money.of(new BigDecimal(3000)))
-                .id(new PaymentId(PAYMENT_ID))
-                .createdAt(ZonedDateTime.now(ZoneId.of(ZONE_ID)))
-                .paymentStatus(PaymentStatus.COMPLETED)
-                .build();
+        Payment payment = null;
+//                Payment.builder(new OrderId(ORDER_ID), new CustomerId(CUSTOMER_ID), Money.of(new BigDecimal(3000)))
+//                .id(new PaymentId(PAYMENT_ID))
+//                .createdAt(ZonedDateTime.now(ZoneId.of(ZONE_ID)))
+//                .paymentStatus(PaymentStatus.COMPLETED)
+//                .build();
 
         creditHistoryRepository.save(creditHistory);
         creditEntryRepository.save(creditEntry);

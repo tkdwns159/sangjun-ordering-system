@@ -1,16 +1,16 @@
 package com.sangjun.payment.dataaccess.creditentry.repository;
 
-import com.sangjun.payment.dataaccess.creditentry.entity.CreditEntryEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import com.sangjun.payment.domain.entity.CreditEntry;
+import com.sangjun.payment.service.ports.output.repository.CreditEntryRepository;
+import org.springframework.data.repository.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
-@Repository
-public interface CreditEntryJpaRepository extends JpaRepository<CreditEntryEntity, UUID> {
+public interface CreditEntryJpaRepository extends CreditEntryRepository, Repository<CreditEntry, UUID> {
+    @Override
+    CreditEntry save(CreditEntry creditEntry);
 
-    Optional<CreditEntryEntity> findByCustomerId(UUID customerId);
-
-
+    @Override
+    Optional<CreditEntry> findByCustomerId(UUID customerId);
 }

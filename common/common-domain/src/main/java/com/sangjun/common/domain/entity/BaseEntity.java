@@ -1,9 +1,13 @@
 package com.sangjun.common.domain.entity;
 
+import javax.persistence.EmbeddedId;
+import javax.persistence.MappedSuperclass;
 import java.util.Objects;
 
+@MappedSuperclass
 public abstract class BaseEntity<ID> {
 
+    @EmbeddedId
     private ID id;
 
     public ID getId() {

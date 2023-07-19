@@ -6,7 +6,7 @@ import com.sangjun.kafka.order.avro.model.PaymentStatus;
 import com.sangjun.payment.domain.event.PaymentCancelledEvent;
 import com.sangjun.payment.domain.event.PaymentCompletedEvent;
 import com.sangjun.payment.domain.event.PaymentFailedEvent;
-import com.sangjun.payment.domain.valueobject.PaymentOrderStatus;
+import com.sangjun.payment.domain.valueobject.payment.PaymentOrderStatus;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import org.springframework.stereotype.Component;
 

@@ -7,7 +7,6 @@ group 'com.sangjun.order.domain'
 
 dependencies {
     api project(':order-domain:order-domain-core')
-    api('com.sangjun.common:common-domain')
     implementation('com.sangjun.saga:saga')
 
     implementation('org.springframework.boot:spring-boot-starter-validation')

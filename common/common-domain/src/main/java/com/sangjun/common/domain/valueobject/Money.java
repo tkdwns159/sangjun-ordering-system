@@ -1,10 +1,15 @@
 package com.sangjun.common.domain.valueobject;
 
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
 
+@Embeddable
 public class Money {
+
+    @Column(name = "amount")
     private final BigDecimal amount;
     public static final Money ZERO = new Money(BigDecimal.ZERO);
 
@@ -14,6 +19,10 @@ public class Money {
 
     public static Money of(BigDecimal amount) {
         return new Money(amount);
+    }
+
+    public static Money of(String amount) {
+        return new Money(new BigDecimal(amount));
     }
 
     private static BigDecimal setScale(BigDecimal input) {
@@ -26,10 +35,6 @@ public class Money {
 
     public boolean isGreaterThan(Money money) {
         return this.amount != null && this.amount.compareTo(money.getAmount()) > 0;
-    }
-
-    public boolean isLessThan(Money money) {
-        return this.amount != null && this.amount.compareTo(money.getAmount()) < 0;
     }
 
     public Money add(Money money) {

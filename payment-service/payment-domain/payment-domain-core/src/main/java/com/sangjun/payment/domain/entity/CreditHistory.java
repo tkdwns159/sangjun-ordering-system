@@ -6,9 +6,18 @@ import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.payment.domain.valueobject.CreditHistoryId;
 import com.sangjun.payment.domain.valueobject.TransactionType;
 
+import javax.persistence.*;
+
+@Entity
+@Table(name = "credit_history", schema = "payment")
+@Access(AccessType.FIELD)
+@AttributeOverride(name = "value", column = @Column(name = "id"))
 public class CreditHistory extends BaseEntity<CreditHistoryId> {
+    @Embedded
     private final CustomerId customerId;
+    @Embedded
     private final Money amount;
+    @Enumerated(EnumType.STRING)
     private final TransactionType transactionType;
 
     private CreditHistory(Builder builder) {

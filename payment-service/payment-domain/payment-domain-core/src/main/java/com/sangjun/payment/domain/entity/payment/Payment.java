@@ -37,7 +37,7 @@ public class Payment extends AggregateRoot<PaymentId> {
         this.price = price;
     }
 
-    public static Payment of(Builder builder) {
+    private static Payment of(Builder builder) {
         return new Payment(
                 requireNonNull(builder.orderId, "orderId"),
                 requireNonNull(builder.restaurantId, "restaurantId"),
@@ -52,8 +52,12 @@ public class Payment extends AggregateRoot<PaymentId> {
     public void initialize() {
         validate();
         setId(new PaymentId(UUID.randomUUID()));
-        this.createdAt = ZonedDateTime.now(ZoneId.of(ZONE_ID));
         this.paymentStatus = PaymentStatus.READY;
+    }
+
+    @PrePersist
+    private void stampCreatedAt() {
+        this.createdAt = ZonedDateTime.now(ZoneId.of(ZONE_ID));
     }
 
     private void validate() {
@@ -141,7 +145,7 @@ public class Payment extends AggregateRoot<PaymentId> {
         }
 
         public Payment build() {
-            return Payment.of(builder());
+            return Payment.of(this);
         }
     }
 }

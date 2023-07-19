@@ -51,7 +51,7 @@ public class PaymentDomainTest {
     }
 
     @Test
-    void setPaymentIdAndCreatedAtWhileInitializingPayment() {
+    void setPaymentIdWhileInitializingPayment() {
         UUID restaurantId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
@@ -66,7 +66,6 @@ public class PaymentDomainTest {
         payment.initialize();
 
         assertThat(payment.getId()).isNotNull();
-        assertThat(payment.getCreatedAt()).isNotNull();
     }
 
     @Test
@@ -117,7 +116,7 @@ public class PaymentDomainTest {
     }
 
     @Test
-    void givenReadyPaymentWhenCancelPaymentThenThrowException() {
+    void paymentMustBeCompletedToCancel() {
         UUID restaurantId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
@@ -139,7 +138,7 @@ public class PaymentDomainTest {
     }
 
     @Test
-    void givenFailedPaymentWhenMarkingPaymentAsFailedThenThrowException() {
+    void failedPaymentCannotBeMarkedFailedAgain() {
         UUID restaurantId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
@@ -164,5 +163,4 @@ public class PaymentDomainTest {
         assertThatThrownBy(payment::markAsFailed)
                 .isInstanceOf(IllegalStateException.class);
     }
-
 }

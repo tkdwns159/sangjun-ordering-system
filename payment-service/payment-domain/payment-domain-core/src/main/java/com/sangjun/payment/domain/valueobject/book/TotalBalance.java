@@ -42,4 +42,8 @@ public class TotalBalance {
     public Money getTotalDebitAmount() {
         return totalDebitAmount;
     }
+
+    public Money getCurrentBalance() {
+        return totalDebitAmount.subtract(totalCreditAmount);
+    }
 }

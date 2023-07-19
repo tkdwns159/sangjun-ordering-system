@@ -1,11 +1,11 @@
 package com.sangjun.payment.domain.entity.book;
 
 import com.sangjun.common.domain.entity.AggregateRoot;
+import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.payment.domain.valueobject.book.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
-import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,14 +21,15 @@ public class Book extends AggregateRoot<BookId> {
     private final BookOwner bookOwner;
     @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id")
-    private List<BookEntry> bookEntries;
+    @Embedded
+    private BookEntryList bookEntryList;
     @Embedded
     private TotalBalance totalBalance;
 
     private Book(BookOwner owner, BookShelve bookShelve) {
         this.bookOwner = owner;
         this.bookShelve = bookShelve;
-        this.bookEntries = new ArrayList<>();
+        this.bookEntryList = new BookEntryList(new ArrayList<>());
         this.totalBalance = new TotalBalance();
     }
 
@@ -42,10 +43,15 @@ public class Book extends AggregateRoot<BookId> {
         requireNonNull(bookOwnerId, "bookOwnerId");
     }
 
-    public BookEntry addBookEntry(TransactionValue transactionValue,
-                                  String desc) {
+    public void transact(Book to, Money amount, String fromDesc, String toDesc) {
+        this.addBookEntry(TransactionValue.of(TransactionValueType.CREDIT, amount), fromDesc);
+        to.addBookEntry(TransactionValue.of(TransactionValueType.DEBIT, amount), toDesc);
+    }
+
+    private BookEntry addBookEntry(TransactionValue transactionValue,
+                                   String desc) {
         BookEntry bookEntry = createBookEntry(transactionValue, desc);
-        this.bookEntries.add(bookEntry);
+        this.bookEntryList.add(bookEntry);
         updateTotalBalance(bookEntry);
 
         return bookEntry;
@@ -66,11 +72,16 @@ public class Book extends AggregateRoot<BookId> {
         };
     }
 
-    public static BookOwner createBookOwner(EntryIdType entryIdType, String id) {
+    private static BookOwner createBookOwner(EntryIdType entryIdType, String id) {
         return entryIdType.createBookOwner(id);
     }
 
     public TotalBalance getTotalBalance() {
         return this.totalBalance;
     }
+
+    public BookEntryList getBookEntryList() {
+        return bookEntryList;
+    }
+
 }

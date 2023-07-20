@@ -21,8 +21,4 @@ public class PaymentRequest {
     private BigDecimal price;
     private Instant createdAt;
     private PaymentOrderStatus paymentOrderStatus;
-
-    public void setPaymentOrderStatus(PaymentOrderStatus paymentOrderStatus) {
-        this.paymentOrderStatus = paymentOrderStatus;
-    }
 }

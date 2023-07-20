@@ -11,12 +11,13 @@ import java.time.ZonedDateTime;
 
 import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 
-public class PaymentInitService {
+public class PaymentInitDomainService {
 
     public PaymentEvent initPayment(Payment payment, Book from, Book to) {
         validate(payment, from);
         payment.initialize();
         from.transact(to, payment.getPrice(), "ITEM_PURCHASE", "ITEM_SELL");
+        payment.complete();
 
         return new PaymentCompletedEvent(payment, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }

@@ -2,19 +2,21 @@ package com.sangjun.payment.container;
 
 import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.Money;
+import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.PaymentStatus;
 import com.sangjun.kafka.order.avro.model.PaymentOrderStatus;
 import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
 import com.sangjun.payment.domain.entity.CreditEntry;
 import com.sangjun.payment.domain.entity.CreditHistory;
+import com.sangjun.payment.domain.entity.book.Book;
+import com.sangjun.payment.domain.entity.book.BookShelve;
 import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.valueobject.CreditEntryId;
 import com.sangjun.payment.domain.valueobject.CreditHistoryId;
 import com.sangjun.payment.domain.valueobject.TransactionType;
-import com.sangjun.payment.service.ports.output.repository.CreditEntryRepository;
-import com.sangjun.payment.service.ports.output.repository.CreditHistoryRepository;
-import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
+import com.sangjun.payment.domain.valueobject.book.EntryIdType;
+import com.sangjun.payment.service.ports.output.repository.*;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.jupiter.api.*;
@@ -62,6 +64,8 @@ public class PaymentIntegrationTest {
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
     private static final UUID PAYMENT_ID = UUID.randomUUID();
+    private static final UUID RESTAURANT_ID = UUID.randomUUID();
+
 
     @Autowired
     private KafkaTemplate<String, PaymentRequestAvroModel> paymentRequestKt;
@@ -77,6 +81,12 @@ public class PaymentIntegrationTest {
 
     @Autowired
     private CreditEntryRepository creditEntryRepository;
+
+    @Autowired
+    private BookRepository bookRepository;
+
+    @Autowired
+    private BookShelveRepository bookShelveRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -145,6 +155,16 @@ public class PaymentIntegrationTest {
     @Test
     void 결제가_완료되면_결제데이터가_저장된다() throws ExecutionException, InterruptedException {
         //given
+        BookShelve customerBookShelve = BookShelve.of("customer", EntryIdType.UUID);
+        Book customerBook = Book.of(customerBookShelve, CUSTOMER_ID.toString());
+        bookShelveRepository.save(customerBookShelve);
+        bookRepository.save(customerBook);
+
+        BookShelve restaurantBookShelve = BookShelve.of("restaurant", EntryIdType.UUID);
+        Book restaurantBook = Book.of(restaurantBookShelve, RESTAURANT_ID.toString());
+        bookShelveRepository.save(restaurantBookShelve);
+        bookRepository.save(restaurantBook);
+
         PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setOrderId(ORDER_ID.toString())
@@ -155,20 +175,6 @@ public class PaymentIntegrationTest {
                 .setPaymentOrderStatus(PaymentOrderStatus.PENDING)
                 .build();
 
-        CreditEntry creditEntry = CreditEntry.builder(new CustomerId(CUSTOMER_ID))
-                .id(new CreditEntryId(UUID.randomUUID()))
-                .totalCreditAmount(Money.of(new BigDecimal("3000")))
-                .build();
-
-        CreditHistory creditHistory = CreditHistory.builder(
-                        new CustomerId(CUSTOMER_ID),
-                        Money.of(new BigDecimal("3000")),
-                        TransactionType.DEBIT)
-                .id(new CreditHistoryId(UUID.randomUUID()))
-                .build();
-
-        creditHistoryRepository.save(creditHistory);
-        creditEntryRepository.save(creditEntry);
         entityManager.flush();
 
         TestTransaction.flagForCommit();
@@ -180,14 +186,40 @@ public class PaymentIntegrationTest {
 
         //then
         Thread.sleep(100);
-        Payment payment = paymentRepository.findByOrderId(ORDER_ID).get();
+        Payment payment = paymentRepository
+                .findByOrderId(new OrderId(ORDER_ID))
+                .get();
 
+        Money expectedPrice = Money.of(msg.getPrice());
         assertThat(payment.getPrice())
-                .isEqualTo(Money.of(new BigDecimal("3000")));
+                .isEqualTo(expectedPrice);
         assertThat(payment.getPaymentStatus())
                 .isEqualTo(PaymentStatus.COMPLETED);
         assertThat(payment.getCustomerId().getValue())
                 .isEqualTo(CUSTOMER_ID);
+
+        고객장부_업데이트_확인(customerBookShelve, customerBook, expectedPrice);
+        식당장부_업데이트_확인(customerBookShelve, RESTAURANT_ID, restaurantBook, expectedPrice);
+    }
+
+    private void 식당장부_업데이트_확인(BookShelve restaurantBookShelve, UUID restaurantId, Book restaurantBook, Money expectedPrice) {
+        Book foundRestaurantBook = bookRepository
+                .findByBookShelveIdAndBookOwner_uuid(restaurantBookShelve.getId().getValue(), restaurantId)
+                .get();
+        assertThat(foundRestaurantBook.getTotalBalance().getCurrentBalance())
+                .isEqualTo(expectedPrice);
+        assertThat(foundRestaurantBook.getBookEntryList().getSize())
+                .isEqualTo(restaurantBook.getBookEntryList().getSize() + 1);
+    }
+
+    private void 고객장부_업데이트_확인(BookShelve customerBookShelve, Book customerBook, Money expectedPrice) {
+        Book foundCustomerBook = bookRepository
+                .findByBookShelveIdAndBookOwner_uuid(customerBookShelve.getId().getValue(), CUSTOMER_ID)
+                .get();
+        assertThat(foundCustomerBook.getTotalBalance().getCurrentBalance())
+                .isEqualTo(Money.ZERO.subtract(expectedPrice));
+        assertThat(foundCustomerBook.getBookEntryList().getSize())
+                .isEqualTo(customerBook.getBookEntryList().getSize() + 1);
     }
 
     @Test
@@ -355,7 +387,7 @@ public class PaymentIntegrationTest {
 
         //then
         Thread.sleep(200);
-        Payment foundPayment = paymentRepository.findByOrderId(ORDER_ID).get();
+        Payment foundPayment = paymentRepository.findByOrderId(new OrderId(ORDER_ID)).get();
 
         assertThat(foundPayment.getPaymentStatus())
                 .isEqualTo(PaymentStatus.CANCELLED);
@@ -400,7 +432,7 @@ public class PaymentIntegrationTest {
         //then
         Thread.sleep(100);
 
-        Payment foundPayment = paymentRepository.findByOrderId(ORDER_ID).get();
+        Payment foundPayment = paymentRepository.findByOrderId(new OrderId(ORDER_ID)).get();
 
         assertThat(foundPayment.getOrderId().getValue())
                 .isEqualTo(ORDER_ID);

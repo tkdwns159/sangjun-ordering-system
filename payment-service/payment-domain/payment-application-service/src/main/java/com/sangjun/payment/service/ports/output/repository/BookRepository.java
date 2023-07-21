@@ -9,5 +9,5 @@ public interface BookRepository {
 
     Book save(Book book);
 
-    Optional<Book> findById(UUID bookId);
+    Optional<Book> findByBookShelveIdAndBookOwner_uuid(UUID bookShelveId, UUID ownerUUID);
 }

@@ -13,10 +13,13 @@ public class BookEntryList {
 
     @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id")
-    private final List<BookEntry> bookEntries;
+    private List<BookEntry> bookEntries;
 
     public BookEntryList(List<BookEntry> bookEntries) {
         this.bookEntries = bookEntries;
+    }
+
+    protected BookEntryList() {
     }
 
     public void add(BookEntry bookEntry) {

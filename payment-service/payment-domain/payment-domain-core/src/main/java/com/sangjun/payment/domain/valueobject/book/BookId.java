@@ -13,4 +13,7 @@ public class BookId extends BaseId<UUID> {
     public BookId(UUID value) {
         super(value);
     }
+
+    protected BookId() {
+    }
 }

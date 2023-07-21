@@ -11,14 +11,18 @@ public class TransactionValue {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type")
-    private final TransactionValueType type;
+    private TransactionValueType type;
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "transaction_amount"))
-    private final Money amount;
+    private Money amount;
 
     private TransactionValue(TransactionValueType type, Money amount) {
         this.type = type;
         this.amount = amount;
+    }
+
+    protected TransactionValue() {
+        
     }
 
     public static TransactionValue of(TransactionValueType type, Money amount) {

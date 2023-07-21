@@ -6,4 +6,6 @@ public interface BookShelveRepository {
 
     BookShelve findById(Long shelveId);
 
+    BookShelve save(BookShelve bookShelve);
+
 }

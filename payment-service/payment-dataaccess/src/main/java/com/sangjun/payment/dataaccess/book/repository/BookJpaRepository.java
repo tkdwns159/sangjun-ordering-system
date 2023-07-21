@@ -12,5 +12,5 @@ public interface BookJpaRepository extends BookRepository, Repository<Book, UUID
     Book save(Book book);
 
     @Override
-    Optional<Book> findById(UUID bookId);
+    Optional<Book> findByBookShelveIdAndBookOwner_uuid(UUID bookShelveId, UUID ownerUuid);
 }

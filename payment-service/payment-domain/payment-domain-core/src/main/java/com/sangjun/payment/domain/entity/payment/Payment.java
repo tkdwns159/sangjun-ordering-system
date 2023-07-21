@@ -16,7 +16,6 @@ import static java.util.Objects.requireNonNull;
 @Entity
 @Table(name = "payments", schema = "payment")
 @Access(AccessType.FIELD)
-@AttributeOverride(name = "value", column = @Column(name = "id"))
 public class Payment extends AggregateRoot<PaymentId> {
     @Embedded
     private final OrderId orderId;

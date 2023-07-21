@@ -16,9 +16,9 @@ import static java.util.Objects.requireNonNull;
 @Access(AccessType.FIELD)
 public class BookEntry extends BaseEntity<BookEntryId> {
     @Embedded
-    private final TransactionValue transactionValue;
-    private final ZonedDateTime createdTime;
-    private final String description;
+    private TransactionValue transactionValue;
+    private ZonedDateTime createdTime;
+    private String description;
 
     private BookEntry(TransactionValue transactionValue,
                       ZonedDateTime createdTime,
@@ -26,6 +26,9 @@ public class BookEntry extends BaseEntity<BookEntryId> {
         this.transactionValue = transactionValue;
         this.createdTime = createdTime;
         this.description = description;
+    }
+
+    protected BookEntry() {
     }
 
     public static BookEntry of(TransactionValue transactionValue, String description) {

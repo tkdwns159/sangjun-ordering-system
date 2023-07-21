@@ -12,4 +12,7 @@ public class BookEntryId extends BaseId<Long> {
     public BookEntryId(Long value) {
         super(value);
     }
+    
+    protected BookEntryId() {
+    }
 }

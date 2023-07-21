@@ -6,6 +6,7 @@ import com.sangjun.payment.domain.valueobject.book.EntryIdType;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
@@ -15,13 +16,16 @@ import static java.util.Objects.requireNonNull;
 public class BookShelve extends BaseEntity<BookShelveId> {
     private String name;
 
-    @Embedded
     @Enumerated(EnumType.STRING)
-    private final EntryIdType entryIdType;
+    private EntryIdType entryIdType;
 
     private BookShelve(String name, EntryIdType entryIdType) {
+        setId(new BookShelveId(UUID.randomUUID()));
         this.name = name;
         this.entryIdType = entryIdType;
+    }
+
+    protected BookShelve() {
     }
 
     public static BookShelve of(String name, EntryIdType entryIdType) {

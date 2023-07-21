@@ -7,4 +7,7 @@ import org.springframework.data.repository.Repository;
 public interface BookShelveJpaRepository extends BookShelveRepository, Repository<BookShelve, Long> {
     @Override
     BookShelve findById(Long shelveId);
+
+    @Override
+    BookShelve save(BookShelve bookShelve);
 }

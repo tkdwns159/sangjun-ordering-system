@@ -2,6 +2,7 @@ package com.sangjun.payment.domain.entity.book;
 
 import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.payment.domain.valueobject.book.BookEntryId;
+import com.sangjun.payment.domain.valueobject.book.BookId;
 import com.sangjun.payment.domain.valueobject.book.TransactionValue;
 
 import javax.persistence.*;
@@ -15,6 +16,8 @@ import static java.util.Objects.requireNonNull;
 @Table(name = "book_entry", schema = "payment")
 @Access(AccessType.FIELD)
 public class BookEntry extends BaseEntity<BookEntryId> {
+    @Embedded
+    private BookId bookId;
     @Embedded
     private TransactionValue transactionValue;
     private ZonedDateTime createdTime;

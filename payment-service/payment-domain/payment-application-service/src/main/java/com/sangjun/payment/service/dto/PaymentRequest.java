@@ -1,6 +1,6 @@
 package com.sangjun.payment.service.dto;
 
-import com.sangjun.payment.domain.valueobject.payment.PaymentOrderStatus;
+import com.sangjun.common.domain.valueobject.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,10 +15,9 @@ import java.time.Instant;
 @NoArgsConstructor
 public class PaymentRequest {
     private String id;
-    private String sagaId;
     private String orderId;
     private String customerId;
     private BigDecimal price;
     private Instant createdAt;
-    private PaymentOrderStatus paymentOrderStatus;
+    private PaymentStatus paymentStatus;
 }

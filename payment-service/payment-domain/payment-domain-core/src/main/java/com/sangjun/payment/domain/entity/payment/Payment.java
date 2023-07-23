@@ -51,7 +51,7 @@ public class Payment extends AggregateRoot<PaymentId> {
     public void initialize() {
         validate();
         setId(new PaymentId(UUID.randomUUID()));
-        this.paymentStatus = PaymentStatus.READY;
+        this.paymentStatus = PaymentStatus.PENDING;
     }
 
     @PrePersist

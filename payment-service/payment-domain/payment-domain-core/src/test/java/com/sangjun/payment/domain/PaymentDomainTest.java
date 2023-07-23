@@ -84,7 +84,7 @@ public class PaymentDomainTest {
 
         payment.initialize();
         assertThat(payment.getPaymentStatus())
-                .isEqualTo(PaymentStatus.READY);
+                .isEqualTo(PaymentStatus.PENDING);
 
         payment.complete();
         assertThat(payment.getPaymentStatus())
@@ -131,7 +131,7 @@ public class PaymentDomainTest {
 
         payment.initialize();
         assertThat(payment.getPaymentStatus())
-                .isEqualTo(PaymentStatus.READY);
+                .isEqualTo(PaymentStatus.PENDING);
 
         assertThatThrownBy(payment::cancel)
                 .isInstanceOf(IllegalStateException.class);

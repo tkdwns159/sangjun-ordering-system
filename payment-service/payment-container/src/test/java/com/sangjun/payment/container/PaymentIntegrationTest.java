@@ -57,7 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(value = MethodOrderer.Random.class)
 @Transactional
-@SpringBootTest(classes = TestConfig.class,
+@SpringBootTest(classes = IntegrationTestConfig.class,
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class PaymentIntegrationTest {
 

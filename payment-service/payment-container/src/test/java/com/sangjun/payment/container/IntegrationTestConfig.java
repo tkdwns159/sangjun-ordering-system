@@ -13,5 +13,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         excludeFilters = @ComponentScan.Filter(classes = {ComponentScan.class}))
 @SpringBootConfiguration
 @EnableAutoConfiguration
-public class TestConfig {
+public class IntegrationTestConfig {
 }

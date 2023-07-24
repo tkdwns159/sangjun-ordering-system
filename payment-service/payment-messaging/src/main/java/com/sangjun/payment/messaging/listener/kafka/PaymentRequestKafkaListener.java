@@ -4,6 +4,7 @@ import com.sangjun.kafka.consumer.KafkaConsumer;
 import com.sangjun.kafka.order.avro.model.PaymentOrderStatus;
 import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
 import com.sangjun.payment.messaging.mapper.PaymentMessagingDataMapper;
+import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.ports.input.message.listener.PaymentRequestMessageListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,12 +44,17 @@ public class PaymentRequestKafkaListener implements KafkaConsumer<PaymentRequest
     private void completePayments(List<PaymentRequestAvroModel> messages) {
         messages.stream()
                 .filter(message -> message.getPaymentOrderStatus() == PaymentOrderStatus.PENDING)
-                .forEach(message -> {
-                    log.info("Processing payment for order id: {}", message.getOrderId());
-                    paymentRequestMessageListener.completePayment(
-                            paymentMessagingDataMapper.paymentRequestAvroModelToPaymentRequest(message)
-                    );
-                });
+                .forEach(this::completePayment);
+    }
+
+    private void completePayment(PaymentRequestAvroModel message) {
+        log.info("Processing payment for order id: {}", message.getOrderId());
+        try {
+            PaymentRequest pr = paymentMessagingDataMapper.paymentRequestAvroModelToPaymentRequest(message);
+            paymentRequestMessageListener.completePayment(pr);
+        } catch (RuntimeException ex) {
+            log.error("Error processing payment for order id: {}", message.getOrderId(), ex);
+        }
     }
 
     private void cancelPayments(List<PaymentRequestAvroModel> messages) {

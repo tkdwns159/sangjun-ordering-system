@@ -1,7 +1,7 @@
 package com.sangjun.order.dataaccess.order.mapper;
 
 import com.sangjun.common.domain.mapper.CentralConfig;
-import com.sangjun.common.domain.mapper.CommonMapstructMapper;
+import com.sangjun.common.domain.mapper.CommonMapper;
 import com.sangjun.common.utils.CommonConstants;
 import com.sangjun.order.dataaccess.order.entity.OrderEntity;
 import com.sangjun.order.dataaccess.order.entity.OrderItemEntity;
@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Mapper(config = CentralConfig.class,
-        uses = {CommonMapstructMapper.class, OrderMapstructMapper.class},
+        uses = {CommonMapper.class, OrderMapstructMapper.class},
         imports = {CommonConstants.class, Collections.class, Optional.class, Arrays.class},
         builder = @Builder(disableBuilder = true))
 @DecoratedWith(OrderDataMapperDecorator.class)

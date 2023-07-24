@@ -5,14 +5,13 @@ import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.book.BookEntry;
 import com.sangjun.payment.domain.entity.book.BookShelve;
 import com.sangjun.payment.domain.entity.payment.Payment;
+import com.sangjun.payment.domain.valueobject.book.BookShelveId;
 import com.sangjun.payment.domain.valueobject.book.EntryIdType;
+import com.sangjun.payment.domain.valueobject.book.TransactionValue;
 import com.sangjun.payment.domain.valueobject.book.TransactionValueType;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.ports.input.message.listener.PaymentRequestMessageListener;
-import com.sangjun.payment.service.ports.output.repository.BookEntryRepository;
-import com.sangjun.payment.service.ports.output.repository.BookRepository;
-import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
-import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
+import com.sangjun.payment.service.ports.output.repository.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +19,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -46,6 +47,9 @@ public class PaymentRequestListenerTest {
     @Autowired
     private BookEntryRepository bookEntryRepository;
 
+    @PersistenceContext
+    private EntityManager em;
+
     @Test
     void 결제_성공() {
         // given
@@ -54,18 +58,28 @@ public class PaymentRequestListenerTest {
         CustomerId customerId = new CustomerId(UUID.randomUUID());
         RestaurantId restaurantId = new RestaurantId(UUID.randomUUID());
 
-        BookShelve customerBookShelve =
-                bookShelveRepository.save(BookShelve.of("customer", EntryIdType.UUID));
-        BookShelve restaurantBookShelve =
-                bookShelveRepository.save(BookShelve.of("restaurant", EntryIdType.UUID));
+        UUID customerBookShelveId = bookShelveRepository.findIdByOwnerType(BookOwnerType.CUSTOMER);
+        UUID restaurantBookShelveId = bookShelveRepository.findIdByOwnerType(BookOwnerType.RESTAURANT);
+        UUID firmBookShelveId = bookShelveRepository.findIdByOwnerType(BookOwnerType.FIRM);
+
+        BookShelve customerBookShelve = getBookShelve(customerBookShelveId, "customer");
+        BookShelve restaurantBookShelve = getBookShelve(restaurantBookShelveId, "restaurant");
+        BookShelve firmBookShelve = getBookShelve(firmBookShelveId, "firm");
 
         Book customerBook = bookRepository.save(Book.of(customerBookShelve, customerId.getValue().toString()));
         Book restaurantBook = bookRepository.save(Book.of(restaurantBookShelve, restaurantId.getValue().toString()));
+        Book firmBook = bookRepository.save(Book.of(firmBookShelve, UUID.randomUUID().toString()));
+
+        firmBook.transact(customerBook, Money.of("1000000"), "", "");
+
+        Money priorCustomerBookBalance = customerBook.getTotalBalance().getCurrentBalance();
+        Money priorRestaurantBookBalance = restaurantBook.getTotalBalance().getCurrentBalance();
 
         // when
         paymentRequestMessageListener.completePayment(PaymentRequest.builder()
                 .orderId(orderId.getValue().toString())
                 .customerId(customerId.getValue().toString())
+                .restaurantId(restaurantId.getValue().toString())
                 .paymentStatus(PaymentStatus.PENDING)
                 .createdAt(Instant.now())
                 .price(price.getAmount())
@@ -76,32 +90,55 @@ public class PaymentRequestListenerTest {
                 .findByOrderId(orderId)
                 .get();
 
+        주어진_결제정보와_저장된_결제정보_비교(newPayment, orderId, price, customerId, restaurantId);
+        장부_총액_변화_확인(customerBook,
+                priorCustomerBookBalance,
+                TransactionValue.of(TransactionValueType.CREDIT, newPayment.getPrice()));
+        장부_총액_변화_확인(restaurantBook,
+                priorRestaurantBookBalance,
+                TransactionValue.of(TransactionValueType.DEBIT, newPayment.getPrice()));
+        마지막으로_추가된_장부_항목_확인(customerBook, newPayment, TransactionValueType.CREDIT);
+        마지막으로_추가된_장부_항목_확인(restaurantBook, newPayment, TransactionValueType.DEBIT);
+    }
+
+    private BookShelve getBookShelve(UUID customerBookShelveId, String name) {
+        return bookShelveRepository.save(BookShelve.of(
+                new BookShelveId(customerBookShelveId),
+                name,
+                EntryIdType.UUID));
+    }
+
+    private void 주어진_결제정보와_저장된_결제정보_비교(Payment newPayment,
+                                       OrderId orderId,
+                                       Money price,
+                                       CustomerId customerId,
+                                       RestaurantId restaurantId) {
         assertThat(newPayment.getOrderId())
                 .isEqualTo(orderId);
+        assertThat(newPayment.getCustomerId())
+                .isEqualTo(customerId);
+        assertThat(newPayment.getRestaurantId())
+                .isEqualTo(restaurantId);
         assertThat(newPayment.getPaymentStatus())
                 .isEqualTo(PaymentStatus.COMPLETED);
         assertThat(newPayment.getPrice())
                 .isEqualTo(price);
-        assertThat(newPayment.getCustomerId())
-                .isEqualTo(customerId);
+        assertThat(newPayment.getCreatedAt())
+                .isNotNull();
+    }
 
-        Money currentCustomerBalance = customerBook.getTotalBalance().getCurrentBalance();
-        Money priorCustomerBalance = currentCustomerBalance.add(newPayment.getPrice());
-        assertThat(priorCustomerBalance)
-                .isEqualTo(currentCustomerBalance.add(newPayment.getPrice()));
+    private void 장부_총액_변화_확인(Book book, Money priorBalance, TransactionValue tv) {
+        Money currentBalance = book.getTotalBalance().getCurrentBalance();
+        Money expectedBalance = tv.getType() == TransactionValueType.DEBIT ?
+                priorBalance.add(tv.getAmount()) : priorBalance.subtract(tv.getAmount());
+        assertThat(currentBalance)
+                .isEqualTo(expectedBalance);
+    }
 
-        BookEntry lastCustomerBookEntry = bookEntryRepository.findLastByBookId(customerBook.getId())
+    private void 마지막으로_추가된_장부_항목_확인(Book restaurantBook, Payment newPayment, TransactionValueType tvType) {
+        BookEntry lastRestaurantBookEntry = bookEntryRepository.findTopByBookIdOrderByCreatedTimeDesc(restaurantBook.getId())
                 .get();
-        assertThat(lastCustomerBookEntry.getTransactionValue().getAmount())
-                .isEqualTo(newPayment.getPrice());
-        assertThat(lastCustomerBookEntry.getTransactionValue().getType())
-                .isEqualTo(TransactionValueType.CREDIT);
-
-        BookEntry lastRestaurantBookEntry = bookEntryRepository.findLastByBookId(restaurantBook.getId())
-                .get();
-        assertThat(lastRestaurantBookEntry.getTransactionValue().getAmount())
-                .isEqualTo(newPayment.getPrice());
-        assertThat(lastRestaurantBookEntry.getTransactionValue().getType())
-                .isEqualTo(TransactionValueType.DEBIT);
+        assertThat(lastRestaurantBookEntry.getTransactionValue())
+                .isEqualTo(TransactionValue.of(tvType, newPayment.getPrice()));
     }
 }

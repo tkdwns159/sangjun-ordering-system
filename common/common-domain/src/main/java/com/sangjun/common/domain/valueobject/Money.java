@@ -71,5 +71,10 @@ public class Money {
         return Objects.hash(amount);
     }
 
-
+    @Override
+    public String toString() {
+        return "Money{" +
+                "amount=" + amount +
+                '}';
+    }
 }

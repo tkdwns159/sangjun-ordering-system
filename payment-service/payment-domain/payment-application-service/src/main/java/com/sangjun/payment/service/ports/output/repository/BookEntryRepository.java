@@ -6,5 +6,5 @@ import com.sangjun.payment.domain.valueobject.book.BookId;
 import java.util.Optional;
 
 public interface BookEntryRepository {
-    Optional<BookEntry> findLastByBookId(BookId bookId);
+    Optional<BookEntry> findTopByBookIdOrderByCreatedTimeDesc(BookId bookId);
 }

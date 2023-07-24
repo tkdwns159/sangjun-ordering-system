@@ -10,11 +10,11 @@ import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
 import com.sangjun.payment.domain.entity.CreditEntry;
 import com.sangjun.payment.domain.entity.CreditHistory;
 import com.sangjun.payment.domain.entity.book.Book;
-import com.sangjun.payment.domain.entity.book.BookShelve;
 import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.valueobject.CreditEntryId;
 import com.sangjun.payment.domain.valueobject.CreditHistoryId;
 import com.sangjun.payment.domain.valueobject.TransactionType;
+import com.sangjun.payment.domain.valueobject.book.BookShelveId;
 import com.sangjun.payment.domain.valueobject.book.EntryIdType;
 import com.sangjun.payment.service.ports.output.repository.*;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -88,6 +88,9 @@ public class PaymentIntegrationTest {
     @Autowired
     private BookShelveRepository bookShelveRepository;
 
+    @Autowired
+    private TestHelper testHelper;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -155,37 +158,43 @@ public class PaymentIntegrationTest {
     @Test
     void 결제가_완료되면_결제데이터가_저장된다() throws ExecutionException, InterruptedException {
         //given
-        BookShelve customerBookShelve = BookShelve.of("customer", EntryIdType.UUID);
-        Book customerBook = Book.of(customerBookShelve, CUSTOMER_ID.toString());
-        bookShelveRepository.save(customerBookShelve);
-        bookRepository.save(customerBook);
+        Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
+        Book customerBook = testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
+        Book restaurantBook = testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
+        Money customerInitialBalance = Money.of("1000000");
+        firmBook.transact(customerBook, customerInitialBalance, "", "");
 
-        BookShelve restaurantBookShelve = BookShelve.of("restaurant", EntryIdType.UUID);
-        Book restaurantBook = Book.of(restaurantBookShelve, RESTAURANT_ID.toString());
-        bookShelveRepository.save(restaurantBookShelve);
-        bookRepository.save(restaurantBook);
+        entityManager.flush();
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
 
-        PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
+        //when
+        TestTransaction.start();
+        PaymentRequestAvroModel msg = 결제완료요청_메세지_생성();
+        paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
+                .get();
+        //then
+        Thread.sleep(200);
+        Payment payment = 결제정보_확인(msg);
+
+        고객장부_업데이트_확인(customerBook, customerInitialBalance.subtract(payment.getPrice()));
+        식당장부_업데이트_확인(restaurantBook, payment.getPrice());
+    }
+
+    private static PaymentRequestAvroModel 결제완료요청_메세지_생성() {
+        return PaymentRequestAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setOrderId(ORDER_ID.toString())
                 .setCreatedAt(Instant.now())
                 .setPrice(new BigDecimal("3000"))
                 .setSagaId("")
+                .setRestaurantId(RESTAURANT_ID.toString())
                 .setCustomerId(CUSTOMER_ID.toString())
                 .setPaymentOrderStatus(PaymentOrderStatus.PENDING)
                 .build();
+    }
 
-        entityManager.flush();
-
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
-        //when
-        paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(100);
+    private Payment 결제정보_확인(PaymentRequestAvroModel msg) {
         Payment payment = paymentRepository
                 .findByOrderId(new OrderId(ORDER_ID))
                 .get();
@@ -195,31 +204,31 @@ public class PaymentIntegrationTest {
                 .isEqualTo(expectedPrice);
         assertThat(payment.getPaymentStatus())
                 .isEqualTo(PaymentStatus.COMPLETED);
+        assertThat(payment.getRestaurantId().getValue())
+                .isEqualTo(RESTAURANT_ID);
         assertThat(payment.getCustomerId().getValue())
                 .isEqualTo(CUSTOMER_ID);
-
-        고객장부_업데이트_확인(customerBookShelve, customerBook, expectedPrice);
-        식당장부_업데이트_확인(customerBookShelve, RESTAURANT_ID, restaurantBook, expectedPrice);
+        return payment;
     }
 
-    private void 식당장부_업데이트_확인(BookShelve restaurantBookShelve, UUID restaurantId, Book restaurantBook, Money expectedPrice) {
+    private void 식당장부_업데이트_확인(Book restaurantBook, Money expectedPrice) {
+        장부_업데이트_확인(restaurantBook, BookOwnerType.RESTAURANT, RESTAURANT_ID.toString(), expectedPrice);
+    }
+
+    private void 고객장부_업데이트_확인(Book customerBook, Money expectedPrice) {
+        장부_업데이트_확인(customerBook, BookOwnerType.CUSTOMER, CUSTOMER_ID.toString(), expectedPrice);
+    }
+
+    private void 장부_업데이트_확인(Book restaurantBook, BookOwnerType bookOwnerType, String bookOwnerId, Money expectedPrice) {
+        UUID restaurantShelveId = bookShelveRepository.findIdByOwnerType(bookOwnerType);
         Book foundRestaurantBook = bookRepository
-                .findByBookShelveIdAndBookOwner_uuid(restaurantBookShelve.getId().getValue(), restaurantId)
+                .findByBookShelveIdAndBookOwner_uuid(new BookShelveId(restaurantShelveId), UUID.fromString(bookOwnerId))
                 .get();
+
         assertThat(foundRestaurantBook.getTotalBalance().getCurrentBalance())
                 .isEqualTo(expectedPrice);
         assertThat(foundRestaurantBook.getBookEntryList().getSize())
                 .isEqualTo(restaurantBook.getBookEntryList().getSize() + 1);
-    }
-
-    private void 고객장부_업데이트_확인(BookShelve customerBookShelve, Book customerBook, Money expectedPrice) {
-        Book foundCustomerBook = bookRepository
-                .findByBookShelveIdAndBookOwner_uuid(customerBookShelve.getId().getValue(), CUSTOMER_ID)
-                .get();
-        assertThat(foundCustomerBook.getTotalBalance().getCurrentBalance())
-                .isEqualTo(Money.ZERO.subtract(expectedPrice));
-        assertThat(foundCustomerBook.getBookEntryList().getSize())
-                .isEqualTo(customerBook.getBookEntryList().getSize() + 1);
     }
 
     @Test

@@ -1,9 +1,10 @@
 package com.sangjun.payment.domain.entity.book;
 
-import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.payment.domain.valueobject.book.BookEntryId;
 import com.sangjun.payment.domain.valueobject.book.BookId;
 import com.sangjun.payment.domain.valueobject.book.TransactionValue;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 import javax.persistence.*;
 import java.time.ZoneId;
@@ -15,7 +16,18 @@ import static java.util.Objects.requireNonNull;
 @Entity
 @Table(name = "book_entry", schema = "payment")
 @Access(AccessType.FIELD)
-public class BookEntry extends BaseEntity<BookEntryId> {
+public class BookEntry {
+    @EmbeddedId
+    @GenericGenerator(name = "book_entry_id_gen",
+            strategy = "com.sangjun.payment.domain.entity.book.BookEntryIdGenerator",
+            parameters = {
+                    @Parameter(name = BookEntryIdGenerator.TYPE, value = "SEQUENCE"),
+                    @Parameter(name = BookEntryIdGenerator.SEQUENCE_NAME, value = "payment.book_entry_id_seq")
+            }
+    )
+    @GeneratedValue(generator = "book_entry_id_gen")
+    private BookEntryId id;
+
     @Embedded
     private BookId bookId;
     @Embedded

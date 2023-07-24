@@ -1,7 +1,7 @@
 package com.sangjun.order.domain.service.mapper;
 
 import com.sangjun.common.domain.mapper.CentralConfig;
-import com.sangjun.common.domain.mapper.CommonMapstructMapper;
+import com.sangjun.common.domain.mapper.CommonMapper;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.entity.Restaurant;
@@ -18,7 +18,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.UUID;
 
-@Mapper(config = CentralConfig.class, uses = CommonMapstructMapper.class)
+@Mapper(config = CentralConfig.class, uses = CommonMapper.class)
 public interface OrderMapstructMapper {
 
     OrderMapstructMapper MAPPER = Mappers.getMapper(OrderMapstructMapper.class);

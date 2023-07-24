@@ -3,11 +3,13 @@ package com.sangjun.payment.domain.valueobject.book;
 import com.sangjun.common.domain.valueobject.Money;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
 @Embeddable
 public class TransactionValue {
+
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type")
@@ -22,7 +24,7 @@ public class TransactionValue {
     }
 
     protected TransactionValue() {
-        
+
     }
 
     public static TransactionValue of(TransactionValueType type, Money amount) {
@@ -50,5 +52,17 @@ public class TransactionValue {
         return type;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TransactionValue that = (TransactionValue) o;
+        return type == that.type && Objects.equals(amount, that.amount);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, amount);
+    }
 
 }

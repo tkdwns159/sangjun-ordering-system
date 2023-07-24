@@ -61,6 +61,7 @@ public class PaymentMessagingDataMapper {
                 .orderId(paymentRequestAvroModel.getOrderId())
                 .customerId(paymentRequestAvroModel.getCustomerId())
                 .price(paymentRequestAvroModel.getPrice())
+                .restaurantId(paymentRequestAvroModel.getRestaurantId())
                 .createdAt(paymentRequestAvroModel.getCreatedAt())
                 .build();
     }

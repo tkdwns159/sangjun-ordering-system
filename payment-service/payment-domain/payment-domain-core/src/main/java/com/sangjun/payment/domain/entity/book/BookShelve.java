@@ -19,8 +19,8 @@ public class BookShelve extends BaseEntity<BookShelveId> {
     @Enumerated(EnumType.STRING)
     private EntryIdType entryIdType;
 
-    private BookShelve(String name, EntryIdType entryIdType) {
-        setId(new BookShelveId(UUID.randomUUID()));
+    private BookShelve(BookShelveId id, String name, EntryIdType entryIdType) {
+        setId(id);
         this.name = name;
         this.entryIdType = entryIdType;
     }
@@ -30,7 +30,17 @@ public class BookShelve extends BaseEntity<BookShelveId> {
 
     public static BookShelve of(String name, EntryIdType entryIdType) {
         validate(name, entryIdType);
-        return new BookShelve(name, entryIdType);
+        return new BookShelve(new BookShelveId(UUID.randomUUID()), name, entryIdType);
+    }
+
+    public static BookShelve of(BookShelveId id, String name, EntryIdType entryIdType) {
+        validate(id, name, entryIdType);
+        return new BookShelve(id, name, entryIdType);
+    }
+
+    private static void validate(BookShelveId id, String name, EntryIdType entryIdType) {
+        requireNonNull(id, "id");
+        validate(name, entryIdType);
     }
 
     private static void validate(String name, EntryIdType entryIdType) {

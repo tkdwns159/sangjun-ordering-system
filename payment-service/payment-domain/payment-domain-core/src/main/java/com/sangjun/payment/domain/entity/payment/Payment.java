@@ -18,13 +18,13 @@ import static java.util.Objects.requireNonNull;
 @Access(AccessType.FIELD)
 public class Payment extends AggregateRoot<PaymentId> {
     @Embedded
-    private final OrderId orderId;
+    private OrderId orderId;
     @Embedded
-    private final RestaurantId restaurantId;
+    private RestaurantId restaurantId;
     @Embedded
-    private final CustomerId customerId;
+    private CustomerId customerId;
     @Embedded
-    private final Money price;
+    private Money price;
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
     private ZonedDateTime createdAt;
@@ -34,6 +34,9 @@ public class Payment extends AggregateRoot<PaymentId> {
         this.restaurantId = restaurantId;
         this.customerId = customerId;
         this.price = price;
+    }
+
+    protected Payment() {
     }
 
     private static Payment of(Builder builder) {
@@ -113,6 +116,9 @@ public class Payment extends AggregateRoot<PaymentId> {
         return createdAt;
     }
 
+    public RestaurantId getRestaurantId() {
+        return restaurantId;
+    }
 
     public static final class Builder {
         private OrderId orderId;

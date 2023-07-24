@@ -107,7 +107,6 @@ public class PaymentRequestListenerTest {
                 .orderId(orderId.getValue().toString())
                 .customerId(customerId.getValue().toString())
                 .restaurantId(restaurantId.getValue().toString())
-                .paymentStatus(PaymentStatus.PENDING)
                 .createdAt(Instant.now())
                 .price(price.getAmount())
                 .build());
@@ -174,7 +173,6 @@ public class PaymentRequestListenerTest {
                 .orderId(orderId.getValue().toString())
                 .customerId(customerId.getValue().toString())
                 .restaurantId(restaurantId.getValue().toString())
-                .paymentStatus(PaymentStatus.PENDING)
                 .createdAt(Instant.now())
                 .price(price.getAmount())
                 .build());
@@ -196,5 +194,39 @@ public class PaymentRequestListenerTest {
                 .isTrue();
     }
 
+    @Test
+    void 결제_취소() {
+        //given
+        Money price = Money.of("1234");
+        saveCompletedPayment(price);
+        em.flush();
 
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        //when
+        paymentRequestMessageListener.cancelPayment(PaymentRequest.builder()
+                .orderId(orderId.getValue().toString())
+                .customerId(customerId.getValue().toString())
+                .restaurantId(restaurantId.getValue().toString())
+                .createdAt(Instant.now())
+                .price(price.getAmount())
+                .build());
+
+        //then
+        Payment foundPayment = paymentRepository.findByOrderId(orderId).get();
+        결제정보_확인(foundPayment, price, PaymentStatus.CANCELLED);
+    }
+
+    private void saveCompletedPayment(Money price) {
+        Payment payment = Payment.builder()
+                .orderId(orderId)
+                .restaurantId(restaurantId)
+                .customerId(customerId)
+                .price(price)
+                .build();
+        payment.initialize();
+        payment.complete();
+        paymentRepository.save(payment);
+    }
 }

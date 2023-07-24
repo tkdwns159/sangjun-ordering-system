@@ -1,11 +1,13 @@
 package com.sangjun.payment.service.ports.input.message.listener;
 
+import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.payment.domain.PaymentInitDomainService;
 import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.event.PaymentEvent;
 import com.sangjun.payment.domain.event.PaymentFailedEvent;
 import com.sangjun.payment.domain.ex.IllegalPaymentStateException;
+import com.sangjun.payment.domain.exception.PaymentNotFoundException;
 import com.sangjun.payment.domain.valueobject.book.BookShelveId;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.exception.BookNotFoundException;
@@ -60,6 +62,13 @@ public class PaymentRequestMessageListener {
                 .orElseThrow(() -> new BookNotFoundException(bookShelveId.getValue(), bookOwnerId));
     }
 
+    @Transactional
     public void cancelPayment(PaymentRequest paymentRequest) {
+        OrderId orderId = new OrderId(UUID.fromString(paymentRequest.getOrderId()));
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new PaymentNotFoundException(orderId.getValue()));
+
+        payment.cancel();
+        paymentRepository.save(payment);
     }
 }

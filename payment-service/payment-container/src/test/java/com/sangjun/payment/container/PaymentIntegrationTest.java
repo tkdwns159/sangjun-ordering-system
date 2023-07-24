@@ -1,9 +1,6 @@
 package com.sangjun.payment.container;
 
-import com.sangjun.common.domain.valueobject.CustomerId;
-import com.sangjun.common.domain.valueobject.Money;
-import com.sangjun.common.domain.valueobject.OrderId;
-import com.sangjun.common.domain.valueobject.PaymentStatus;
+import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.PaymentOrderStatus;
 import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
@@ -167,7 +164,7 @@ public class PaymentIntegrationTest {
 
         //when
         TestTransaction.start();
-        PaymentRequestAvroModel msg = 결제완료요청_메세지_생성();
+        PaymentRequestAvroModel msg = 결제요청_메세지_생성(new BigDecimal("3000"), PaymentOrderStatus.PENDING);
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
         //then
@@ -178,16 +175,16 @@ public class PaymentIntegrationTest {
         식당장부_업데이트_확인(restaurantBook, payment.getPrice());
     }
 
-    private static PaymentRequestAvroModel 결제완료요청_메세지_생성() {
+    private PaymentRequestAvroModel 결제요청_메세지_생성(BigDecimal price, PaymentOrderStatus paymentOrderStatus) {
         return PaymentRequestAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setOrderId(ORDER_ID.toString())
                 .setCreatedAt(Instant.now())
-                .setPrice(new BigDecimal("3000"))
+                .setPrice(price)
                 .setSagaId("")
                 .setRestaurantId(RESTAURANT_ID.toString())
                 .setCustomerId(CUSTOMER_ID.toString())
-                .setPaymentOrderStatus(PaymentOrderStatus.PENDING)
+                .setPaymentOrderStatus(paymentOrderStatus)
                 .build();
     }
 
@@ -346,40 +343,16 @@ public class PaymentIntegrationTest {
     }
 
     @Test
-    void 결제가_취소시_결제데이터는_결제취소상태로_변경된다() throws ExecutionException, InterruptedException, TimeoutException {
+    void 결제가_취소시_결제데이터는_결제취소상태로_변경된다() throws ExecutionException, InterruptedException {
         //given
-        PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
-                .setCreatedAt(Instant.now())
-                .setPrice(new BigDecimal("3000"))
-                .setSagaId("")
-                .setCustomerId(CUSTOMER_ID.toString())
-                .setPaymentOrderStatus(PaymentOrderStatus.CANCELLED)
+        Payment payment = Payment.builder()
+                .orderId(new OrderId(ORDER_ID))
+                .restaurantId(new RestaurantId(RESTAURANT_ID))
+                .customerId(new CustomerId(CUSTOMER_ID))
+                .price(Money.of(new BigDecimal("3000")))
                 .build();
-
-        CreditEntry creditEntry = CreditEntry.builder(new CustomerId(CUSTOMER_ID))
-                .id(new CreditEntryId(UUID.randomUUID()))
-                .totalCreditAmount(Money.of(new BigDecimal("3000")))
-                .build();
-
-        CreditHistory creditHistory = CreditHistory.builder(
-                        new CustomerId(CUSTOMER_ID),
-                        Money.of(new BigDecimal("3000")),
-                        TransactionType.DEBIT)
-                .id(new CreditHistoryId(UUID.randomUUID()))
-                .build();
-
-
-        Payment payment = null;
-//                Payment.builder(new OrderId(ORDER_ID), new CustomerId(CUSTOMER_ID), Money.of(new BigDecimal(3000)))
-//                .id(new PaymentId(PAYMENT_ID))
-//                .createdAt(ZonedDateTime.now(ZoneId.of(ZONE_ID)))
-//                .paymentStatus(PaymentStatus.COMPLETED)
-//                .build();
-
-        creditHistoryRepository.save(creditHistory);
-        creditEntryRepository.save(creditEntry);
+        payment.initialize();
+        payment.complete();
         paymentRepository.save(payment);
         entityManager.flush();
 
@@ -387,6 +360,7 @@ public class PaymentIntegrationTest {
         TestTransaction.end();
 
         //when
+        PaymentRequestAvroModel msg = 결제요청_메세지_생성(new BigDecimal("3000"), PaymentOrderStatus.CANCELLED);
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
 
@@ -409,17 +383,7 @@ public class PaymentIntegrationTest {
         TestTransaction.end();
 
         //when
-        PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
-                .setCreatedAt(Instant.now())
-                .setPrice(new BigDecimal("4000"))
-                .setSagaId("")
-                .setCustomerId(CUSTOMER_ID.toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .setPaymentOrderStatus(PaymentOrderStatus.PENDING)
-                .build();
-
+        PaymentRequestAvroModel msg = 결제요청_메세지_생성(new BigDecimal("4000"), PaymentOrderStatus.PENDING);
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
 

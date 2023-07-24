@@ -63,9 +63,7 @@ public class PaymentIntegrationTest {
 
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
-    private static final UUID PAYMENT_ID = UUID.randomUUID();
     private static final UUID RESTAURANT_ID = UUID.randomUUID();
-
 
     @Autowired
     private KafkaTemplate<String, PaymentRequestAvroModel> paymentRequestKt;
@@ -150,7 +148,6 @@ public class PaymentIntegrationTest {
         consumePaymentResponseTopic();
     }
 
-
     @Test
     void contextLoads() {
     }
@@ -175,7 +172,7 @@ public class PaymentIntegrationTest {
                 .get();
         //then
         Thread.sleep(200);
-        Payment payment = 결제정보_확인(msg);
+        Payment payment = 결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.COMPLETED);
 
         고객장부_업데이트_확인(customerBook, customerInitialBalance.subtract(payment.getPrice()));
         식당장부_업데이트_확인(restaurantBook, payment.getPrice());
@@ -194,16 +191,15 @@ public class PaymentIntegrationTest {
                 .build();
     }
 
-    private Payment 결제정보_확인(PaymentRequestAvroModel msg) {
+    private Payment 결제정보_확인(Money expectedPrice, PaymentStatus paymentStatus) {
         Payment payment = paymentRepository
                 .findByOrderId(new OrderId(ORDER_ID))
                 .get();
 
-        Money expectedPrice = Money.of(msg.getPrice());
         assertThat(payment.getPrice())
                 .isEqualTo(expectedPrice);
         assertThat(payment.getPaymentStatus())
-                .isEqualTo(PaymentStatus.COMPLETED);
+                .isEqualTo(paymentStatus);
         assertThat(payment.getRestaurantId().getValue())
                 .isEqualTo(RESTAURANT_ID);
         assertThat(payment.getCustomerId().getValue())
@@ -403,8 +399,16 @@ public class PaymentIntegrationTest {
     }
 
     @Test
-    void 결제실패시_결제데이터가_실패상태로_저장된다() throws ExecutionException, InterruptedException, TimeoutException {
+    void 결제실패시_결제데이터가_실패상태로_저장된다() throws ExecutionException, InterruptedException {
         //given
+        testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
+        testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
+        entityManager.flush();
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        //when
         PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setOrderId(ORDER_ID.toString())
@@ -412,45 +416,18 @@ public class PaymentIntegrationTest {
                 .setPrice(new BigDecimal("4000"))
                 .setSagaId("")
                 .setCustomerId(CUSTOMER_ID.toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
                 .setPaymentOrderStatus(PaymentOrderStatus.PENDING)
                 .build();
 
-        CreditEntry creditEntry = CreditEntry.builder(new CustomerId(CUSTOMER_ID))
-                .id(new CreditEntryId(UUID.randomUUID()))
-                .totalCreditAmount(Money.of(new BigDecimal("3000")))
-                .build();
-
-        CreditHistory creditHistory = CreditHistory.builder(
-                        new CustomerId(CUSTOMER_ID),
-                        Money.of(new BigDecimal("3000")),
-                        TransactionType.DEBIT)
-                .id(new CreditHistoryId(UUID.randomUUID()))
-                .build();
-
-        creditHistoryRepository.save(creditHistory);
-        creditEntryRepository.save(creditEntry);
-        entityManager.flush();
-
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
-        //when
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
 
         //then
-        Thread.sleep(100);
+        Thread.sleep(200);
 
         Payment foundPayment = paymentRepository.findByOrderId(new OrderId(ORDER_ID)).get();
-
-        assertThat(foundPayment.getOrderId().getValue())
-                .isEqualTo(ORDER_ID);
-        assertThat(foundPayment.getCustomerId().getValue())
-                .isEqualTo(CUSTOMER_ID);
-        assertThat(foundPayment.getPrice())
-                .isEqualTo(Money.of(new BigDecimal("4000")));
-        assertThat(foundPayment.getPaymentStatus())
-                .isEqualTo(PaymentStatus.FAILED);
+        결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.FAILED);
     }
 
     @Test
@@ -493,6 +470,7 @@ public class PaymentIntegrationTest {
         Thread.sleep(100);
         Map<String, PaymentResponseAvroModel> result = consumePaymentResponseTopic();
         PaymentResponseAvroModel response = result.get(ORDER_ID.toString());
+
 
         assertThat(response.getPaymentId())
                 .isNotNull();

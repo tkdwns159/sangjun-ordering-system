@@ -3,6 +3,9 @@ package com.sangjun.payment.service.ports.input.message.listener;
 import com.sangjun.payment.domain.PaymentInitDomainService;
 import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
+import com.sangjun.payment.domain.event.PaymentEvent;
+import com.sangjun.payment.domain.event.PaymentFailedEvent;
+import com.sangjun.payment.domain.ex.IllegalPaymentStateException;
 import com.sangjun.payment.domain.valueobject.book.BookShelveId;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.exception.BookNotFoundException;
@@ -15,7 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.UUID;
+
+import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 
 @Slf4j
 @Service
@@ -32,9 +39,18 @@ public class PaymentRequestMessageListener {
         final Payment payment = PaymentRequestMapper.MAPPER.toPayment(paymentRequest);
         final Book customerBook = getBook(BookOwnerType.CUSTOMER, payment.getCustomerId().getValue());
         final Book restaurantBook = getBook(BookOwnerType.RESTAURANT, payment.getRestaurantId().getValue());
-        paymentInitDomainService.initPayment(payment, customerBook, restaurantBook);
 
-        paymentRepository.save(payment);
+        final PaymentEvent paymentEvent = executePayment(payment, customerBook, restaurantBook);
+        paymentRepository.save(paymentEvent.getPayment());
+    }
+
+    private PaymentEvent executePayment(Payment payment, Book customerBook, Book restaurantBook) {
+        try {
+            return paymentInitDomainService.initPayment(payment.clone(), customerBook, restaurantBook);
+        } catch (IllegalPaymentStateException ex) {
+            payment.markAsFailed();
+            return new PaymentFailedEvent(payment, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
+        }
     }
 
     Book getBook(BookOwnerType bookOwnerType, UUID bookOwnerId) {

@@ -5,8 +5,7 @@ import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.event.PaymentCompletedEvent;
 import com.sangjun.payment.domain.event.PaymentEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.sangjun.payment.domain.ex.IllegalPaymentStateException;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -14,8 +13,6 @@ import java.time.ZonedDateTime;
 import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 
 public class PaymentInitDomainService {
-
-    private final Logger log = LoggerFactory.getLogger(PaymentInitDomainService.class);
 
     public PaymentEvent initPayment(Payment payment, Book from, Book to) {
         validate(payment, from);
@@ -35,7 +32,7 @@ public class PaymentInitDomainService {
         Money currentBalance = book.getTotalBalance().getCurrentBalance();
 
         if (paymentPrice.isGreaterThan(currentBalance)) {
-            throw new IllegalStateException(String.format("Payment price(%s) is over the current balance(%s)",
+            throw new IllegalPaymentStateException(String.format("Payment price(%s) is over the current balance(%s)",
                     payment.getPrice(), currentBalance));
         }
     }

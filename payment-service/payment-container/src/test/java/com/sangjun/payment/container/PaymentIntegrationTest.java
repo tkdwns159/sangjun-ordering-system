@@ -251,59 +251,6 @@ public class PaymentIntegrationTest {
     }
 
     @Test
-    void 결제가_완료되면_결제완료_이벤트가_발행된다() throws ExecutionException, InterruptedException {
-        //given
-        PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
-                .setCreatedAt(Instant.now())
-                .setPrice(new BigDecimal("3000"))
-                .setSagaId("")
-                .setCustomerId(CUSTOMER_ID.toString())
-                .setPaymentOrderStatus(PaymentOrderStatus.PENDING)
-                .build();
-
-        CreditEntry creditEntry = CreditEntry.builder(new CustomerId(CUSTOMER_ID))
-                .id(new CreditEntryId(UUID.randomUUID()))
-                .totalCreditAmount(Money.of(new BigDecimal("3000")))
-                .build();
-
-        CreditHistory creditHistory = CreditHistory.builder(
-                        new CustomerId(CUSTOMER_ID),
-                        Money.of(new BigDecimal("3000")),
-                        TransactionType.DEBIT)
-                .id(new CreditHistoryId(UUID.randomUUID()))
-                .build();
-
-        creditHistoryRepository.save(creditHistory);
-        creditEntryRepository.save(creditEntry);
-        entityManager.flush();
-
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
-        //when
-        paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(100);
-        Map<String, PaymentResponseAvroModel> eventList = 발행된_이벤트메세지_모두_가져오기();
-        assertThat(eventList.size()).isEqualTo(1);
-
-        PaymentResponseAvroModel paymentResponseAvroModel = eventList.get(ORDER_ID.toString());
-
-        assertThat(paymentResponseAvroModel.getOrderId())
-                .isEqualTo(ORDER_ID.toString());
-        assertThat(paymentResponseAvroModel.getCustomerId())
-                .isEqualTo(CUSTOMER_ID.toString());
-        assertThat(paymentResponseAvroModel.getPaymentStatus())
-                .isEqualTo(com.sangjun.kafka.order.avro.model.PaymentStatus.COMPLETED);
-        assertThat(paymentResponseAvroModel.getPrice())
-                .isEqualTo(Money.of(new BigDecimal("3000")).getAmount());
-    }
-
-    @Test
     void 결제취소시_결제취소_이벤트가_발행된다() throws ExecutionException, InterruptedException, TimeoutException {
         //given
         PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()

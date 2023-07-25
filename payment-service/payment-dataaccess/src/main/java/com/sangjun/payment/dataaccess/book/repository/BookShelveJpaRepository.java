@@ -7,7 +7,7 @@ import org.springframework.data.repository.Repository;
 
 import java.util.Optional;
 
-public interface BookShelveJpaRepository extends BookShelveRepository, Repository<BookShelve, Long> {
+public interface BookShelveJpaRepository extends BookShelveRepository, Repository<BookShelve, BookShelveId> {
 
     @Override
     Optional<BookShelve> findById(BookShelveId bookShelveId);

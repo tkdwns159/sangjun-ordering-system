@@ -35,7 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Transactional
-@SpringBootTest(classes = PaymentRequestListenerTestConfig.class)
+@SpringBootTest(classes = PaymentRequestListenerTestConfig.class,
+        webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class PaymentRequestListenerTest {
     private static final OrderId orderId = new OrderId(UUID.randomUUID());
     private static final CustomerId customerId = new CustomerId(UUID.randomUUID());

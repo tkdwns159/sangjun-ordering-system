@@ -55,6 +55,7 @@ public class PaymentIntegrationTest {
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
     private static final UUID RESTAURANT_ID = UUID.randomUUID();
+    private static final int SLEEP_AMOUNT = 250;
 
     @Autowired
     private KafkaTemplate<String, PaymentRequestAvroModel> paymentRequestKt;
@@ -152,7 +153,7 @@ public class PaymentIntegrationTest {
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
         //then
-        Thread.sleep(200);
+        Thread.sleep(SLEEP_AMOUNT);
         결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.COMPLETED);
         결제완료_이벤트_발행_확인();
     }
@@ -238,7 +239,7 @@ public class PaymentIntegrationTest {
                 .get();
 
         //then
-        Thread.sleep(200);
+        Thread.sleep(SLEEP_AMOUNT);
         결제상태가_취소로_변경됨을_확인();
         결제취소_이벤트_발행_확인(price);
     }
@@ -287,7 +288,7 @@ public class PaymentIntegrationTest {
                 .get();
 
         //then
-        Thread.sleep(200);
+        Thread.sleep(SLEEP_AMOUNT);
         결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.FAILED);
         결제실패_이벤트_발행_확인(price);
     }

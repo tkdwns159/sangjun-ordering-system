@@ -305,6 +305,7 @@ public class PaymentIntegrationTest {
     @Test
     void 결제실패시_결제데이터가_실패상태로_저장된다() throws ExecutionException, InterruptedException {
         //given
+        Money price = Money.of("4000");
         testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
         testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
         entityManager.flush();
@@ -313,15 +314,22 @@ public class PaymentIntegrationTest {
         TestTransaction.end();
 
         //when
-        PaymentRequestAvroModel msg = 결제요청_메세지_생성(new BigDecimal("4000"), PaymentOrderStatus.PENDING);
+        PaymentRequestAvroModel msg = 결제요청_메세지_생성(price.getAmount(), PaymentOrderStatus.PENDING);
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
 
         //then
         Thread.sleep(200);
-
-        Payment foundPayment = paymentRepository.findByOrderId(new OrderId(ORDER_ID)).get();
         결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.FAILED);
+
+        Map<String, PaymentResponseAvroModel> eventList = 발행된_이벤트메세지_모두_가져오기();
+        assertThat(eventList.size()).isEqualTo(1);
+
+        PaymentResponseAvroModel paymentResponseAvroModel = eventList.get(ORDER_ID.toString());
+
+        발행된_이벤트메세지_확인(paymentResponseAvroModel,
+                com.sangjun.kafka.order.avro.model.PaymentStatus.FAILED,
+                price.getAmount());
     }
 
     @Test

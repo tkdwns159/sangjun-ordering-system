@@ -4,12 +4,14 @@ import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.book.BookEntry;
 import com.sangjun.payment.domain.entity.payment.Payment;
-import com.sangjun.payment.domain.valueobject.book.EntryIdType;
 import com.sangjun.payment.domain.valueobject.book.TransactionValue;
 import com.sangjun.payment.domain.valueobject.book.TransactionValueType;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.ports.input.message.listener.PaymentRequestMessageListener;
-import com.sangjun.payment.service.ports.output.repository.*;
+import com.sangjun.payment.service.ports.output.repository.BookEntryRepository;
+import com.sangjun.payment.service.ports.output.repository.BookRepository;
+import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
+import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -93,9 +95,9 @@ public class PaymentRequestListenerTest {
         // given
         Money price = Money.of("1234");
 
-        Book customerBook = testHelper.saveBook(customerId.getValue().toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        Book restaurantBook = testHelper.saveBook(restaurantId.getValue().toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-        Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
+        Book customerBook = testHelper.고객_장부_생성(customerId.getValue());
+        Book restaurantBook = testHelper.식당_장부_생성(restaurantId.getValue());
+        Book firmBook = testHelper.회사_장부_생성(UUID.randomUUID());
 
         firmBook.transact(customerBook, Money.of("1000000"), "", "");
 
@@ -163,9 +165,9 @@ public class PaymentRequestListenerTest {
     @Test
     void 결제_실패() {
         //given
-        Book customerBook = testHelper.saveBook(customerId.getValue().toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        Book restaurantBook = testHelper.saveBook(restaurantId.getValue().toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-        Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
+        Book customerBook = testHelper.고객_장부_생성(customerId.getValue());
+        Book restaurantBook = testHelper.식당_장부_생성(restaurantId.getValue());
+        testHelper.회사_장부_생성(UUID.randomUUID());
         Money price = Money.of("1234");
 
         //when

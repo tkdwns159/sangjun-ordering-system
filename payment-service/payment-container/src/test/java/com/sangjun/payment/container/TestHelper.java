@@ -15,6 +15,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class TestHelper {
 
     private final BookShelveRepository bookShelveRepository;
@@ -33,7 +34,6 @@ public class TestHelper {
         return saveBook(id.toString(), BookOwnerType.FIRM, EntryIdType.UUID);
     }
 
-    @Transactional
     public Book saveBook(String bookOwnerId, BookOwnerType bookOwnerType, EntryIdType entryIdType) {
         String bookShelveName = switch (bookOwnerType) {
             case CUSTOMER -> "customer";

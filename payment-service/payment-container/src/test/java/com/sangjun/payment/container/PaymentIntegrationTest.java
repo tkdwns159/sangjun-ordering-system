@@ -7,7 +7,6 @@ import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
 import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.valueobject.book.BookShelveId;
-import com.sangjun.payment.domain.valueobject.book.EntryIdType;
 import com.sangjun.payment.service.ports.output.repository.BookOwnerType;
 import com.sangjun.payment.service.ports.output.repository.BookRepository;
 import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
@@ -143,9 +142,9 @@ public class PaymentIntegrationTest {
     @Test
     void 결제_완료() throws ExecutionException, InterruptedException {
         //given
-        Book firmBook = 회사_장부_생성();
-        Book customerBook = 고객_장부_생성();
-        Book restaurantBook = 식당_장부_생성();
+        Book firmBook = testHelper.회사_장부_생성(UUID.randomUUID());
+        Book customerBook = testHelper.고객_장부_생성(CUSTOMER_ID);
+        Book restaurantBook = testHelper.식당_장부_생성(RESTAURANT_ID);
         Money customerInitialBalance = Money.of(new BigDecimal("100000"));
         고객에게_충전금_부여(firmBook, customerBook, customerInitialBalance);
 
@@ -161,21 +160,6 @@ public class PaymentIntegrationTest {
         고객장부_업데이트_확인(customerBook, customerInitialBalance.subtract(payment.getPrice()));
         식당장부_업데이트_확인(restaurantBook, payment.getPrice());
         결제완료_이벤트_발행_확인();
-    }
-
-    private Book 식당_장부_생성() {
-        Book restaurantBook = testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-        return restaurantBook;
-    }
-
-    private Book 고객_장부_생성() {
-        Book customerBook = testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        return customerBook;
-    }
-
-    private Book 회사_장부_생성() {
-        Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
-        return firmBook;
     }
 
     private void 고객에게_충전금_부여(Book firmBook, Book customerBook, Money initialBalance) {
@@ -266,9 +250,9 @@ public class PaymentIntegrationTest {
     @Test
     void 결제_취소() throws ExecutionException, InterruptedException {
         //given
-        고객_장부_생성();
-        식당_장부_생성();
         Money price = Money.of("3000");
+        testHelper.고객_장부_생성(CUSTOMER_ID);
+        testHelper.식당_장부_생성(RESTAURANT_ID);
         결제완료정보_생성(price);
 
         사전조건_반영();
@@ -317,8 +301,8 @@ public class PaymentIntegrationTest {
     void 결제_실패() throws ExecutionException, InterruptedException {
         //given
         Money price = Money.of("4000");
-        고객_장부_생성();
-        식당_장부_생성();
+        testHelper.고객_장부_생성(CUSTOMER_ID);
+        testHelper.식당_장부_생성(RESTAURANT_ID);
 
         사전조건_반영();
 

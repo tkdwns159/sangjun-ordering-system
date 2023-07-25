@@ -94,12 +94,11 @@ public class PaymentRequestListenerTest {
     void 결제_성공() {
         // given
         Money price = Money.of("1234");
-
         Book customerBook = testHelper.고객_장부_생성(customerId.getValue());
         Book restaurantBook = testHelper.식당_장부_생성(restaurantId.getValue());
         Book firmBook = testHelper.회사_장부_생성(UUID.randomUUID());
 
-        firmBook.transact(customerBook, Money.of("1000000"), "", "");
+        고객에게_충전금_부여(customerBook, firmBook);
 
         Money priorCustomerBookBalance = customerBook.getTotalBalance().getCurrentBalance();
         Money priorRestaurantBookBalance = restaurantBook.getTotalBalance().getCurrentBalance();
@@ -127,6 +126,10 @@ public class PaymentRequestListenerTest {
                 TransactionValue.of(TransactionValueType.DEBIT, foundPayment.getPrice()));
         마지막으로_추가된_장부_항목_확인(customerBook, foundPayment, TransactionValueType.CREDIT);
         마지막으로_추가된_장부_항목_확인(restaurantBook, foundPayment, TransactionValueType.DEBIT);
+    }
+
+    private void 고객에게_충전금_부여(Book customerBook, Book firmBook) {
+        firmBook.transact(customerBook, Money.of("1000000"), "", "");
     }
 
     private void 결제정보_확인(Payment newPayment,

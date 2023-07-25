@@ -322,17 +322,8 @@ public class PaymentIntegrationTest {
         //given
         Book customerBook = testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
         Book restaurantBook = testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-
         Money price = Money.of("3000");
-        Payment payment = Payment.builder()
-                .orderId(new OrderId(ORDER_ID))
-                .restaurantId(new RestaurantId(RESTAURANT_ID))
-                .customerId(new CustomerId(CUSTOMER_ID))
-                .price(price)
-                .build();
-        payment.initialize();
-        payment.complete();
-        paymentRepository.save(payment);
+        결제완료정보_생성(price);
         entityManager.flush();
 
         TestTransaction.flagForCommit();
@@ -345,11 +336,26 @@ public class PaymentIntegrationTest {
 
         //then
         Thread.sleep(200);
+        결제상태가_취소로_변경됨을_확인();
+        결제취소_이벤트_발행_확인(price);
+    }
+
+    private void 결제완료정보_생성(Money price) {
+        Payment payment = Payment.builder()
+                .orderId(new OrderId(ORDER_ID))
+                .restaurantId(new RestaurantId(RESTAURANT_ID))
+                .customerId(new CustomerId(CUSTOMER_ID))
+                .price(price)
+                .build();
+        payment.initialize();
+        payment.complete();
+        paymentRepository.save(payment);
+    }
+
+    private void 결제상태가_취소로_변경됨을_확인() {
         Payment foundPayment = paymentRepository.findByOrderId(new OrderId(ORDER_ID)).get();
         assertThat(foundPayment.getPaymentStatus())
                 .isEqualTo(PaymentStatus.CANCELLED);
-
-        결제취소_이벤트_발행_확인(price);
     }
 
     private void 결제취소_이벤트_발행_확인(Money price) {

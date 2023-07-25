@@ -116,11 +116,21 @@ public class PaymentRequestListenerTest {
                 .findByOrderId(orderId)
                 .get();
 
+        final Money priorCustomerBookBalance = customerBook.getTotalBalance().getCurrentBalance();
+        final Money priorRestaurantBookBalance = restaurantBook.getTotalBalance().getCurrentBalance();
+        final Money currentCustomerBookBalance = priorCustomerBookBalance.subtract(price);
+        final Money currentRestaurantBookBalance = priorRestaurantBookBalance.add(price);
+
+        final TransactionValue customerTransactionValue =
+                TransactionValue.of(TransactionValueType.CREDIT, foundPayment.getPrice());
+        final TransactionValue restaurantTransactionValue =
+                TransactionValue.of(TransactionValueType.DEBIT, foundPayment.getPrice());
+
         결제정보_확인(foundPayment, price, PaymentStatus.COMPLETED);
-        장부_총액_변화_확인(customerBook.getId(), customerBook.getTotalBalance().getCurrentBalance().subtract(price));
-        장부_총액_변화_확인(restaurantBook.getId(), restaurantBook.getTotalBalance().getCurrentBalance().add(price));
-        마지막으로_추가된_장부_항목_확인(customerBook, TransactionValue.of(TransactionValueType.CREDIT, foundPayment.getPrice()));
-        마지막으로_추가된_장부_항목_확인(restaurantBook, TransactionValue.of(TransactionValueType.DEBIT, foundPayment.getPrice()));
+        장부_총액_변화_확인(customerBook.getId(), currentCustomerBookBalance);
+        장부_총액_변화_확인(restaurantBook.getId(), currentRestaurantBookBalance);
+        마지막으로_추가된_장부_항목_확인(customerBook, customerTransactionValue);
+        마지막으로_추가된_장부_항목_확인(restaurantBook, restaurantTransactionValue);
     }
 
     private void 고객에게_충전금_부여(Book customerBook, Book firmBook) {
@@ -156,7 +166,7 @@ public class PaymentRequestListenerTest {
         BookEntry lastRestaurantBookEntry = bookEntryRepository
                 .findTopByBookIdOrderByCreatedTimeDesc(restaurantBook.getId())
                 .get();
-        
+
         assertThat(lastRestaurantBookEntry.getTransactionValue())
                 .isEqualTo(tv);
     }
@@ -216,9 +226,15 @@ public class PaymentRequestListenerTest {
 
         //then
         Payment foundPayment = paymentRepository.findByOrderId(orderId).get();
+
+        final Money priorCustomerBookBalance = customerBook.getTotalBalance().getCurrentBalance();
+        final Money priorRestaurantBookBalance = restaurantBook.getTotalBalance().getCurrentBalance();
+        final Money currentCustomerBookBalance = priorCustomerBookBalance.add(price);
+        final Money currentRestaurantBookBalance = priorRestaurantBookBalance.subtract(price);
+
         결제정보_확인(foundPayment, price, PaymentStatus.CANCELLED);
-        장부_총액_변화_확인(customerBook.getId(), customerBook.getTotalBalance().getCurrentBalance().add(price));
-        장부_총액_변화_확인(restaurantBook.getId(), restaurantBook.getTotalBalance().getCurrentBalance().subtract(price));
+        장부_총액_변화_확인(customerBook.getId(), currentCustomerBookBalance);
+        장부_총액_변화_확인(restaurantBook.getId(), currentRestaurantBookBalance);
         마지막으로_추가된_장부_항목_확인(restaurantBook, TransactionValue.of(TransactionValueType.CREDIT, foundPayment.getPrice()));
         마지막으로_추가된_장부_항목_확인(customerBook, TransactionValue.of(TransactionValueType.DEBIT, foundPayment.getPrice()));
     }

@@ -4,6 +4,7 @@ import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.book.BookShelve;
 import com.sangjun.payment.domain.valueobject.book.BookShelveId;
 import com.sangjun.payment.domain.valueobject.book.EntryIdType;
+import com.sangjun.payment.service.ports.output.repository.BookEntryRepository;
 import com.sangjun.payment.service.ports.output.repository.BookOwnerType;
 import com.sangjun.payment.service.ports.output.repository.BookRepository;
 import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
@@ -23,6 +24,7 @@ public class TestHelper {
 
     private final BookShelveRepository bookShelveRepository;
     private final BookRepository bookRepository;
+    private final BookEntryRepository bookEntryRepository;
 
     @PersistenceContext
     private final EntityManager em;

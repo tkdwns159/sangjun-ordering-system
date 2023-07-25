@@ -119,8 +119,8 @@ public class PaymentRequestListenerTest {
         결제정보_확인(foundPayment, price, PaymentStatus.COMPLETED);
         장부_총액_변화_확인(customerBook.getId(), customerBook.getTotalBalance().getCurrentBalance().subtract(price));
         장부_총액_변화_확인(restaurantBook.getId(), restaurantBook.getTotalBalance().getCurrentBalance().add(price));
-        마지막으로_추가된_장부_항목_확인(customerBook, foundPayment, TransactionValueType.CREDIT);
-        마지막으로_추가된_장부_항목_확인(restaurantBook, foundPayment, TransactionValueType.DEBIT);
+        마지막으로_추가된_장부_항목_확인(customerBook, TransactionValue.of(TransactionValueType.CREDIT, foundPayment.getPrice()));
+        마지막으로_추가된_장부_항목_확인(restaurantBook, TransactionValue.of(TransactionValueType.DEBIT, foundPayment.getPrice()));
     }
 
     private void 고객에게_충전금_부여(Book customerBook, Book firmBook) {
@@ -152,11 +152,13 @@ public class PaymentRequestListenerTest {
                 .isEqualTo(expectedBalance);
     }
 
-    private void 마지막으로_추가된_장부_항목_확인(Book restaurantBook, Payment newPayment, TransactionValueType tvType) {
-        BookEntry lastRestaurantBookEntry = bookEntryRepository.findTopByBookIdOrderByCreatedTimeDesc(restaurantBook.getId())
+    private void 마지막으로_추가된_장부_항목_확인(Book restaurantBook, TransactionValue tv) {
+        BookEntry lastRestaurantBookEntry = bookEntryRepository
+                .findTopByBookIdOrderByCreatedTimeDesc(restaurantBook.getId())
                 .get();
+        
         assertThat(lastRestaurantBookEntry.getTransactionValue())
-                .isEqualTo(TransactionValue.of(tvType, newPayment.getPrice()));
+                .isEqualTo(tv);
     }
 
     @Test
@@ -217,8 +219,8 @@ public class PaymentRequestListenerTest {
         결제정보_확인(foundPayment, price, PaymentStatus.CANCELLED);
         장부_총액_변화_확인(customerBook.getId(), customerBook.getTotalBalance().getCurrentBalance().add(price));
         장부_총액_변화_확인(restaurantBook.getId(), restaurantBook.getTotalBalance().getCurrentBalance().subtract(price));
-        마지막으로_추가된_장부_항목_확인(restaurantBook, foundPayment, TransactionValueType.CREDIT);
-        마지막으로_추가된_장부_항목_확인(customerBook, foundPayment, TransactionValueType.DEBIT);
+        마지막으로_추가된_장부_항목_확인(restaurantBook, TransactionValue.of(TransactionValueType.CREDIT, foundPayment.getPrice()));
+        마지막으로_추가된_장부_항목_확인(customerBook, TransactionValue.of(TransactionValueType.DEBIT, foundPayment.getPrice()));
     }
 
     private void saveCompletedPayment(Money price) {

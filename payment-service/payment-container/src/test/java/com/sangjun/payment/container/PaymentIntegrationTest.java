@@ -6,8 +6,6 @@ import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
 import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
-import com.sangjun.payment.domain.valueobject.book.BookShelveId;
-import com.sangjun.payment.service.ports.output.repository.BookOwnerType;
 import com.sangjun.payment.service.ports.output.repository.BookRepository;
 import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
 import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
@@ -155,10 +153,7 @@ public class PaymentIntegrationTest {
                 .get();
         //then
         Thread.sleep(200);
-        Payment payment = 결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.COMPLETED);
-
-        고객장부_업데이트_확인(customerBook, customerInitialBalance.subtract(payment.getPrice()));
-        식당장부_업데이트_확인(restaurantBook, payment.getPrice());
+        결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.COMPLETED);
         결제완료_이벤트_발행_확인();
     }
 
@@ -227,32 +222,12 @@ public class PaymentIntegrationTest {
         return payment;
     }
 
-    private void 식당장부_업데이트_확인(Book restaurantBook, Money expectedPrice) {
-        장부_업데이트_확인(restaurantBook, BookOwnerType.RESTAURANT, RESTAURANT_ID.toString(), expectedPrice);
-    }
-
-    private void 고객장부_업데이트_확인(Book customerBook, Money expectedPrice) {
-        장부_업데이트_확인(customerBook, BookOwnerType.CUSTOMER, CUSTOMER_ID.toString(), expectedPrice);
-    }
-
-    private void 장부_업데이트_확인(Book restaurantBook, BookOwnerType bookOwnerType, String bookOwnerId, Money expectedPrice) {
-        UUID restaurantShelveId = bookShelveRepository.findIdByOwnerType(bookOwnerType);
-        Book foundRestaurantBook = bookRepository
-                .findByBookShelveIdAndBookOwner_uuid(new BookShelveId(restaurantShelveId), UUID.fromString(bookOwnerId))
-                .get();
-
-        assertThat(foundRestaurantBook.getTotalBalance().getCurrentBalance())
-                .isEqualTo(expectedPrice);
-        assertThat(foundRestaurantBook.getBookEntryList().getSize())
-                .isEqualTo(restaurantBook.getBookEntryList().getSize() + 1);
-    }
-
     @Test
     void 결제_취소() throws ExecutionException, InterruptedException {
         //given
         Money price = Money.of("3000");
-        Book customerBook = testHelper.고객_장부_생성(CUSTOMER_ID);
-        Book restaurantBook = testHelper.식당_장부_생성(RESTAURANT_ID);
+        testHelper.고객_장부_생성(CUSTOMER_ID);
+        testHelper.식당_장부_생성(RESTAURANT_ID);
         결제완료정보_생성(price);
 
         사전조건_반영();
@@ -265,8 +240,6 @@ public class PaymentIntegrationTest {
         //then
         Thread.sleep(200);
         결제상태가_취소로_변경됨을_확인();
-        고객장부_업데이트_확인(customerBook, price);
-        식당장부_업데이트_확인(restaurantBook, Money.ZERO.subtract(price));
         결제취소_이벤트_발행_확인(price);
     }
 

@@ -8,7 +8,10 @@ import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.valueobject.book.BookShelveId;
 import com.sangjun.payment.domain.valueobject.book.EntryIdType;
-import com.sangjun.payment.service.ports.output.repository.*;
+import com.sangjun.payment.service.ports.output.repository.BookOwnerType;
+import com.sangjun.payment.service.ports.output.repository.BookRepository;
+import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
+import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.jupiter.api.*;
@@ -64,12 +67,6 @@ public class PaymentIntegrationTest {
 
     @Autowired
     private PaymentRepository paymentRepository;
-
-    @Autowired
-    private CreditHistoryRepository creditHistoryRepository;
-
-    @Autowired
-    private CreditEntryRepository creditEntryRepository;
 
     @Autowired
     private BookRepository bookRepository;

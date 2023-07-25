@@ -251,8 +251,8 @@ public class PaymentIntegrationTest {
     void 결제_취소() throws ExecutionException, InterruptedException {
         //given
         Money price = Money.of("3000");
-        testHelper.고객_장부_생성(CUSTOMER_ID);
-        testHelper.식당_장부_생성(RESTAURANT_ID);
+        Book customerBook = testHelper.고객_장부_생성(CUSTOMER_ID);
+        Book restaurantBook = testHelper.식당_장부_생성(RESTAURANT_ID);
         결제완료정보_생성(price);
 
         사전조건_반영();
@@ -265,6 +265,8 @@ public class PaymentIntegrationTest {
         //then
         Thread.sleep(200);
         결제상태가_취소로_변경됨을_확인();
+        고객장부_업데이트_확인(customerBook, price);
+        식당장부_업데이트_확인(restaurantBook, Money.ZERO.subtract(price));
         결제취소_이벤트_발행_확인(price);
     }
 

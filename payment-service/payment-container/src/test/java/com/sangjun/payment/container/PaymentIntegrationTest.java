@@ -146,18 +146,14 @@ public class PaymentIntegrationTest {
     @Test
     void 결제_완료() throws ExecutionException, InterruptedException {
         //given
-        Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
-        Book customerBook = testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        Book restaurantBook = testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-        Money customerInitialBalance = Money.of("1000000");
-        firmBook.transact(customerBook, customerInitialBalance, "", "");
+        Book firmBook = 회사_장부_생성();
+        Book customerBook = 고객_장부_생성();
+        Book restaurantBook = 식당_장부_생성();
+        Money customerInitialBalance = Money.of(new BigDecimal("100000"));
+        고객에게_충전금_부여(firmBook, customerBook, customerInitialBalance);
 
-        entityManager.flush();
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
+        사전조건_반영();
         //when
-        TestTransaction.start();
         PaymentRequestAvroModel msg = 결제요청_메세지_생성(new BigDecimal("3000"), PaymentOrderStatus.PENDING);
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
@@ -168,6 +164,32 @@ public class PaymentIntegrationTest {
         고객장부_업데이트_확인(customerBook, customerInitialBalance.subtract(payment.getPrice()));
         식당장부_업데이트_확인(restaurantBook, payment.getPrice());
         결제완료_이벤트_발행_확인();
+    }
+
+    private Book 식당_장부_생성() {
+        Book restaurantBook = testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
+        return restaurantBook;
+    }
+
+    private Book 고객_장부_생성() {
+        Book customerBook = testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
+        return customerBook;
+    }
+
+    private Book 회사_장부_생성() {
+        Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
+        return firmBook;
+    }
+
+    private void 고객에게_충전금_부여(Book firmBook, Book customerBook, Money initialBalance) {
+        firmBook.transact(customerBook, initialBalance, "", "");
+    }
+
+    private void 사전조건_반영() {
+        entityManager.flush();
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+        TestTransaction.start();
     }
 
     private void 결제완료_이벤트_발행_확인() {
@@ -247,14 +269,12 @@ public class PaymentIntegrationTest {
     @Test
     void 결제_취소() throws ExecutionException, InterruptedException {
         //given
-        Book customerBook = testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        Book restaurantBook = testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
+        고객_장부_생성();
+        식당_장부_생성();
         Money price = Money.of("3000");
         결제완료정보_생성(price);
-        entityManager.flush();
 
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
+        사전조건_반영();
 
         //when
         PaymentRequestAvroModel msg = 결제요청_메세지_생성(price.getAmount(), PaymentOrderStatus.CANCELLED);
@@ -300,12 +320,10 @@ public class PaymentIntegrationTest {
     void 결제_실패() throws ExecutionException, InterruptedException {
         //given
         Money price = Money.of("4000");
-        testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-        entityManager.flush();
+        고객_장부_생성();
+        식당_장부_생성();
 
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
+        사전조건_반영();
 
         //when
         PaymentRequestAvroModel msg = 결제요청_메세지_생성(price.getAmount(), PaymentOrderStatus.PENDING);

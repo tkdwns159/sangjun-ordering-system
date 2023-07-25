@@ -68,15 +68,15 @@ public class PaymentRequestMessageListener {
 
     @Transactional
     public void cancelPayment(PaymentRequest paymentRequest) {
-        OrderId orderId = new OrderId(UUID.fromString(paymentRequest.getOrderId()));
-        Payment payment = paymentRepository.findByOrderId(orderId)
+        final OrderId orderId = new OrderId(UUID.fromString(paymentRequest.getOrderId()));
+        final Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new PaymentNotFoundException(orderId.getValue()));
         final Book customerBook = getBook(BookOwnerType.CUSTOMER, payment.getCustomerId().getValue());
         final Book restaurantBook = getBook(BookOwnerType.RESTAURANT, payment.getRestaurantId().getValue());
 
         final PaymentCancelledEvent paymentCancelledEvent =
                 paymentCancelDomainService.cancelPayment(payment, restaurantBook, customerBook);
-        paymentRepository.save(payment);
+        paymentRepository.save(paymentCancelledEvent.getPayment());
         paymentEventShooter.fire(paymentCancelledEvent);
     }
 }

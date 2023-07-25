@@ -6,7 +6,7 @@ import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.RestaurantId;
 import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
-import com.sangjun.payment.domain.event.PaymentCompletedEvent;
+import com.sangjun.payment.domain.event.PaymentEvent;
 import com.sangjun.payment.domain.valueobject.payment.PaymentId;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -44,5 +44,5 @@ public interface PaymentMessageMapper {
     @Mapping(target = "paymentId", source = "payment.id")
     @Mapping(target = "sagaId", constant = "")
     @Mapping(target = "createdAt", source = "createdAt")
-    PaymentResponseAvroModel toPaymentResponseAvroModel(PaymentCompletedEvent paymentCompletedEvent);
+    PaymentResponseAvroModel toPaymentResponseAvroModel(PaymentEvent paymentEvent);
 }

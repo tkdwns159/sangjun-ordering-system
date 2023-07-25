@@ -4,7 +4,7 @@ import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
 import com.sangjun.kafka.producer.KafkaMessageHelper;
 import com.sangjun.kafka.producer.service.KafkaProducer;
 import com.sangjun.payment.domain.event.PaymentCancelledEvent;
-import com.sangjun.payment.domain.event.PaymentCompletedEvent;
+import com.sangjun.payment.messaging.mapper.PaymentMessageMapper;
 import com.sangjun.payment.messaging.mapper.PaymentMessagingDataMapper;
 import com.sangjun.payment.service.config.PaymentServiceConfigData;
 import com.sangjun.payment.service.ports.output.message.publisher.PaymentCancelledMessagePublisher;
@@ -27,7 +27,8 @@ public class PaymentCancelledKafkaMessagePublisher implements PaymentCancelledMe
         log.info("Received PaymentCancelledEvent for order id : {}", orderId);
 
         try {
-            PaymentResponseAvroModel paymentResponseAvroModel = paymentMessagingDataMapper.paymentCancelledEventToPaymentResponseAvroModel(domainEvent);
+            PaymentResponseAvroModel paymentResponseAvroModel =
+                    PaymentMessageMapper.MAPPER.toPaymentResponseAvroModel(domainEvent);
             kafkaProducer.send(
                     paymentServiceConfigData.getPaymentResponseTopicName(),
                     orderId,

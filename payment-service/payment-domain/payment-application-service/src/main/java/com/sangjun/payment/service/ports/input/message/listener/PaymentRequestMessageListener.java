@@ -44,6 +44,7 @@ public class PaymentRequestMessageListener {
 
         final PaymentEvent paymentEvent = executePayment(payment, customerBook, restaurantBook);
         paymentRepository.save(paymentEvent.getPayment());
+        paymentEventShooter.fire(paymentEvent);
     }
 
     private PaymentEvent executePayment(Payment payment, Book customerBook, Book restaurantBook) {

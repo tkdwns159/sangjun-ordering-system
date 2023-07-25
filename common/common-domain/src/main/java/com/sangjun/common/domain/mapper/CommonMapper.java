@@ -39,4 +39,5 @@ public interface CommonMapper {
     default UUID toUUID(RestaurantId restaurantId) {
         return restaurantId.getValue();
     }
+
 }

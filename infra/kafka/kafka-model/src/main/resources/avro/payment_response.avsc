@@ -39,6 +39,13 @@
       }
     },
     {
+      "name": "restaurantId",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
       "name": "price",
       "type": {
         "type": "bytes",
@@ -62,7 +69,8 @@
         "symbols": [
           "COMPLETED",
           "CANCELLED",
-          "FAILED"
+          "FAILED",
+          "PENDING"
         ]
       }
     },

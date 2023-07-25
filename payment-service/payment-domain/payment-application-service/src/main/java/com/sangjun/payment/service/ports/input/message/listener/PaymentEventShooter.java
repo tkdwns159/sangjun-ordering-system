@@ -32,7 +32,5 @@ public class PaymentEventShooter {
             log.error("Invalid PaymentEvent: {}", event.getClass().toString());
             throw new PaymentDomainException("Invalid OrderEvent: " + event.getClass());
         }
-
     }
-
 }

@@ -150,7 +150,7 @@ public class PaymentIntegrationTest {
     }
 
     @Test
-    void 결제가_완료되면_결제데이터가_저장된다() throws ExecutionException, InterruptedException {
+    void 결제_완료() throws ExecutionException, InterruptedException {
         //given
         Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
         Book customerBook = testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
@@ -173,6 +173,22 @@ public class PaymentIntegrationTest {
 
         고객장부_업데이트_확인(customerBook, customerInitialBalance.subtract(payment.getPrice()));
         식당장부_업데이트_확인(restaurantBook, payment.getPrice());
+
+        Map<String, PaymentResponseAvroModel> eventList = consumePaymentResponseTopic();
+        assertThat(eventList.size()).isEqualTo(1);
+
+        PaymentResponseAvroModel responseMsg = eventList.get(ORDER_ID.toString());
+
+        assertThat(responseMsg.getOrderId())
+                .isEqualTo(ORDER_ID.toString());
+        assertThat(responseMsg.getCustomerId())
+                .isEqualTo(CUSTOMER_ID.toString());
+        assertThat(responseMsg.getRestaurantId())
+                .isEqualTo(RESTAURANT_ID.toString());
+        assertThat(responseMsg.getPaymentStatus())
+                .isEqualTo(com.sangjun.kafka.order.avro.model.PaymentStatus.COMPLETED);
+        assertThat(responseMsg.getPrice())
+                .isEqualTo(Money.of(new BigDecimal("3000")).getAmount());
     }
 
     private PaymentRequestAvroModel 결제요청_메세지_생성(BigDecimal price, PaymentOrderStatus paymentOrderStatus) {
@@ -225,7 +241,7 @@ public class PaymentIntegrationTest {
     }
 
     @Test
-    void 결제가_완료되면_결제완료_이벤트가_발행된다() throws ExecutionException, InterruptedException, TimeoutException {
+    void 결제가_완료되면_결제완료_이벤트가_발행된다() throws ExecutionException, InterruptedException {
         //given
         PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())

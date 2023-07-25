@@ -9,7 +9,11 @@ import javax.persistence.Embeddable;
 @Embeddable
 @AttributeOverride(name = "value", column = @Column(name = "book_entry_id"))
 public class BookEntryId extends BaseId<Long> {
+
     public BookEntryId(Long value) {
         super(value);
+    }
+
+    protected BookEntryId() {
     }
 }

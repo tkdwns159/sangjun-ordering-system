@@ -1,13 +1,16 @@
 package com.sangjun.common.domain.valueobject;
 
+import javax.persistence.Access;
+import javax.persistence.AccessType;
 import javax.persistence.MappedSuperclass;
 import java.io.Serializable;
 import java.util.Objects;
 
 @MappedSuperclass
+@Access(AccessType.FIELD)
 public abstract class BaseId<T> implements Serializable {
 
-    private final T value;
+    private T value;
 
     protected BaseId(T value) {
         this.value = value;
@@ -15,6 +18,9 @@ public abstract class BaseId<T> implements Serializable {
 
     public T getValue() {
         return this.value;
+    }
+
+    protected BaseId() {
     }
 
     @Override

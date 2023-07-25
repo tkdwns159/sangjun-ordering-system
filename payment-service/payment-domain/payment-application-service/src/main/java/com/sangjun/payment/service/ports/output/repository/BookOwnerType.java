@@ -1,4 +1,4 @@
-package com.sangjun.payment.domain.valueobject.book;
+package com.sangjun.payment.service.ports.output.repository;
 
 public enum BookOwnerType {
     FIRM, CUSTOMER, RESTAURANT;

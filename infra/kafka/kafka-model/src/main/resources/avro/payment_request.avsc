@@ -18,6 +18,13 @@
       }
     },
     {
+      "name": "restaurantId",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
       "name": "customerId",
       "type": {
         "type": "string",
@@ -52,7 +59,10 @@
       "type": {
         "type": "enum",
         "name": "PaymentOrderStatus",
-        "symbols": ["PENDING", "CANCELLED"]
+        "symbols": [
+          "PENDING",
+          "CANCELLED"
+        ]
       }
     }
   ]

@@ -3,6 +3,7 @@ package com.sangjun.payment.domain.entity.payment;
 
 import com.sangjun.common.domain.entity.AggregateRoot;
 import com.sangjun.common.domain.valueobject.*;
+import com.sangjun.payment.domain.ex.IllegalPaymentStateException;
 import com.sangjun.payment.domain.valueobject.payment.PaymentId;
 
 import javax.persistence.*;
@@ -16,16 +17,15 @@ import static java.util.Objects.requireNonNull;
 @Entity
 @Table(name = "payments", schema = "payment")
 @Access(AccessType.FIELD)
-@AttributeOverride(name = "value", column = @Column(name = "id"))
-public class Payment extends AggregateRoot<PaymentId> {
+public class Payment extends AggregateRoot<PaymentId> implements Cloneable {
     @Embedded
-    private final OrderId orderId;
+    private OrderId orderId;
     @Embedded
-    private final RestaurantId restaurantId;
+    private RestaurantId restaurantId;
     @Embedded
-    private final CustomerId customerId;
+    private CustomerId customerId;
     @Embedded
-    private final Money price;
+    private Money price;
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
     private ZonedDateTime createdAt;
@@ -37,6 +37,26 @@ public class Payment extends AggregateRoot<PaymentId> {
         this.price = price;
     }
 
+    private Payment(
+            PaymentId paymentId,
+            OrderId orderId,
+            RestaurantId restaurantId,
+            CustomerId customerId,
+            Money price,
+            PaymentStatus paymentStatus,
+            ZonedDateTime createdAt) {
+        setId(paymentId);
+        this.orderId = orderId;
+        this.restaurantId = restaurantId;
+        this.customerId = customerId;
+        this.price = price;
+        this.paymentStatus = paymentStatus;
+        this.createdAt = createdAt;
+    }
+
+    protected Payment() {
+    }
+
     private static Payment of(Builder builder) {
         return new Payment(
                 requireNonNull(builder.orderId, "orderId"),
@@ -45,6 +65,7 @@ public class Payment extends AggregateRoot<PaymentId> {
                 requireNonNull(builder.price, "price"));
     }
 
+
     public static Builder builder() {
         return new Builder();
     }
@@ -52,7 +73,7 @@ public class Payment extends AggregateRoot<PaymentId> {
     public void initialize() {
         validate();
         setId(new PaymentId(UUID.randomUUID()));
-        this.paymentStatus = PaymentStatus.READY;
+        this.paymentStatus = PaymentStatus.PENDING;
     }
 
     @PrePersist
@@ -66,7 +87,7 @@ public class Payment extends AggregateRoot<PaymentId> {
 
     private void checkIfPriceIsGreaterThanZero() {
         if (!price.isGreaterThanZero()) {
-            throw new IllegalStateException(
+            throw new IllegalPaymentStateException(
                     String.format("Price(%s) must be greater than zero",
                             this.price.getAmount().toString()));
         }
@@ -78,7 +99,7 @@ public class Payment extends AggregateRoot<PaymentId> {
 
     public void cancel() {
         if (this.paymentStatus != PaymentStatus.COMPLETED) {
-            throw new IllegalStateException(
+            throw new IllegalPaymentStateException(
                     String.format("Payment(id: %s) - PaymentStatus(%s) must be COMPLETED to cancel payment",
                             this.getId().getValue(), this.paymentStatus.toString()));
         }
@@ -87,10 +108,11 @@ public class Payment extends AggregateRoot<PaymentId> {
 
     public void markAsFailed() {
         if (this.paymentStatus == PaymentStatus.FAILED) {
-            throw new IllegalStateException(
+            throw new IllegalPaymentStateException(
                     String.format("Payment(id: %s) is already marked as FAILED",
                             this.getId().getValue()));
         }
+        setId(new PaymentId(UUID.randomUUID()));
         this.paymentStatus = PaymentStatus.FAILED;
     }
 
@@ -114,6 +136,20 @@ public class Payment extends AggregateRoot<PaymentId> {
         return createdAt;
     }
 
+    public RestaurantId getRestaurantId() {
+        return restaurantId;
+    }
+
+    @Override
+    public Payment clone() {
+        try {
+            Payment clone = (Payment) super.clone();
+            // TODO: copy mutable state here, so the clone can't change the internals of the original
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
 
     public static final class Builder {
         private OrderId orderId;

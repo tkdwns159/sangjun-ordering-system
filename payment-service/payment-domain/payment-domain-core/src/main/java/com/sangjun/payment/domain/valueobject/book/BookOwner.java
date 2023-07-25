@@ -1,22 +1,29 @@
 package com.sangjun.payment.domain.valueobject.book;
 
+import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import java.util.UUID;
 
 @Embeddable
 public class BookOwner {
 
-    private final UUID ownerUuid;
-    private final Long ownerId;
+    @Column(name = "owner_uuid")
+    private UUID uuid;
+
+    @Column(name = "owner_long_id")
+    private Long longId;
 
     private BookOwner(UUID ownerUuid) {
-        this.ownerUuid = ownerUuid;
-        this.ownerId = null;
+        this.uuid = ownerUuid;
+        this.longId = null;
     }
 
-    private BookOwner(Long ownerId) {
-        this.ownerId = ownerId;
-        this.ownerUuid = null;
+    private BookOwner(Long longId) {
+        this.longId = longId;
+        this.uuid = null;
+    }
+
+    protected BookOwner() {
     }
 
     public static BookOwner uuidOf(UUID id) {

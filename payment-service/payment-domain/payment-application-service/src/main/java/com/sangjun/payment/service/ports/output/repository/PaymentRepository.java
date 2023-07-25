@@ -1,12 +1,12 @@
 package com.sangjun.payment.service.ports.output.repository;
 
+import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.payment.domain.entity.payment.Payment;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public interface PaymentRepository {
     Payment save(Payment payment);
 
-    Optional<Payment> findByOrderId(UUID orderId);
+    Optional<Payment> findByOrderId(OrderId orderId);
 }

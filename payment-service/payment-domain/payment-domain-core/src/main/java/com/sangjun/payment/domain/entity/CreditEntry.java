@@ -14,10 +14,13 @@ import javax.persistence.*;
 @AttributeOverride(name = "value", column = @Column(name = "id"))
 public class CreditEntry extends BaseEntity<CreditEntryId> {
     @Embedded
-    private final CustomerId customerId;
+    private CustomerId customerId;
 
     @Embedded
     private Money totalCreditAmount;
+
+    protected CreditEntry() {
+    }
 
     private CreditEntry(Builder builder) {
         setId(builder.id);

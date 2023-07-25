@@ -14,11 +14,11 @@ import javax.persistence.*;
 @AttributeOverride(name = "value", column = @Column(name = "id"))
 public class CreditHistory extends BaseEntity<CreditHistoryId> {
     @Embedded
-    private final CustomerId customerId;
+    private CustomerId customerId;
     @Embedded
-    private final Money amount;
+    private Money amount;
     @Enumerated(EnumType.STRING)
-    private final TransactionType transactionType;
+    private TransactionType transactionType;
 
     private CreditHistory(Builder builder) {
         setId(builder.id);
@@ -27,10 +27,12 @@ public class CreditHistory extends BaseEntity<CreditHistoryId> {
         transactionType = builder.transactionType;
     }
 
+    protected CreditHistory() {
+    }
+
     public static Builder builder(CustomerId customerId, Money amount, TransactionType transactionType) {
         return new Builder(customerId, amount, transactionType);
     }
-
 
     public CustomerId getCustomerId() {
         return customerId;

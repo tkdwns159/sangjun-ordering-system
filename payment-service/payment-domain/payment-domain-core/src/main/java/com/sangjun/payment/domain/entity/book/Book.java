@@ -6,6 +6,7 @@ import com.sangjun.payment.domain.valueobject.book.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
@@ -16,21 +17,24 @@ public class Book extends AggregateRoot<BookId> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_shelve_id")
-    private final BookShelve bookShelve;
+    private BookShelve bookShelve;
     @Embedded
-    private final BookOwner bookOwner;
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_id")
+    private BookOwner bookOwner;
+
     @Embedded
     private BookEntryList bookEntryList;
     @Embedded
     private TotalBalance totalBalance;
 
     private Book(BookOwner owner, BookShelve bookShelve) {
+        setId(new BookId(UUID.randomUUID()));
         this.bookOwner = owner;
         this.bookShelve = bookShelve;
         this.bookEntryList = new BookEntryList(new ArrayList<>());
-        this.totalBalance = new TotalBalance();
+        this.totalBalance = TotalBalance.newInstance();
+    }
+
+    protected Book() {
     }
 
     public static Book of(BookShelve bookShelve, String bookOwnerId) {

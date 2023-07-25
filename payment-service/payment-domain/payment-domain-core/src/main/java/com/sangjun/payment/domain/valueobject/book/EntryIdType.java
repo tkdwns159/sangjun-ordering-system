@@ -1,8 +1,5 @@
 package com.sangjun.payment.domain.valueobject.book;
 
-import javax.persistence.Embeddable;
-
-@Embeddable
 public enum EntryIdType {
     UUID, LONG;
 

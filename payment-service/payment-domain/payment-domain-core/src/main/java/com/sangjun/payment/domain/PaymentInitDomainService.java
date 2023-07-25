@@ -5,18 +5,20 @@ import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.event.PaymentCompletedEvent;
 import com.sangjun.payment.domain.event.PaymentEvent;
+import com.sangjun.payment.domain.ex.IllegalPaymentStateException;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 
-public class PaymentInitService {
+public class PaymentInitDomainService {
 
     public PaymentEvent initPayment(Payment payment, Book from, Book to) {
         validate(payment, from);
         payment.initialize();
         from.transact(to, payment.getPrice(), "ITEM_PURCHASE", "ITEM_SELL");
+        payment.complete();
 
         return new PaymentCompletedEvent(payment, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
@@ -30,7 +32,7 @@ public class PaymentInitService {
         Money currentBalance = book.getTotalBalance().getCurrentBalance();
 
         if (paymentPrice.isGreaterThan(currentBalance)) {
-            throw new IllegalStateException(String.format("Payment price(%s) is over the current balance(%s)",
+            throw new IllegalPaymentStateException(String.format("Payment price(%s) is over the current balance(%s)",
                     payment.getPrice(), currentBalance));
         }
     }

@@ -10,11 +10,14 @@ import java.util.Objects;
 public class Money {
 
     @Column(name = "amount")
-    private final BigDecimal amount;
+    private BigDecimal amount;
     public static final Money ZERO = new Money(BigDecimal.ZERO);
 
     public Money(BigDecimal amount) {
         this.amount = setScale(amount);
+    }
+
+    protected Money() {
     }
 
     public static Money of(BigDecimal amount) {
@@ -68,5 +71,10 @@ public class Money {
         return Objects.hash(amount);
     }
 
-
+    @Override
+    public String toString() {
+        return "Money{" +
+                "amount=" + amount +
+                '}';
+    }
 }

@@ -11,20 +11,22 @@ import javax.persistence.Embedded;
 public class TotalBalance {
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "total_credit_amount"))
-    private final Money totalCreditAmount;
+    private Money totalCreditAmount;
 
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "total_debit_amount"))
-    private final Money totalDebitAmount;
+    private Money totalDebitAmount;
 
-    public TotalBalance() {
-        this.totalCreditAmount = Money.ZERO;
-        this.totalDebitAmount = Money.ZERO;
+    protected TotalBalance() {
     }
 
     private TotalBalance(Money totalCreditAmount, Money totalDebitAmount) {
         this.totalCreditAmount = totalCreditAmount;
         this.totalDebitAmount = totalDebitAmount;
+    }
+
+    public static TotalBalance newInstance() {
+        return new TotalBalance(Money.ZERO, Money.ZERO);
     }
 
     public TotalBalance addCredit(Money amount) {

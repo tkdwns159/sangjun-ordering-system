@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Mapper(config = CentralConfig.class)
-public interface CommonMapstructMapper {
+public interface CommonMapper {
 
-    CommonMapstructMapper MAPPER = Mappers.getMapper(CommonMapstructMapper.class);
+    CommonMapper MAPPER = Mappers.getMapper(CommonMapper.class);
 
     OrderId toOrderId(UUID value);
 

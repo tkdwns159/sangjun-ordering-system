@@ -6,7 +6,6 @@ import com.sangjun.kafka.order.avro.model.PaymentStatus;
 import com.sangjun.payment.domain.event.PaymentCancelledEvent;
 import com.sangjun.payment.domain.event.PaymentCompletedEvent;
 import com.sangjun.payment.domain.event.PaymentFailedEvent;
-import com.sangjun.payment.domain.valueobject.payment.PaymentOrderStatus;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import org.springframework.stereotype.Component;
 
@@ -59,12 +58,11 @@ public class PaymentMessagingDataMapper {
     public PaymentRequest paymentRequestAvroModelToPaymentRequest(PaymentRequestAvroModel paymentRequestAvroModel) {
         return PaymentRequest.builder()
                 .id(paymentRequestAvroModel.getId())
-                .sagaId(paymentRequestAvroModel.getSagaId())
                 .orderId(paymentRequestAvroModel.getOrderId())
                 .customerId(paymentRequestAvroModel.getCustomerId())
                 .price(paymentRequestAvroModel.getPrice())
+                .restaurantId(paymentRequestAvroModel.getRestaurantId())
                 .createdAt(paymentRequestAvroModel.getCreatedAt())
-                .paymentOrderStatus(PaymentOrderStatus.valueOf(paymentRequestAvroModel.getPaymentOrderStatus().name()))
                 .build();
     }
 }

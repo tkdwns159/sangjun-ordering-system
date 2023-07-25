@@ -2,15 +2,21 @@ package com.sangjun.payment.domain.valueobject.book;
 
 import com.sangjun.payment.domain.entity.book.BookEntry;
 
-import javax.persistence.Embeddable;
+import javax.persistence.*;
 import java.util.List;
 
 @Embeddable
 public class BookEntryList {
-    private final List<BookEntry> bookEntries;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinColumn(name = "book_id")
+    private List<BookEntry> bookEntries;
 
     public BookEntryList(List<BookEntry> bookEntries) {
         this.bookEntries = bookEntries;
+    }
+
+    protected BookEntryList() {
     }
 
     public void add(BookEntry bookEntry) {
@@ -19,9 +25,5 @@ public class BookEntryList {
 
     public int getSize() {
         return bookEntries.size();
-    }
-
-    public BookEntry getLastEntry() {
-        return this.bookEntries.get(this.bookEntries.size() - 1);
     }
 }

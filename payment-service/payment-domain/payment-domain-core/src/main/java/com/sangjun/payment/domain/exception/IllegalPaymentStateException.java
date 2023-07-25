@@ -1,4 +1,4 @@
-package com.sangjun.payment.domain.ex;
+package com.sangjun.payment.domain.exception;
 
 public class IllegalPaymentStateException extends RuntimeException {
     public IllegalPaymentStateException(String msg) {

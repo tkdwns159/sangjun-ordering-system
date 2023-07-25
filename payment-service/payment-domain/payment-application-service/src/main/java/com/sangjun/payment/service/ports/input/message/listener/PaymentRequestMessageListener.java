@@ -8,7 +8,7 @@ import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.event.PaymentCancelledEvent;
 import com.sangjun.payment.domain.event.PaymentEvent;
 import com.sangjun.payment.domain.event.PaymentFailedEvent;
-import com.sangjun.payment.domain.ex.IllegalPaymentStateException;
+import com.sangjun.payment.domain.exception.IllegalPaymentStateException;
 import com.sangjun.payment.domain.exception.PaymentNotFoundException;
 import com.sangjun.payment.domain.valueobject.book.BookShelveId;
 import com.sangjun.payment.service.dto.PaymentRequest;

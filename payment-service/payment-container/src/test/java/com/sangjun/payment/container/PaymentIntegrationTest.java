@@ -4,13 +4,8 @@ import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.PaymentOrderStatus;
 import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
-import com.sangjun.payment.domain.entity.CreditEntry;
-import com.sangjun.payment.domain.entity.CreditHistory;
 import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
-import com.sangjun.payment.domain.valueobject.CreditEntryId;
-import com.sangjun.payment.domain.valueobject.CreditHistoryId;
-import com.sangjun.payment.domain.valueobject.TransactionType;
 import com.sangjun.payment.domain.valueobject.book.BookShelveId;
 import com.sangjun.payment.domain.valueobject.book.EntryIdType;
 import com.sangjun.payment.service.ports.output.repository.*;
@@ -38,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -331,63 +325,6 @@ public class PaymentIntegrationTest {
                 com.sangjun.kafka.order.avro.model.PaymentStatus.FAILED,
                 price.getAmount());
     }
-
-    @Test
-    void 결제실패시_결제실패이벤트가_발행된다() throws ExecutionException, InterruptedException, TimeoutException {
-        //given
-        PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
-                .setCreatedAt(Instant.now())
-                .setPrice(new BigDecimal("4000"))
-                .setSagaId("")
-                .setCustomerId(CUSTOMER_ID.toString())
-                .setPaymentOrderStatus(PaymentOrderStatus.PENDING)
-                .build();
-
-        CreditEntry creditEntry = CreditEntry.builder(new CustomerId(CUSTOMER_ID))
-                .id(new CreditEntryId(UUID.randomUUID()))
-                .totalCreditAmount(Money.of(new BigDecimal("3000")))
-                .build();
-
-        CreditHistory creditHistory = CreditHistory.builder(
-                        new CustomerId(CUSTOMER_ID),
-                        Money.of(new BigDecimal("3000")),
-                        TransactionType.DEBIT)
-                .id(new CreditHistoryId(UUID.randomUUID()))
-                .build();
-
-        creditHistoryRepository.save(creditHistory);
-        creditEntryRepository.save(creditEntry);
-        entityManager.flush();
-
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
-        //when
-        paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(100);
-        Map<String, PaymentResponseAvroModel> result = 발행된_이벤트메세지_모두_가져오기();
-        PaymentResponseAvroModel response = result.get(ORDER_ID.toString());
-
-
-        assertThat(response.getPaymentId())
-                .isNotNull();
-        assertThat(response.getOrderId())
-                .isEqualTo(ORDER_ID.toString());
-        assertThat(response.getCustomerId())
-                .isEqualTo(CUSTOMER_ID.toString());
-        assertThat(response.getFailureMessages().isEmpty())
-                .isNotNull();
-        assertThat(response.getPrice())
-                .isEqualTo(Money.of(new BigDecimal("4000")).getAmount());
-        assertThat(response.getPaymentStatus())
-                .isEqualTo(com.sangjun.kafka.order.avro.model.PaymentStatus.FAILED);
-    }
-
 
     private Map<String, PaymentResponseAvroModel> 발행된_이벤트메세지_모두_가져오기() {
         ConsumerRecords<String, PaymentResponseAvroModel> result =

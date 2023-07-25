@@ -5,6 +5,7 @@ import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.book.BookShelve;
 import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.event.PaymentEvent;
+import com.sangjun.payment.domain.exception.IllegalPaymentStateException;
 import com.sangjun.payment.domain.valueobject.book.EntryIdType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ public class PaymentInitTest {
         // when, then
         assertThatThrownBy(() ->
                 paymentInitDomainService.initPayment(payment, customerBook, restaurantBook))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalPaymentStateException.class);
     }
 
     @Test

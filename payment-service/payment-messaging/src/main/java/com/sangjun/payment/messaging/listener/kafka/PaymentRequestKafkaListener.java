@@ -3,7 +3,7 @@ package com.sangjun.payment.messaging.listener.kafka;
 import com.sangjun.kafka.consumer.KafkaConsumer;
 import com.sangjun.kafka.order.avro.model.PaymentOrderStatus;
 import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
-import com.sangjun.payment.messaging.mapper.PaymentMessagingDataMapper;
+import com.sangjun.payment.messaging.mapper.PaymentMessageMapper;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.ports.input.message.listener.PaymentRequestMessageListener;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentRequestKafkaListener implements KafkaConsumer<PaymentRequestAvroModel> {
     private final PaymentRequestMessageListener paymentRequestMessageListener;
-    private final PaymentMessagingDataMapper paymentMessagingDataMapper;
 
     @Override
     @KafkaListener(id = "${kafka-consumer-config.payment-consumer-group-id}",
@@ -50,7 +49,7 @@ public class PaymentRequestKafkaListener implements KafkaConsumer<PaymentRequest
     private void completePayment(PaymentRequestAvroModel message) {
         log.info("Processing payment for order id: {}", message.getOrderId());
         try {
-            PaymentRequest pr = paymentMessagingDataMapper.paymentRequestAvroModelToPaymentRequest(message);
+            final PaymentRequest pr = PaymentMessageMapper.MAPPER.toPaymentRequest(message);
             paymentRequestMessageListener.completePayment(pr);
         } catch (RuntimeException ex) {
             log.error("Error processing payment for order id: {}", message.getOrderId(), ex);
@@ -62,9 +61,8 @@ public class PaymentRequestKafkaListener implements KafkaConsumer<PaymentRequest
                 .filter(message -> message.getPaymentOrderStatus() == PaymentOrderStatus.CANCELLED)
                 .forEach(message -> {
                     log.info("Cancelling payment for order id: {}", message.getOrderId());
-                    paymentRequestMessageListener.cancelPayment(
-                            paymentMessagingDataMapper.paymentRequestAvroModelToPaymentRequest(message)
-                    );
+                    final PaymentRequest pr = PaymentMessageMapper.MAPPER.toPaymentRequest(message);
+                    paymentRequestMessageListener.cancelPayment(pr);
                 });
     }
 }

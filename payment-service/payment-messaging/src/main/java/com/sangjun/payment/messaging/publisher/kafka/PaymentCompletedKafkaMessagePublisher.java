@@ -5,7 +5,6 @@ import com.sangjun.kafka.producer.KafkaMessageHelper;
 import com.sangjun.kafka.producer.service.KafkaProducer;
 import com.sangjun.payment.domain.event.PaymentCompletedEvent;
 import com.sangjun.payment.messaging.mapper.PaymentMessageMapper;
-import com.sangjun.payment.messaging.mapper.PaymentMessagingDataMapper;
 import com.sangjun.payment.service.config.PaymentServiceConfigData;
 import com.sangjun.payment.service.ports.output.message.publisher.PaymentCompletedMessagePublisher;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PaymentCompletedKafkaMessagePublisher implements PaymentCompletedMessagePublisher {
 
-    private final PaymentMessagingDataMapper paymentMessagingDataMapper;
     private final KafkaProducer<String, PaymentResponseAvroModel> kafkaProducer;
     private final PaymentServiceConfigData paymentServiceConfigData;
     private final KafkaMessageHelper kafkaMessageHelper;

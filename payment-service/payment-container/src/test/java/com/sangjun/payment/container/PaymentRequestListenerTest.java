@@ -198,6 +198,8 @@ public class PaymentRequestListenerTest {
     void 결제_취소() {
         //given
         Money price = Money.of("1234");
+        testHelper.식당_장부_생성(restaurantId.getValue());
+        testHelper.고객_장부_생성(customerId.getValue());
         saveCompletedPayment(price);
         em.flush();
 

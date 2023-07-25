@@ -20,6 +20,19 @@ public class TestHelper {
     private final BookShelveRepository bookShelveRepository;
     private final BookRepository bookRepository;
 
+
+    public Book 식당_장부_생성(UUID id) {
+        return saveBook(id.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
+    }
+
+    public Book 고객_장부_생성(UUID id) {
+        return saveBook(id.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
+    }
+
+    public Book 회사_장부_생성(UUID id) {
+        return saveBook(id.toString(), BookOwnerType.FIRM, EntryIdType.UUID);
+    }
+
     @Transactional
     public Book saveBook(String bookOwnerId, BookOwnerType bookOwnerType, EntryIdType entryIdType) {
         String bookShelveName = switch (bookOwnerType) {
@@ -34,4 +47,6 @@ public class TestHelper {
         bookShelveRepository.save(bookShelve);
         return bookRepository.save(restaurantBook);
     }
+
+
 }

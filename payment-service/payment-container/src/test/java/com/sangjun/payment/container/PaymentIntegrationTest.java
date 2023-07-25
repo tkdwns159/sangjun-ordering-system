@@ -297,7 +297,7 @@ public class PaymentIntegrationTest {
     }
 
     @Test
-    void 결제실패시_결제데이터가_실패상태로_저장된다() throws ExecutionException, InterruptedException {
+    void 결제_실패() throws ExecutionException, InterruptedException {
         //given
         Money price = Money.of("4000");
         testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
@@ -315,7 +315,10 @@ public class PaymentIntegrationTest {
         //then
         Thread.sleep(200);
         결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.FAILED);
+        결제실패_이벤트_발행_확인(price);
+    }
 
+    private void 결제실패_이벤트_발행_확인(Money price) {
         Map<String, PaymentResponseAvroModel> eventList = 발행된_이벤트메세지_모두_가져오기();
         assertThat(eventList.size()).isEqualTo(1);
 

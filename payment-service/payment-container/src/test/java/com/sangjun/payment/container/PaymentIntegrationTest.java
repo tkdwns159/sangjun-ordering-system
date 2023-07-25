@@ -142,7 +142,7 @@ public class PaymentIntegrationTest {
 
     @AfterEach
     void cleanKafkaEvents() {
-        consumePaymentResponseTopic();
+        발행된_이벤트메세지_모두_가져오기();
     }
 
     @Test
@@ -173,12 +173,22 @@ public class PaymentIntegrationTest {
 
         고객장부_업데이트_확인(customerBook, customerInitialBalance.subtract(payment.getPrice()));
         식당장부_업데이트_확인(restaurantBook, payment.getPrice());
+        결제완료_이벤트_발행_확인();
+    }
 
-        Map<String, PaymentResponseAvroModel> eventList = consumePaymentResponseTopic();
+    private void 결제완료_이벤트_발행_확인() {
+        Map<String, PaymentResponseAvroModel> eventList = 발행된_이벤트메세지_모두_가져오기();
         assertThat(eventList.size()).isEqualTo(1);
 
         PaymentResponseAvroModel responseMsg = eventList.get(ORDER_ID.toString());
+        발행된_이벤트메세지_확인(responseMsg,
+                com.sangjun.kafka.order.avro.model.PaymentStatus.COMPLETED,
+                Money.of("3000"));
+    }
 
+    private static void 발행된_이벤트메세지_확인(PaymentResponseAvroModel responseMsg,
+                                      com.sangjun.kafka.order.avro.model.PaymentStatus paymentStatus,
+                                      Money price) {
         assertThat(responseMsg.getOrderId())
                 .isEqualTo(ORDER_ID.toString());
         assertThat(responseMsg.getCustomerId())
@@ -186,9 +196,9 @@ public class PaymentIntegrationTest {
         assertThat(responseMsg.getRestaurantId())
                 .isEqualTo(RESTAURANT_ID.toString());
         assertThat(responseMsg.getPaymentStatus())
-                .isEqualTo(com.sangjun.kafka.order.avro.model.PaymentStatus.COMPLETED);
+                .isEqualTo(paymentStatus);
         assertThat(responseMsg.getPrice())
-                .isEqualTo(Money.of(new BigDecimal("3000")).getAmount());
+                .isEqualTo(price);
     }
 
     private PaymentRequestAvroModel 결제요청_메세지_생성(BigDecimal price, PaymentOrderStatus paymentOrderStatus) {
@@ -278,7 +288,7 @@ public class PaymentIntegrationTest {
 
         //then
         Thread.sleep(100);
-        Map<String, PaymentResponseAvroModel> eventList = consumePaymentResponseTopic();
+        Map<String, PaymentResponseAvroModel> eventList = 발행된_이벤트메세지_모두_가져오기();
         assertThat(eventList.size()).isEqualTo(1);
 
         PaymentResponseAvroModel paymentResponseAvroModel = eventList.get(ORDER_ID.toString());
@@ -341,7 +351,7 @@ public class PaymentIntegrationTest {
 
         //then
         Thread.sleep(100);
-        Map<String, PaymentResponseAvroModel> eventList = consumePaymentResponseTopic();
+        Map<String, PaymentResponseAvroModel> eventList = 발행된_이벤트메세지_모두_가져오기();
         assertThat(eventList.size()).isEqualTo(1);
 
         PaymentResponseAvroModel paymentResponseAvroModel = eventList.get(ORDER_ID.toString());
@@ -448,7 +458,7 @@ public class PaymentIntegrationTest {
 
         //then
         Thread.sleep(100);
-        Map<String, PaymentResponseAvroModel> result = consumePaymentResponseTopic();
+        Map<String, PaymentResponseAvroModel> result = 발행된_이벤트메세지_모두_가져오기();
         PaymentResponseAvroModel response = result.get(ORDER_ID.toString());
 
 
@@ -467,7 +477,7 @@ public class PaymentIntegrationTest {
     }
 
 
-    private Map<String, PaymentResponseAvroModel> consumePaymentResponseTopic() {
+    private Map<String, PaymentResponseAvroModel> 발행된_이벤트메세지_모두_가져오기() {
         ConsumerRecords<String, PaymentResponseAvroModel> result =
                 KafkaTestUtils.getRecords(paymentResponseAvroModelConsumer, 100);
         Map<String, PaymentResponseAvroModel> records = new HashMap<>();

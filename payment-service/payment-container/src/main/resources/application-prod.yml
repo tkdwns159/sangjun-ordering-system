@@ -51,7 +51,8 @@ spring:
     open-in-view: false
     show-sql: true
     database-platform: org.hibernate.dialect.PostgreSQL95Dialect
-
+    hibernate:
+      ddl-auto: none
   datasource:
     url:
       jdbc:postgresql://localhost:5000/postgres?currentSchema=payment&binaryTransfer=true&reWriteBatchedInserts=true&stringtype=unspecified
@@ -64,6 +65,4 @@ spring:
       platform: postgres
       schema-locations:
         - classpath*:init-schema.sql
-      data-locations:
-        - classpath*:init-data.sql
       mode: always

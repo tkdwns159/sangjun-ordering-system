@@ -4,12 +4,15 @@ import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.book.BookEntry;
 import com.sangjun.payment.domain.entity.payment.Payment;
-import com.sangjun.payment.domain.valueobject.book.EntryIdType;
+import com.sangjun.payment.domain.valueobject.book.BookId;
 import com.sangjun.payment.domain.valueobject.book.TransactionValue;
 import com.sangjun.payment.domain.valueobject.book.TransactionValueType;
 import com.sangjun.payment.service.dto.PaymentRequest;
 import com.sangjun.payment.service.ports.input.message.listener.PaymentRequestMessageListener;
-import com.sangjun.payment.service.ports.output.repository.*;
+import com.sangjun.payment.service.ports.output.repository.BookEntryRepository;
+import com.sangjun.payment.service.ports.output.repository.BookRepository;
+import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
+import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -32,7 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Transactional
-@SpringBootTest(classes = PaymentRequestListenerTestConfig.class)
+@SpringBootTest(classes = PaymentRequestListenerTestConfig.class,
+        webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class PaymentRequestListenerTest {
     private static final OrderId orderId = new OrderId(UUID.randomUUID());
     private static final CustomerId customerId = new CustomerId(UUID.randomUUID());
@@ -76,7 +80,7 @@ public class PaymentRequestListenerTest {
 
         query = em.createNativeQuery(
                 "SELECT 'TRUNCATE TABLE ' || TABLE_SCHEMA || '.' || TABLE_NAME || ';' FROM INFORMATION_SCHEMA.TABLES WHERE " +
-                        "TABLE_SCHEMA in ('restaurant', 'payment')");
+                        "TABLE_SCHEMA in ('payment')");
         List<String> statements = query.getResultList();
 
         for (String statement : statements) {
@@ -92,15 +96,12 @@ public class PaymentRequestListenerTest {
     void 결제_성공() {
         // given
         Money price = Money.of("1234");
+        Book customerBook = testHelper.고객_장부_생성(customerId.getValue());
+        Book restaurantBook = testHelper.식당_장부_생성(restaurantId.getValue());
+        Book firmBook = testHelper.회사_장부_생성(UUID.randomUUID());
 
-        Book customerBook = testHelper.saveBook(customerId.getValue().toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        Book restaurantBook = testHelper.saveBook(restaurantId.getValue().toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-        Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
-
-        firmBook.transact(customerBook, Money.of("1000000"), "", "");
-
-        Money priorCustomerBookBalance = customerBook.getTotalBalance().getCurrentBalance();
-        Money priorRestaurantBookBalance = restaurantBook.getTotalBalance().getCurrentBalance();
+        고객에게_충전금_부여(customerBook, firmBook);
+        testHelper.사전조건_반영();
 
         // when
         paymentRequestMessageListener.completePayment(PaymentRequest.builder()
@@ -116,15 +117,25 @@ public class PaymentRequestListenerTest {
                 .findByOrderId(orderId)
                 .get();
 
+        final Money priorCustomerBookBalance = customerBook.getTotalBalance().getCurrentBalance();
+        final Money priorRestaurantBookBalance = restaurantBook.getTotalBalance().getCurrentBalance();
+        final Money currentCustomerBookBalance = priorCustomerBookBalance.subtract(price);
+        final Money currentRestaurantBookBalance = priorRestaurantBookBalance.add(price);
+
+        final TransactionValue customerTransactionValue =
+                TransactionValue.of(TransactionValueType.CREDIT, foundPayment.getPrice());
+        final TransactionValue restaurantTransactionValue =
+                TransactionValue.of(TransactionValueType.DEBIT, foundPayment.getPrice());
+
         결제정보_확인(foundPayment, price, PaymentStatus.COMPLETED);
-        장부_총액_변화_확인(customerBook,
-                priorCustomerBookBalance,
-                TransactionValue.of(TransactionValueType.CREDIT, foundPayment.getPrice()));
-        장부_총액_변화_확인(restaurantBook,
-                priorRestaurantBookBalance,
-                TransactionValue.of(TransactionValueType.DEBIT, foundPayment.getPrice()));
-        마지막으로_추가된_장부_항목_확인(customerBook, foundPayment, TransactionValueType.CREDIT);
-        마지막으로_추가된_장부_항목_확인(restaurantBook, foundPayment, TransactionValueType.DEBIT);
+        장부_총액_변화_확인(customerBook.getId(), currentCustomerBookBalance);
+        장부_총액_변화_확인(restaurantBook.getId(), currentRestaurantBookBalance);
+        마지막으로_추가된_장부_항목_확인(customerBook, customerTransactionValue);
+        마지막으로_추가된_장부_항목_확인(restaurantBook, restaurantTransactionValue);
+    }
+
+    private void 고객에게_충전금_부여(Book customerBook, Book firmBook) {
+        firmBook.transact(customerBook, Money.of("1000000"), "", "");
     }
 
     private void 결제정보_확인(Payment newPayment,
@@ -145,28 +156,30 @@ public class PaymentRequestListenerTest {
 
     }
 
-    private void 장부_총액_변화_확인(Book book, Money priorBalance, TransactionValue tv) {
+    private void 장부_총액_변화_확인(BookId bookId, Money expectedBalance) {
+        Book book = bookRepository.findById(bookId).get();
         Money currentBalance = book.getTotalBalance().getCurrentBalance();
-        Money expectedBalance = tv.getType() == TransactionValueType.DEBIT ?
-                priorBalance.add(tv.getAmount()) : priorBalance.subtract(tv.getAmount());
         assertThat(currentBalance)
                 .isEqualTo(expectedBalance);
     }
 
-    private void 마지막으로_추가된_장부_항목_확인(Book restaurantBook, Payment newPayment, TransactionValueType tvType) {
-        BookEntry lastRestaurantBookEntry = bookEntryRepository.findTopByBookIdOrderByCreatedTimeDesc(restaurantBook.getId())
+    private void 마지막으로_추가된_장부_항목_확인(Book restaurantBook, TransactionValue tv) {
+        BookEntry lastRestaurantBookEntry = bookEntryRepository
+                .findTopByBookIdOrderByCreatedTimeDesc(restaurantBook.getId())
                 .get();
+
         assertThat(lastRestaurantBookEntry.getTransactionValue())
-                .isEqualTo(TransactionValue.of(tvType, newPayment.getPrice()));
+                .isEqualTo(tv);
     }
 
     @Test
     void 결제_실패() {
         //given
-        Book customerBook = testHelper.saveBook(customerId.getValue().toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        Book restaurantBook = testHelper.saveBook(restaurantId.getValue().toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-        Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
         Money price = Money.of("1234");
+        Book customerBook = testHelper.고객_장부_생성(customerId.getValue());
+        Book restaurantBook = testHelper.식당_장부_생성(restaurantId.getValue());
+        testHelper.회사_장부_생성(UUID.randomUUID());
+        testHelper.사전조건_반영();
 
         //when
         paymentRequestMessageListener.completePayment(PaymentRequest.builder()
@@ -198,11 +211,10 @@ public class PaymentRequestListenerTest {
     void 결제_취소() {
         //given
         Money price = Money.of("1234");
+        Book restaurantBook = testHelper.식당_장부_생성(restaurantId.getValue());
+        Book customerBook = testHelper.고객_장부_생성(customerId.getValue());
         saveCompletedPayment(price);
-        em.flush();
-
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
+        testHelper.사전조건_반영();
 
         //when
         paymentRequestMessageListener.cancelPayment(PaymentRequest.builder()
@@ -215,7 +227,17 @@ public class PaymentRequestListenerTest {
 
         //then
         Payment foundPayment = paymentRepository.findByOrderId(orderId).get();
+
+        final Money priorCustomerBookBalance = customerBook.getTotalBalance().getCurrentBalance();
+        final Money priorRestaurantBookBalance = restaurantBook.getTotalBalance().getCurrentBalance();
+        final Money currentCustomerBookBalance = priorCustomerBookBalance.add(price);
+        final Money currentRestaurantBookBalance = priorRestaurantBookBalance.subtract(price);
+
         결제정보_확인(foundPayment, price, PaymentStatus.CANCELLED);
+        장부_총액_변화_확인(customerBook.getId(), currentCustomerBookBalance);
+        장부_총액_변화_확인(restaurantBook.getId(), currentRestaurantBookBalance);
+        마지막으로_추가된_장부_항목_확인(restaurantBook, TransactionValue.of(TransactionValueType.CREDIT, foundPayment.getPrice()));
+        마지막으로_추가된_장부_항목_확인(customerBook, TransactionValue.of(TransactionValueType.DEBIT, foundPayment.getPrice()));
     }
 
     private void saveCompletedPayment(Money price) {

@@ -3,11 +3,9 @@ package com.sangjun.payment.messaging.publisher.kafka;
 import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
 import com.sangjun.kafka.producer.KafkaMessageHelper;
 import com.sangjun.kafka.producer.service.KafkaProducer;
-import com.sangjun.payment.domain.event.PaymentCompletedEvent;
 import com.sangjun.payment.domain.event.PaymentFailedEvent;
-import com.sangjun.payment.messaging.mapper.PaymentMessagingDataMapper;
+import com.sangjun.payment.messaging.mapper.PaymentMessageMapper;
 import com.sangjun.payment.service.config.PaymentServiceConfigData;
-import com.sangjun.payment.service.ports.output.message.publisher.PaymentCompletedMessagePublisher;
 import com.sangjun.payment.service.ports.output.message.publisher.PaymentFailedMessagePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +16,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PaymentFailedKafkaMessagePublisher implements PaymentFailedMessagePublisher {
 
-    private final PaymentMessagingDataMapper paymentMessagingDataMapper;
     private final KafkaProducer<String, PaymentResponseAvroModel> kafkaProducer;
     private final PaymentServiceConfigData paymentServiceConfigData;
     private final KafkaMessageHelper kafkaMessageHelper;
@@ -29,7 +26,8 @@ public class PaymentFailedKafkaMessagePublisher implements PaymentFailedMessageP
         log.info("Received PaymentFailedEvent for order id : {}", orderId);
 
         try {
-            PaymentResponseAvroModel paymentResponseAvroModel = paymentMessagingDataMapper.paymentFailedEventToPaymentResponseAvroModel(domainEvent);
+            PaymentResponseAvroModel paymentResponseAvroModel =
+                    PaymentMessageMapper.MAPPER.toPaymentResponseAvroModel(domainEvent);
             kafkaProducer.send(
                     paymentServiceConfigData.getPaymentResponseTopicName(),
                     orderId,

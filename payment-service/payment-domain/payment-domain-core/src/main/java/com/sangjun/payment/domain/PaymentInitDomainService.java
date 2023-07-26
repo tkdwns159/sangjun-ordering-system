@@ -5,7 +5,7 @@ import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
 import com.sangjun.payment.domain.event.PaymentCompletedEvent;
 import com.sangjun.payment.domain.event.PaymentEvent;
-import com.sangjun.payment.domain.ex.IllegalPaymentStateException;
+import com.sangjun.payment.domain.exception.IllegalPaymentStateException;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;

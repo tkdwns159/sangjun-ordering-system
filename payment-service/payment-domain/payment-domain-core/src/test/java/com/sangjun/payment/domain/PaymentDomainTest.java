@@ -2,6 +2,7 @@ package com.sangjun.payment.domain;
 
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.payment.domain.entity.payment.Payment;
+import com.sangjun.payment.domain.exception.IllegalPaymentStateException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -47,7 +48,7 @@ public class PaymentDomainTest {
                 .build();
 
         Assertions.assertThatThrownBy(payment::initialize)
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalPaymentStateException.class);
     }
 
     @Test
@@ -134,7 +135,7 @@ public class PaymentDomainTest {
                 .isEqualTo(PaymentStatus.PENDING);
 
         assertThatThrownBy(payment::cancel)
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalPaymentStateException.class);
     }
 
     @Test
@@ -161,6 +162,6 @@ public class PaymentDomainTest {
                 .isEqualTo(PaymentStatus.FAILED);
 
         assertThatThrownBy(payment::markAsFailed)
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalPaymentStateException.class);
     }
 }

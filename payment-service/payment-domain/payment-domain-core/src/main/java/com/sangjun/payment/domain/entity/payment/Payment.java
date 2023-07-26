@@ -3,7 +3,7 @@ package com.sangjun.payment.domain.entity.payment;
 
 import com.sangjun.common.domain.entity.AggregateRoot;
 import com.sangjun.common.domain.valueobject.*;
-import com.sangjun.payment.domain.ex.IllegalPaymentStateException;
+import com.sangjun.payment.domain.exception.IllegalPaymentStateException;
 import com.sangjun.payment.domain.valueobject.payment.PaymentId;
 
 import javax.persistence.*;

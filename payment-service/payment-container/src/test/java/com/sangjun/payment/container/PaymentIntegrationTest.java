@@ -4,16 +4,11 @@ import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.PaymentOrderStatus;
 import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.PaymentResponseAvroModel;
-import com.sangjun.payment.domain.entity.CreditEntry;
-import com.sangjun.payment.domain.entity.CreditHistory;
 import com.sangjun.payment.domain.entity.book.Book;
 import com.sangjun.payment.domain.entity.payment.Payment;
-import com.sangjun.payment.domain.valueobject.CreditEntryId;
-import com.sangjun.payment.domain.valueobject.CreditHistoryId;
-import com.sangjun.payment.domain.valueobject.TransactionType;
-import com.sangjun.payment.domain.valueobject.book.BookShelveId;
-import com.sangjun.payment.domain.valueobject.book.EntryIdType;
-import com.sangjun.payment.service.ports.output.repository.*;
+import com.sangjun.payment.service.ports.output.repository.BookRepository;
+import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
+import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.jupiter.api.*;
@@ -38,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,6 +55,7 @@ public class PaymentIntegrationTest {
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
     private static final UUID RESTAURANT_ID = UUID.randomUUID();
+    private static final int SLEEP_AMOUNT = 250;
 
     @Autowired
     private KafkaTemplate<String, PaymentRequestAvroModel> paymentRequestKt;
@@ -70,12 +65,6 @@ public class PaymentIntegrationTest {
 
     @Autowired
     private PaymentRepository paymentRepository;
-
-    @Autowired
-    private CreditHistoryRepository creditHistoryRepository;
-
-    @Autowired
-    private CreditEntryRepository creditEntryRepository;
 
     @Autowired
     private BookRepository bookRepository;
@@ -142,7 +131,7 @@ public class PaymentIntegrationTest {
 
     @AfterEach
     void cleanKafkaEvents() {
-        consumePaymentResponseTopic();
+        발행된_이벤트메세지_모두_가져오기();
     }
 
     @Test
@@ -150,29 +139,59 @@ public class PaymentIntegrationTest {
     }
 
     @Test
-    void 결제가_완료되면_결제데이터가_저장된다() throws ExecutionException, InterruptedException {
+    void 결제_완료() throws ExecutionException, InterruptedException {
         //given
-        Book firmBook = testHelper.saveBook(UUID.randomUUID().toString(), BookOwnerType.FIRM, EntryIdType.UUID);
-        Book customerBook = testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        Book restaurantBook = testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-        Money customerInitialBalance = Money.of("1000000");
-        firmBook.transact(customerBook, customerInitialBalance, "", "");
+        Book firmBook = testHelper.회사_장부_생성(UUID.randomUUID());
+        Book customerBook = testHelper.고객_장부_생성(CUSTOMER_ID);
+        Book restaurantBook = testHelper.식당_장부_생성(RESTAURANT_ID);
+        Money customerInitialBalance = Money.of(new BigDecimal("100000"));
+        고객에게_충전금_부여(firmBook, customerBook, customerInitialBalance);
 
-        entityManager.flush();
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
+        사전조건_반영();
         //when
-        TestTransaction.start();
         PaymentRequestAvroModel msg = 결제요청_메세지_생성(new BigDecimal("3000"), PaymentOrderStatus.PENDING);
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
         //then
-        Thread.sleep(200);
-        Payment payment = 결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.COMPLETED);
+        Thread.sleep(SLEEP_AMOUNT);
+        결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.COMPLETED);
+        결제완료_이벤트_발행_확인();
+    }
 
-        고객장부_업데이트_확인(customerBook, customerInitialBalance.subtract(payment.getPrice()));
-        식당장부_업데이트_확인(restaurantBook, payment.getPrice());
+    private void 고객에게_충전금_부여(Book firmBook, Book customerBook, Money initialBalance) {
+        firmBook.transact(customerBook, initialBalance, "", "");
+    }
+
+    private void 사전조건_반영() {
+        entityManager.flush();
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+        TestTransaction.start();
+    }
+
+    private void 결제완료_이벤트_발행_확인() {
+        Map<String, PaymentResponseAvroModel> eventList = 발행된_이벤트메세지_모두_가져오기();
+        assertThat(eventList.size()).isEqualTo(1);
+
+        PaymentResponseAvroModel responseMsg = eventList.get(ORDER_ID.toString());
+        발행된_이벤트메세지_확인(responseMsg,
+                com.sangjun.kafka.order.avro.model.PaymentStatus.COMPLETED,
+                Money.of("3000").getAmount());
+    }
+
+    private static void 발행된_이벤트메세지_확인(PaymentResponseAvroModel responseMsg,
+                                      com.sangjun.kafka.order.avro.model.PaymentStatus paymentStatus,
+                                      BigDecimal price) {
+        assertThat(responseMsg.getOrderId())
+                .isEqualTo(ORDER_ID.toString());
+        assertThat(responseMsg.getCustomerId())
+                .isEqualTo(CUSTOMER_ID.toString());
+        assertThat(responseMsg.getRestaurantId())
+                .isEqualTo(RESTAURANT_ID.toString());
+        assertThat(responseMsg.getPaymentStatus())
+                .isEqualTo(paymentStatus);
+        assertThat(responseMsg.getPrice())
+                .isEqualTo(price);
     }
 
     private PaymentRequestAvroModel 결제요청_메세지_생성(BigDecimal price, PaymentOrderStatus paymentOrderStatus) {
@@ -204,254 +223,88 @@ public class PaymentIntegrationTest {
         return payment;
     }
 
-    private void 식당장부_업데이트_확인(Book restaurantBook, Money expectedPrice) {
-        장부_업데이트_확인(restaurantBook, BookOwnerType.RESTAURANT, RESTAURANT_ID.toString(), expectedPrice);
-    }
-
-    private void 고객장부_업데이트_확인(Book customerBook, Money expectedPrice) {
-        장부_업데이트_확인(customerBook, BookOwnerType.CUSTOMER, CUSTOMER_ID.toString(), expectedPrice);
-    }
-
-    private void 장부_업데이트_확인(Book restaurantBook, BookOwnerType bookOwnerType, String bookOwnerId, Money expectedPrice) {
-        UUID restaurantShelveId = bookShelveRepository.findIdByOwnerType(bookOwnerType);
-        Book foundRestaurantBook = bookRepository
-                .findByBookShelveIdAndBookOwner_uuid(new BookShelveId(restaurantShelveId), UUID.fromString(bookOwnerId))
-                .get();
-
-        assertThat(foundRestaurantBook.getTotalBalance().getCurrentBalance())
-                .isEqualTo(expectedPrice);
-        assertThat(foundRestaurantBook.getBookEntryList().getSize())
-                .isEqualTo(restaurantBook.getBookEntryList().getSize() + 1);
-    }
-
     @Test
-    void 결제가_완료되면_결제완료_이벤트가_발행된다() throws ExecutionException, InterruptedException, TimeoutException {
+    void 결제_취소() throws ExecutionException, InterruptedException {
         //given
-        PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
-                .setCreatedAt(Instant.now())
-                .setPrice(new BigDecimal("3000"))
-                .setSagaId("")
-                .setCustomerId(CUSTOMER_ID.toString())
-                .setPaymentOrderStatus(PaymentOrderStatus.PENDING)
-                .build();
+        Money price = Money.of("3000");
+        testHelper.고객_장부_생성(CUSTOMER_ID);
+        testHelper.식당_장부_생성(RESTAURANT_ID);
+        결제완료정보_생성(price);
 
-        CreditEntry creditEntry = CreditEntry.builder(new CustomerId(CUSTOMER_ID))
-                .id(new CreditEntryId(UUID.randomUUID()))
-                .totalCreditAmount(Money.of(new BigDecimal("3000")))
-                .build();
-
-        CreditHistory creditHistory = CreditHistory.builder(
-                        new CustomerId(CUSTOMER_ID),
-                        Money.of(new BigDecimal("3000")),
-                        TransactionType.DEBIT)
-                .id(new CreditHistoryId(UUID.randomUUID()))
-                .build();
-
-        creditHistoryRepository.save(creditHistory);
-        creditEntryRepository.save(creditEntry);
-        entityManager.flush();
-
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
+        사전조건_반영();
 
         //when
+        PaymentRequestAvroModel msg = 결제요청_메세지_생성(price.getAmount(), PaymentOrderStatus.CANCELLED);
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
 
         //then
-        Thread.sleep(100);
-        Map<String, PaymentResponseAvroModel> eventList = consumePaymentResponseTopic();
-        assertThat(eventList.size()).isEqualTo(1);
-
-        PaymentResponseAvroModel paymentResponseAvroModel = eventList.get(ORDER_ID.toString());
-
-        assertThat(paymentResponseAvroModel.getOrderId())
-                .isEqualTo(ORDER_ID.toString());
-        assertThat(paymentResponseAvroModel.getCustomerId())
-                .isEqualTo(CUSTOMER_ID.toString());
-        assertThat(paymentResponseAvroModel.getPaymentStatus())
-                .isEqualTo(com.sangjun.kafka.order.avro.model.PaymentStatus.COMPLETED);
-        assertThat(paymentResponseAvroModel.getPrice())
-                .isEqualTo(Money.of(new BigDecimal("3000")).getAmount());
+        Thread.sleep(SLEEP_AMOUNT);
+        결제상태가_취소로_변경됨을_확인();
+        결제취소_이벤트_발행_확인(price);
     }
 
-    @Test
-    void 결제취소시_결제취소_이벤트가_발행된다() throws ExecutionException, InterruptedException, TimeoutException {
-        //given
-        PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
-                .setCreatedAt(Instant.now())
-                .setPrice(new BigDecimal("3000"))
-                .setSagaId("")
-                .setCustomerId(CUSTOMER_ID.toString())
-                .setPaymentOrderStatus(PaymentOrderStatus.CANCELLED)
-                .build();
-
-        CreditEntry creditEntry = CreditEntry.builder(new CustomerId(CUSTOMER_ID))
-                .id(new CreditEntryId(UUID.randomUUID()))
-                .totalCreditAmount(Money.of(new BigDecimal("3000")))
-                .build();
-
-        CreditHistory creditHistory = CreditHistory.builder(
-                        new CustomerId(CUSTOMER_ID),
-                        Money.of(new BigDecimal("3000")),
-                        TransactionType.DEBIT)
-                .id(new CreditHistoryId(UUID.randomUUID()))
-                .build();
-
-        UUID paymentId = UUID.randomUUID();
-
-        Payment payment = null;
-//                Payment.builder(new OrderId(ORDER_ID), new CustomerId(CUSTOMER_ID), Money.of(new BigDecimal(3000)))
-//                .id(new PaymentId(paymentId))
-//                .createdAt(ZonedDateTime.now(ZoneId.of(ZONE_ID)))
-//                .paymentStatus(PaymentStatus.COMPLETED)
-//                .build();
-
-        creditHistoryRepository.save(creditHistory);
-        creditEntryRepository.save(creditEntry);
-        paymentRepository.save(payment);
-        entityManager.flush();
-
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
-        //when
-        paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(100);
-        Map<String, PaymentResponseAvroModel> eventList = consumePaymentResponseTopic();
-        assertThat(eventList.size()).isEqualTo(1);
-
-        PaymentResponseAvroModel paymentResponseAvroModel = eventList.get(ORDER_ID.toString());
-
-        assertThat(paymentResponseAvroModel.getPaymentId())
-                .isEqualTo(paymentId.toString());
-        assertThat(paymentResponseAvroModel.getOrderId())
-                .isEqualTo(ORDER_ID.toString());
-        assertThat(paymentResponseAvroModel.getCustomerId())
-                .isEqualTo(CUSTOMER_ID.toString());
-        assertThat(paymentResponseAvroModel.getPaymentStatus())
-                .isEqualTo(com.sangjun.kafka.order.avro.model.PaymentStatus.CANCELLED);
-        assertThat(paymentResponseAvroModel.getPrice())
-                .isEqualTo(Money.of(new BigDecimal("3000")).getAmount());
-    }
-
-    @Test
-    void 결제가_취소시_결제데이터는_결제취소상태로_변경된다() throws ExecutionException, InterruptedException {
-        //given
+    private void 결제완료정보_생성(Money price) {
         Payment payment = Payment.builder()
                 .orderId(new OrderId(ORDER_ID))
                 .restaurantId(new RestaurantId(RESTAURANT_ID))
                 .customerId(new CustomerId(CUSTOMER_ID))
-                .price(Money.of(new BigDecimal("3000")))
+                .price(price)
                 .build();
         payment.initialize();
         payment.complete();
         paymentRepository.save(payment);
-        entityManager.flush();
+    }
 
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
-        //when
-        PaymentRequestAvroModel msg = 결제요청_메세지_생성(new BigDecimal("3000"), PaymentOrderStatus.CANCELLED);
-        paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(200);
+    private void 결제상태가_취소로_변경됨을_확인() {
         Payment foundPayment = paymentRepository.findByOrderId(new OrderId(ORDER_ID)).get();
-
         assertThat(foundPayment.getPaymentStatus())
                 .isEqualTo(PaymentStatus.CANCELLED);
     }
 
-    @Test
-    void 결제실패시_결제데이터가_실패상태로_저장된다() throws ExecutionException, InterruptedException {
-        //given
-        testHelper.saveBook(CUSTOMER_ID.toString(), BookOwnerType.CUSTOMER, EntryIdType.UUID);
-        testHelper.saveBook(RESTAURANT_ID.toString(), BookOwnerType.RESTAURANT, EntryIdType.UUID);
-        entityManager.flush();
+    private void 결제취소_이벤트_발행_확인(Money price) {
+        Map<String, PaymentResponseAvroModel> eventList = 발행된_이벤트메세지_모두_가져오기();
+        assertThat(eventList.size()).isEqualTo(1);
 
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
+        PaymentResponseAvroModel paymentResponseAvroModel = eventList.get(ORDER_ID.toString());
+
+        발행된_이벤트메세지_확인(paymentResponseAvroModel,
+                com.sangjun.kafka.order.avro.model.PaymentStatus.CANCELLED,
+                price.getAmount());
+    }
+
+    @Test
+    void 결제_실패() throws ExecutionException, InterruptedException {
+        //given
+        Money price = Money.of("4000");
+        testHelper.고객_장부_생성(CUSTOMER_ID);
+        testHelper.식당_장부_생성(RESTAURANT_ID);
+
+        사전조건_반영();
 
         //when
-        PaymentRequestAvroModel msg = 결제요청_메세지_생성(new BigDecimal("4000"), PaymentOrderStatus.PENDING);
+        PaymentRequestAvroModel msg = 결제요청_메세지_생성(price.getAmount(), PaymentOrderStatus.PENDING);
         paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
                 .get();
 
         //then
-        Thread.sleep(200);
-
-        Payment foundPayment = paymentRepository.findByOrderId(new OrderId(ORDER_ID)).get();
+        Thread.sleep(SLEEP_AMOUNT);
         결제정보_확인(Money.of(msg.getPrice()), PaymentStatus.FAILED);
+        결제실패_이벤트_발행_확인(price);
     }
 
-    @Test
-    void 결제실패시_결제실패이벤트가_발행된다() throws ExecutionException, InterruptedException, TimeoutException {
-        //given
-        PaymentRequestAvroModel msg = PaymentRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
-                .setCreatedAt(Instant.now())
-                .setPrice(new BigDecimal("4000"))
-                .setSagaId("")
-                .setCustomerId(CUSTOMER_ID.toString())
-                .setPaymentOrderStatus(PaymentOrderStatus.PENDING)
-                .build();
+    private void 결제실패_이벤트_발행_확인(Money price) {
+        Map<String, PaymentResponseAvroModel> eventList = 발행된_이벤트메세지_모두_가져오기();
+        assertThat(eventList.size()).isEqualTo(1);
 
-        CreditEntry creditEntry = CreditEntry.builder(new CustomerId(CUSTOMER_ID))
-                .id(new CreditEntryId(UUID.randomUUID()))
-                .totalCreditAmount(Money.of(new BigDecimal("3000")))
-                .build();
+        PaymentResponseAvroModel paymentResponseAvroModel = eventList.get(ORDER_ID.toString());
 
-        CreditHistory creditHistory = CreditHistory.builder(
-                        new CustomerId(CUSTOMER_ID),
-                        Money.of(new BigDecimal("3000")),
-                        TransactionType.DEBIT)
-                .id(new CreditHistoryId(UUID.randomUUID()))
-                .build();
-
-        creditHistoryRepository.save(creditHistory);
-        creditEntryRepository.save(creditEntry);
-        entityManager.flush();
-
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-
-        //when
-        paymentRequestKt.send(paymentRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(100);
-        Map<String, PaymentResponseAvroModel> result = consumePaymentResponseTopic();
-        PaymentResponseAvroModel response = result.get(ORDER_ID.toString());
-
-
-        assertThat(response.getPaymentId())
-                .isNotNull();
-        assertThat(response.getOrderId())
-                .isEqualTo(ORDER_ID.toString());
-        assertThat(response.getCustomerId())
-                .isEqualTo(CUSTOMER_ID.toString());
-        assertThat(response.getFailureMessages().isEmpty())
-                .isNotNull();
-        assertThat(response.getPrice())
-                .isEqualTo(Money.of(new BigDecimal("4000")).getAmount());
-        assertThat(response.getPaymentStatus())
-                .isEqualTo(com.sangjun.kafka.order.avro.model.PaymentStatus.FAILED);
+        발행된_이벤트메세지_확인(paymentResponseAvroModel,
+                com.sangjun.kafka.order.avro.model.PaymentStatus.FAILED,
+                price.getAmount());
     }
 
-
-    private Map<String, PaymentResponseAvroModel> consumePaymentResponseTopic() {
+    private Map<String, PaymentResponseAvroModel> 발행된_이벤트메세지_모두_가져오기() {
         ConsumerRecords<String, PaymentResponseAvroModel> result =
                 KafkaTestUtils.getRecords(paymentResponseAvroModelConsumer, 100);
         Map<String, PaymentResponseAvroModel> records = new HashMap<>();

@@ -9,8 +9,8 @@ import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
-import com.sangjun.order.domain.service.dto.create.OrderAddress;
-import com.sangjun.order.domain.service.dto.create.OrderItem;
+import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
+import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.mapper.OrderMapstructMapper;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
@@ -51,13 +51,13 @@ public class OrderCreateTest {
             .active(true)
             .products(List.of(PRODUCT))
             .build();
-    private static final OrderAddress ORDER_ADDRESS = OrderAddress.builder()
+    private static final OrderAddressDto ORDER_ADDRESS = OrderAddressDto.builder()
             .city("Seoul")
             .postalCode("432")
             .street("Sillim")
             .build();
 
-    private static final OrderItem ORDER_ITEM = OrderItem.builder()
+    private static final OrderItemDto ORDER_ITEM = OrderItemDto.builder()
             .productId(PRODUCT_ID)
             .price(PRODUCT.getPrice().getAmount())
             .quantity(1)
@@ -92,7 +92,7 @@ public class OrderCreateTest {
                 .customerId(invalidCustomerId)
                 .restaurantId(RESTAURANT_ID)
                 .price(BigDecimal.ZERO)
-                .orderAddress(ORDER_ADDRESS)
+                .orderAddressDto(ORDER_ADDRESS)
                 .items(List.of(ORDER_ITEM))
                 .build();
 
@@ -107,7 +107,7 @@ public class OrderCreateTest {
                 .customerId(CUSTOMER_ID)
                 .price(new BigDecimal("1000"))
                 .items(List.of(ORDER_ITEM))
-                .orderAddress(ORDER_ADDRESS)
+                .orderAddressDto(ORDER_ADDRESS)
                 .build();
 
         when(customerRepository.findCustomer(CUSTOMER_ID))
@@ -125,7 +125,7 @@ public class OrderCreateTest {
                 .customerId(CUSTOMER_ID)
                 .price(BigDecimal.ZERO)
                 .items(List.of(ORDER_ITEM))
-                .orderAddress(ORDER_ADDRESS)
+                .orderAddressDto(ORDER_ADDRESS)
                 .build();
 
         assertThrows(OrderDomainException.class,
@@ -166,7 +166,7 @@ public class OrderCreateTest {
                 .customerId(CUSTOMER_ID)
                 .price(new BigDecimal("1000"))
                 .items(List.of(ORDER_ITEM))
-                .orderAddress(ORDER_ADDRESS)
+                .orderAddressDto(ORDER_ADDRESS)
                 .build();
 
         CreateOrderResponse response = orderApplicationService.createOrder(createOrderCommand);

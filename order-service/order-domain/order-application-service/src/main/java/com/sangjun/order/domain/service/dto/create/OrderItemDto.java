@@ -10,7 +10,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class OrderItem {
+public class OrderItemDto {
     @NotNull(message = "Item productId is required")
     private UUID productId;
     @NotNull(message = "Item quantity is required")

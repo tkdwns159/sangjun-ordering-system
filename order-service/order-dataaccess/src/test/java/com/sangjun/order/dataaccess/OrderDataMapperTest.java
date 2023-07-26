@@ -69,7 +69,6 @@ public class OrderDataMapperTest {
     @Test
     void testOrderToOrderEntity() {
         StreetAddress streetAddress = StreetAddress.builder()
-                .id(UUID.randomUUID())
                 .city("Seoul")
                 .street("Sillim")
                 .postalCode("4321")
@@ -95,7 +94,6 @@ public class OrderDataMapperTest {
         assertEquals(CUSTOMER_ID, orderEntity.getCustomerId());
         assertEquals(RESTAURANT_ID, orderEntity.getRestaurantId());
         assertEquals(OrderStatus.PENDING, orderEntity.getOrderStatus());
-        assertEquals(streetAddress.getId(), orderEntity.getAddress().getId());
         assertEquals(streetAddress.getCity(), orderEntity.getAddress().getCity());
         assertEquals(streetAddress.getStreet(), orderEntity.getAddress().getStreet());
         assertEquals(streetAddress.getPostalCode(), orderEntity.getAddress().getPostalCode());
@@ -150,7 +148,6 @@ public class OrderDataMapperTest {
         assertEquals(CUSTOMER_ID, order.getCustomerId().getValue());
         assertEquals(RESTAURANT_ID, order.getRestaurantId().getValue());
         assertEquals(OrderStatus.PENDING, order.getOrderStatus());
-        assertEquals(address.getId(), order.getDeliveryAddress().getId());
         assertEquals(address.getCity(), order.getDeliveryAddress().getCity());
         assertEquals(address.getStreet(), order.getDeliveryAddress().getStreet());
         assertEquals(address.getPostalCode(), order.getDeliveryAddress().getPostalCode());

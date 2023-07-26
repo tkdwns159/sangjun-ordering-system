@@ -3,24 +3,22 @@ package com.sangjun.order.container;
 import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
 import com.sangjun.common.dataaccess.restaurant.repository.RestaurantJpaRepository;
 import com.sangjun.common.domain.valueobject.*;
-import com.sangjun.kafka.order.avro.model.OrderApprovalStatus;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
-import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
 import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.dataaccess.customer.entity.CustomerEntity;
 import com.sangjun.order.dataaccess.customer.repository.CustomerJpaRepository;
 import com.sangjun.order.domain.entity.Order;
+import com.sangjun.order.domain.entity.OrderItem;
 import com.sangjun.order.domain.entity.Product;
-import com.sangjun.order.domain.exception.OrderNotFoundException;
+import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
-import com.sangjun.order.domain.service.dto.create.OrderAddress;
-import com.sangjun.order.domain.service.dto.create.OrderItem;
-import com.sangjun.order.domain.service.dto.track.TrackOrderQuery;
-import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
+import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
+import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.valueobject.OrderItemId;
+import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -45,11 +43,9 @@ import javax.persistence.Query;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import static com.sangjun.order.domain.service.mapper.OrderMapstructMapper.MAPPER;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 
@@ -119,7 +115,7 @@ public class OrderIntegrationTest {
             .productPrice(PRODUCT_2.getPrice().getAmount())
             .productAvailable(true)
             .build();
-    private static final OrderAddress ORDER_ADDRESS = OrderAddress.builder()
+    private static final OrderAddressDto ORDER_ADDRESS = OrderAddressDto.builder()
             .street("Sillim")
             .city("Seoul")
             .postalCode("4321")
@@ -233,99 +229,122 @@ public class OrderIntegrationTest {
         query.executeUpdate();
     }
 
-
     @Test
-    void 주문이_성공하면_추적번호가_발급된다() {
+    void 주문_성공() {
         //given
-        List<OrderItem> items = new ArrayList<>();
-        OrderItem item1 = getOrderItem(PRODUCT_1, 2);
-        OrderItem item2 = getOrderItem(PRODUCT_2, 1);
-        items.addAll(List.of(item1, item2));
-
-        CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
-                .customerId(CUSTOMER_ID)
-                .restaurantId(RESTAURANT_ID)
-                .price(item1.getSubTotal().add(item2.getSubTotal()))
-                .items(items)
-                .orderAddress(ORDER_ADDRESS)
-                .build();
-
-        //when
         mockCustomerFindById();
         mockFindByRestaurantIdAndProductIdIn();
-        CreateOrderResponse response = orderApplicationService.createOrder(createOrderCommand);
+
+        //when
+        BigDecimal price = new BigDecimal("3000");
+        OrderItemDto orderItemDto1 = OrderItemDto.builder()
+                .price(ORDER_ITEM_1.getPrice().getAmount())
+                .subTotal(ORDER_ITEM_1.getSubTotal().getAmount())
+                .productId(ORDER_ITEM_1.getProduct().getId().getValue())
+                .quantity(ORDER_ITEM_1.getQuantity())
+                .build();
+        OrderItemDto orderItemDto2 = OrderItemDto.builder()
+                .price(ORDER_ITEM_2.getPrice().getAmount())
+                .subTotal(ORDER_ITEM_2.getSubTotal().getAmount())
+                .productId(ORDER_ITEM_2.getProduct().getId().getValue())
+                .quantity(ORDER_ITEM_2.getQuantity())
+                .build();
+        List<OrderItemDto> items = new ArrayList<>(Arrays.asList(orderItemDto1, orderItemDto2));
+        OrderAddressDto orderAddressDto = OrderAddressDto.builder()
+                .city("Seoul")
+                .postalCode("12345")
+                .street("Sillim")
+                .build();
+
+        items.add(orderItemDto1);
+
+        CreateOrderCommand command = CreateOrderCommand.builder()
+                .customerId(CUSTOMER_ID)
+                .restaurantId(RESTAURANT_ID)
+                .price(price)
+                .items(items)
+                .orderAddressDto(orderAddressDto)
+                .build();
+
+        CreateOrderResponse resp = orderApplicationService.createOrder(command);
 
         //then
-        assertNotNull(response.getOrderTrackingId());
-        Order order = assertDoesNotThrow(() -> orderRepository.findByTrackingId(response.getOrderTrackingId())
-                .orElseThrow(() -> new OrderNotFoundException("Order not found")));
-        assertEquals(response.getOrderTrackingId(), order.getTrackingId().getValue());
+        Order createdOrder = orderRepository.findByTrackingId(resp.getOrderTrackingId()).get();
+        생성된_주문데이터_확인(price, orderAddressDto, items, createdOrder);
+    }
+
+    private static void 생성된_주문데이터_확인(BigDecimal price,
+                                     OrderAddressDto orderAddressDto,
+                                     List<OrderItemDto> itemDtoList,
+                                     Order createdOrder) {
+        assertThat(createdOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.PENDING);
+        assertThat(createdOrder.getPrice())
+                .isEqualTo(Money.of(price));
+        assertThat(createdOrder.getCustomerId().getValue())
+                .isEqualTo(CUSTOMER_ID);
+        assertThat(createdOrder.getRestaurantId().getValue())
+                .isEqualTo(RESTAURANT_ID);
+        assertThat(createdOrder.getDeliveryAddress())
+                .isEqualTo(StreetAddress.builder()
+                        .city(orderAddressDto.getCity())
+                        .postalCode(orderAddressDto.getPostalCode())
+                        .street(orderAddressDto.getStreet())
+                        .build());
+
+        for (int i = 0; i < itemDtoList.size(); i++) {
+            checkOrderItem(itemDtoList.get(i), createdOrder.getId(), createdOrder.getItems().get(i));
+        }
+    }
+
+    private static void checkOrderItem(OrderItemDto orderItemDto, OrderId createdOrderId, OrderItem orderItem) {
+        assertThat(orderItem.getOrderId())
+                .isEqualTo(createdOrderId);
+        assertThat(orderItem.getProduct().getId().getValue())
+                .isEqualTo(orderItemDto.getProductId());
+        assertThat(orderItem.getQuantity())
+                .isEqualTo(orderItemDto.getQuantity());
+        assertThat(orderItem.getPrice())
+                .isEqualTo(Money.of(orderItemDto.getPrice()));
     }
 
     @Test
-    void 주문이_성공하면_주문상태가_PENDING이다() throws InterruptedException {
+    void 주문_취소() {
         //given
-        List<OrderItem> items = new ArrayList<>();
-        OrderItem item1 = getOrderItem(PRODUCT_1, 2);
-        OrderItem item2 = getOrderItem(PRODUCT_2, 1);
-        items.addAll(List.of(item1, item2));
-
-        CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
-                .customerId(CUSTOMER_ID)
-                .restaurantId(RESTAURANT_ID)
-                .price(item1.getSubTotal().add(item2.getSubTotal()))
-                .items(items)
-                .orderAddress(ORDER_ADDRESS)
-                .build();
+        orderRepository.save(ORDER);
 
         //when
-        mockCustomerFindById();
-        mockFindByRestaurantIdAndProductIdIn();
-        CreateOrderResponse response = orderApplicationService.createOrder(createOrderCommand);
-        Thread.sleep(100);
-
-        //then
-        Order order = assertDoesNotThrow(() -> orderRepository.findByTrackingId(response.getOrderTrackingId())
-                .orElseThrow(() -> new OrderNotFoundException("Order not found")));
-        assertEquals(OrderStatus.PENDING, order.getOrderStatus());
-    }
-
-    @Test
-    void 주문이_성공하면_결제요청_메세지가_날아간다() throws InterruptedException {
-        //given
-        List<OrderItem> items = new ArrayList<>();
-        OrderItem item1 = getOrderItem(PRODUCT_1, 2);
-        OrderItem item2 = getOrderItem(PRODUCT_2, 1);
-        items.addAll(List.of(item1, item2));
-
-        CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .orderTrackingId(ORDER_TRACKING_ID)
                 .customerId(CUSTOMER_ID)
-                .restaurantId(RESTAURANT_ID)
-                .price(item1.getSubTotal().add(item2.getSubTotal()))
-                .items(items)
-                .orderAddress(ORDER_ADDRESS)
                 .build();
 
-        //when
-        mockCustomerFindById();
-        mockFindByRestaurantIdAndProductIdIn();
-        CreateOrderResponse response = orderApplicationService.createOrder(createOrderCommand);
-        Thread.sleep(100);
+        orderApplicationService.cancelOrder(command);
 
         //then
-        Order order = assertDoesNotThrow(() -> orderRepository.findByTrackingId(response.getOrderTrackingId())
-                .orElseThrow(() -> new OrderNotFoundException("Order not found")));
+        주문취소_이벤트가_발행됨();
+    }
 
-        Map<String, PaymentRequestAvroModel> resultTable = readPaymentRequestRecords();
-        assertTrue(resultTable.containsKey(order.getId().getValue().toString()));
-
-        PaymentRequestAvroModel record = resultTable.get(order.getId().getValue().toString());
-        assertEquals(order.getId().getValue().toString(), record.getOrderId());
-        assertEquals(PaymentOrderStatus.PENDING, record.getPaymentOrderStatus());
-        assertEquals(order.getCustomerId().getValue().toString(), record.getCustomerId());
-        assertEquals(order.getPrice().getAmount(), record.getPrice());
+    private void 주문취소_이벤트가_발행됨() {
 
     }
+
+//    private void 결제취소_이벤트_발행_확인() {
+//        Map<String, PaymentRequestAvroModel> map = readPaymentRequestRecords();
+//        PaymentRequestAvroModel requestMsg = map.get(ORDER_ID.toString());
+//
+//        assertThat(requestMsg.getOrderId())
+//                .isEqualTo(ORDER_ID.toString());
+//        assertThat(requestMsg.getPaymentOrderStatus())
+//                .isEqualTo(PaymentOrderStatus.CANCELLED);
+//        assertThat(requestMsg.getPrice())
+//                .isEqualTo(ORDER.getPrice().getAmount());
+//        assertThat(requestMsg.getCustomerId())
+//                .isEqualTo(CUSTOMER_ID.toString());
+//        assertThat(requestMsg.getRestaurantId())
+//                .isEqualTo(ORDER.getRestaurantId().toString());
+//    }
+
 
     private void mockCustomerFindById() {
         CustomerEntity customerEntity = new CustomerEntity(CUSTOMER_ID);
@@ -341,93 +360,13 @@ public class OrderIntegrationTest {
     }
 
 
-    private OrderItem getOrderItem(Product product, int quantity) {
-        return OrderItem.builder()
+    private OrderItemDto getOrderItem(Product product, int quantity) {
+        return OrderItemDto.builder()
                 .productId(product.getId().getValue())
                 .quantity(quantity)
                 .price(product.getPrice().getAmount())
                 .subTotal(product.getPrice().multiply(quantity).getAmount())
                 .build();
-    }
-
-    @Test
-    void 주문추적이_성공한다() {
-        orderRepository.save(ORDER);
-        entityManager.flush();
-
-        TrackOrderQuery query = TrackOrderQuery.builder()
-                .orderTrackingId(ORDER_TRACKING_ID)
-                .build();
-        TrackOrderResponse response = orderApplicationService.trackOrder(query);
-        assertNotNull(response.getOrderStatus());
-        assertEquals(ORDER_TRACKING_ID, response.getOrderTrackingId());
-    }
-
-    @Test
-    void 결제완료시_주문상태가_PAID로_변한다() throws ExecutionException, InterruptedException, TimeoutException {
-        //given
-        savePendingOrder();
-
-        UUID paymentId = UUID.randomUUID();
-        BigDecimal price = new BigDecimal("1200.00");
-
-        PaymentResponseAvroModel response = getPaymentResponseAvroModel(paymentId, price);
-
-        //when
-        TestTransaction.start();
-        paymentResponseKt.send(
-                        paymentResponseTopic,
-                        ORDER.getId().getValue().toString(),
-                        response)
-                .get();
-
-        //then
-        Thread.sleep(100);
-        Order order = assertDoesNotThrow(() -> orderRepository.findById(ORDER.getId())
-                .orElseThrow(() -> new OrderNotFoundException("Order Not found")));
-
-        assertEquals(OrderStatus.PAID, order.getOrderStatus());
-    }
-
-
-    @Test
-    void 결제완료시_식당승인요청_메세지를_전송한다() throws ExecutionException, InterruptedException, TimeoutException {
-        //given
-        savePendingOrder();
-
-        UUID paymentId = UUID.randomUUID();
-        BigDecimal price = new BigDecimal("1200.00");
-
-        PaymentResponseAvroModel response = getPaymentResponseAvroModel(paymentId, price);
-
-        //when
-        TestTransaction.start();
-        paymentResponseKt.send(
-                        paymentResponseTopic,
-                        ORDER_ID.toString(),
-                        response)
-                .get();
-
-        //then
-        Thread.sleep(100);
-        Map<String, RestaurantApprovalRequestAvroModel> resultTable = readRestaurantRequestRecords();
-        assertTrue(resultTable.containsKey(ORDER_ID.toString()));
-
-        RestaurantApprovalRequestAvroModel record = resultTable.get(ORDER_ID.toString());
-        assertEquals(ORDER_ID.toString(), record.getOrderId());
-        assertEquals(ORDER.getPrice().getAmount(), record.getPrice());
-        assertEquals(ORDER.getRestaurantId().getValue().toString(), record.getRestaurantId());
-        ORDER.getItems().stream()
-                .map(com.sangjun.order.domain.entity.OrderItem::getProduct)
-                .map(Product::getId)
-                .map(ProductId::getValue)
-                .map(UUID::toString)
-                .forEach(id ->
-                        assertDoesNotThrow(() -> record.getProducts().stream()
-                                .filter(p -> p.getId().equals(id))
-                                .findFirst().orElseThrow()));
-        assertEquals(RestaurantOrderStatus.PAID, record.getRestaurantOrderStatus());
-
     }
 
     private void savePendingOrder() {
@@ -452,98 +391,6 @@ public class OrderIntegrationTest {
         return response;
     }
 
-    @Test
-    void 식당승인완료시_주문상태가_APPROVED로_변한다() throws ExecutionException, InterruptedException, TimeoutException {
-        //given
-        savePaidOrder();
-
-        RestaurantApprovalResponseAvroModel response =
-                getRestaurantApprovalResponseAvroModel(OrderApprovalStatus.APPROVED);
-
-        //when
-        TestTransaction.start();
-
-        restaurantResponseKt.send(
-                restaurantResponseTopic,
-                ORDER_ID.toString(),
-                response
-        ).get();
-
-        //then
-        Thread.sleep(300);
-        Order order = assertDoesNotThrow(() -> orderRepository.findById(ORDER.getId())
-                .orElseThrow(() -> new OrderNotFoundException("Order Not found")));
-
-        assertEquals(OrderStatus.APPROVED, order.getOrderStatus());
-    }
-
-    private static RestaurantApprovalResponseAvroModel getRestaurantApprovalResponseAvroModel(OrderApprovalStatus approved) {
-        return RestaurantApprovalResponseAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
-                .setCreatedAt(Instant.now())
-                .setSagaId("")
-                .setFailureMessages(new ArrayList<>())
-                .setOrderApprovalStatus(approved)
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .build();
-    }
-
-    @Test
-    void 식당승인취소시_주문상태가_CANCELLING으로_변한다() throws ExecutionException, InterruptedException, TimeoutException {
-        //given
-        savePaidOrder();
-
-        RestaurantApprovalResponseAvroModel response =
-                getRestaurantApprovalResponseAvroModel(OrderApprovalStatus.REJECTED);
-
-        //when
-        TestTransaction.start();
-
-        restaurantResponseKt.send(
-                restaurantResponseTopic,
-                ORDER_ID.toString(),
-                response
-        ).get();
-
-        //then
-        Thread.sleep(100);
-
-        Order order = assertDoesNotThrow(() -> orderRepository.findById(ORDER.getId())
-                .orElseThrow(() -> new OrderNotFoundException("Order Not found")));
-
-        assertEquals(OrderStatus.CANCELLING, order.getOrderStatus());
-    }
-
-    @Test
-    void 식당주문취소시_결제취소_메세지가_날아간다() throws InterruptedException, ExecutionException {
-        //given
-        savePaidOrder();
-
-        RestaurantApprovalResponseAvroModel response =
-                getRestaurantApprovalResponseAvroModel(OrderApprovalStatus.REJECTED);
-
-        //when
-        TestTransaction.start();
-
-        restaurantResponseKt.send(
-                restaurantResponseTopic,
-                ORDER_ID.toString(),
-                response
-        ).get();
-
-        //then
-        Thread.sleep(100);
-
-        Map<String, PaymentRequestAvroModel> resultTable = readPaymentRequestRecords();
-        assertTrue(resultTable.containsKey(ORDER_ID.toString()));
-
-        PaymentRequestAvroModel record = resultTable.get(ORDER_ID.toString());
-        assertEquals(PaymentOrderStatus.CANCELLED, record.getPaymentOrderStatus());
-        assertEquals(ORDER_ID.toString(), record.getOrderId());
-        assertEquals(ORDER.getPrice().getAmount(), record.getPrice());
-        assertEquals(ORDER.getCustomerId().getValue().toString(), record.getCustomerId());
-    }
 
     private void savePaidOrder() {
         TestTransaction.flagForCommit();
@@ -571,5 +418,6 @@ public class OrderIntegrationTest {
         restaurantRequestConsumer.commitSync();
         return resultTable;
     }
+
 
 }

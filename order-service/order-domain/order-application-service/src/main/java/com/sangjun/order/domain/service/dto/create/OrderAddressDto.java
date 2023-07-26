@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class OrderAddress {
+public class OrderAddressDto {
     @NotNull(message = "street is required")
     @Max(value = 50)
     private String street;

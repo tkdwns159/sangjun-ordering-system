@@ -6,8 +6,8 @@ import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
-import com.sangjun.order.domain.service.dto.create.OrderAddress;
-import com.sangjun.order.domain.service.dto.create.OrderItem;
+import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
+import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
@@ -29,7 +29,7 @@ public class OrderMapstructMapperTest {
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
     private static final UUID PRODUCT_ID = UUID.randomUUID();
     public static final UUID TRACKING_ID = UUID.randomUUID();
-    private static final OrderAddress ORDER_ADDRESS = OrderAddress.builder()
+    private static final OrderAddressDto ORDER_ADDRESS = OrderAddressDto.builder()
             .city("Seoul")
             .postalCode("432")
             .street("Sillim")
@@ -91,12 +91,12 @@ public class OrderMapstructMapperTest {
     void testOrderItemToProduct() {
         BigDecimal price = new BigDecimal("1000.00");
 
-        OrderItem orderItem = OrderItem.builder()
+        OrderItemDto orderItemDto = OrderItemDto.builder()
                 .productId(PRODUCT_ID)
                 .price(price)
                 .build();
 
-        Product product = MAPPER.toProduct(orderItem);
+        Product product = MAPPER.toProduct(orderItemDto);
 
         assertEquals(PRODUCT_ID, product.getId().getValue());
         assertEquals(price, product.getPrice().getAmount());
@@ -108,14 +108,14 @@ public class OrderMapstructMapperTest {
         int quantity = 2;
         BigDecimal subTotal = new BigDecimal("2000.00");
 
-        OrderItem orderItem = OrderItem.builder()
+        OrderItemDto orderItemDto = OrderItemDto.builder()
                 .productId(PRODUCT_ID)
                 .quantity(quantity)
                 .price(price)
                 .subTotal(subTotal)
                 .build();
 
-        com.sangjun.order.domain.entity.OrderItem orderItemEntity = MAPPER.toOrderItem(orderItem);
+        com.sangjun.order.domain.entity.OrderItem orderItemEntity = MAPPER.toOrderItem(orderItemDto);
         assertEquals(PRODUCT_ID, orderItemEntity.getProduct().getId().getValue());
         assertEquals(quantity, orderItemEntity.getQuantity());
         assertEquals(subTotal, orderItemEntity.getSubTotal().getAmount());
@@ -137,8 +137,8 @@ public class OrderMapstructMapperTest {
         int quantity = 2;
         BigDecimal subTotal = price.multiply(BigDecimal.valueOf(quantity));
 
-        List<OrderItem> items = new ArrayList<>();
-        items.add(OrderItem.builder()
+        List<OrderItemDto> items = new ArrayList<>();
+        items.add(OrderItemDto.builder()
                 .productId(PRODUCT_ID)
                 .price(price)
                 .quantity(quantity)
@@ -148,7 +148,7 @@ public class OrderMapstructMapperTest {
         CreateOrderCommand command = CreateOrderCommand.builder()
                 .restaurantId(RESTAURANT_ID)
                 .customerId(CUSTOMER_ID)
-                .orderAddress(ORDER_ADDRESS)
+                .orderAddressDto(ORDER_ADDRESS)
                 .items(items)
                 .price(price)
                 .build();

@@ -7,8 +7,8 @@ import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
-import com.sangjun.order.domain.service.dto.create.OrderAddress;
-import com.sangjun.order.domain.service.dto.create.OrderItem;
+import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
+import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
@@ -37,15 +37,14 @@ public interface OrderMapstructMapper {
     Restaurant toRestaurant(Order order);
 
     @Mapping(target = "id", source = "productId")
-    Product toProduct(OrderItem orderItem);
+    Product toProduct(OrderItemDto orderItemDto);
 
     @Mapping(target = "product.id", source = "productId")
-    com.sangjun.order.domain.entity.OrderItem toOrderItem(OrderItem orderItem);
+    com.sangjun.order.domain.entity.OrderItem toOrderItem(OrderItemDto orderItemDto);
 
-    @Mapping(target = "id", expression = "java(UUID.randomUUID())")
-    StreetAddress toStreetAddress(OrderAddress orderAddress);
+    StreetAddress toStreetAddress(OrderAddressDto orderAddressDto);
 
-    @Mapping(target = "deliveryAddress", source = "orderAddress")
+    @Mapping(target = "deliveryAddress", source = "orderAddressDto")
     Order toOrder(CreateOrderCommand createOrderCommand);
 
 

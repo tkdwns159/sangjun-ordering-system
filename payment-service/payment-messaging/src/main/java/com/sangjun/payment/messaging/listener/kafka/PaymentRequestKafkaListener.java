@@ -39,7 +39,6 @@ public class PaymentRequestKafkaListener implements KafkaConsumer<PaymentRequest
         cancelPayments(messages);
     }
 
-
     private void completePayments(List<PaymentRequestAvroModel> messages) {
         messages.stream()
                 .filter(message -> message.getPaymentOrderStatus() == PaymentOrderStatus.PENDING)

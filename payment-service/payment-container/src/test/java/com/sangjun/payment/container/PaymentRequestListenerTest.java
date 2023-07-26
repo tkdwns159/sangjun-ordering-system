@@ -80,7 +80,7 @@ public class PaymentRequestListenerTest {
 
         query = em.createNativeQuery(
                 "SELECT 'TRUNCATE TABLE ' || TABLE_SCHEMA || '.' || TABLE_NAME || ';' FROM INFORMATION_SCHEMA.TABLES WHERE " +
-                        "TABLE_SCHEMA in ('payment')");
+                        "TABLE_SCHEMA in ('restaurant', 'payment')");
         List<String> statements = query.getResultList();
 
         for (String statement : statements) {

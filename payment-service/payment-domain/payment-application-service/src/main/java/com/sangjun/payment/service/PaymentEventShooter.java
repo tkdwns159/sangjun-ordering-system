@@ -1,4 +1,4 @@
-package com.sangjun.payment.service.ports.input.message.listener;
+package com.sangjun.payment.service;
 
 import com.sangjun.payment.domain.event.PaymentCancelledEvent;
 import com.sangjun.payment.domain.event.PaymentCompletedEvent;

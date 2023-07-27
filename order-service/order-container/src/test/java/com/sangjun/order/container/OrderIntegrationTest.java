@@ -271,6 +271,7 @@ public class OrderIntegrationTest {
         //then
         Order createdOrder = orderRepository.findByTrackingId(resp.getOrderTrackingId()).get();
         생성된_주문데이터_확인(price, orderAddressDto, items, createdOrder);
+        결제요청_이벤트가_발행됨();
     }
 
     private static void 생성된_주문데이터_확인(BigDecimal price,
@@ -296,6 +297,23 @@ public class OrderIntegrationTest {
             checkOrderItem(itemDtoList.get(i), createdOrder.getId(), createdOrder.getItems().get(i));
         }
     }
+
+    private void 결제요청_이벤트가_발행됨() {
+        Map<String, PaymentRequestAvroModel> map = readPaymentRequestRecords();
+        PaymentRequestAvroModel msg = map.get(ORDER_ID.toString());
+
+        assertThat(msg.getOrderId())
+                .isEqualTo(ORDER_ID.toString());
+        assertThat(msg.getPaymentOrderStatus())
+                .isEqualTo(PaymentOrderStatus.PENDING);
+        assertThat(msg.getPrice())
+                .isEqualTo(ORDER.getPrice().getAmount());
+        assertThat(msg.getCustomerId())
+                .isEqualTo(CUSTOMER_ID.toString());
+        assertThat(msg.getRestaurantId())
+                .isEqualTo(ORDER.getRestaurantId().toString());
+    }
+
 
     private static void checkOrderItem(OrderItemDto orderItemDto, OrderId createdOrderId, OrderItem orderItem) {
         assertThat(orderItem.getOrderId())

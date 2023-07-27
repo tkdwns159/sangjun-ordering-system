@@ -5,6 +5,7 @@ import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.exception.OrderDomainException;
+import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.track.TrackOrderQuery;
@@ -86,5 +87,9 @@ class OrderApplicationServiceImpl implements OrderApplicationService {
                     log.error("Order with tracking id: {} not found", trackingId);
                     return new OrderDomainException("Order with tracking id " + trackingId + " not found");
                 });
+    }
+
+    @Override
+    public void cancelOrder(CancelOrderCommand command) {
     }
 }

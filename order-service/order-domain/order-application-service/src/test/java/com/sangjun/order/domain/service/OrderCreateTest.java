@@ -142,7 +142,7 @@ public class OrderCreateTest {
                 .price(PRODUCT.getPrice())
                 .quantity(1)
                 .subTotal(PRODUCT.getPrice())
-                .product(PRODUCT)
+                .productId(new ProductId(PRODUCT_ID))
                 .build();
 
         when(customerRepository.findCustomer(CUSTOMER_ID))

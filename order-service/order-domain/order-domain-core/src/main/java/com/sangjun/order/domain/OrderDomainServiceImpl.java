@@ -20,7 +20,6 @@ public class OrderDomainServiceImpl implements OrderDomainService {
 
     @Override
     public void validateOrder(Order order, Restaurant restaurant) {
-        OrderValidator.validate(order, restaurant);
     }
 
     @Override

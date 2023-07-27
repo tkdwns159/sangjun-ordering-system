@@ -28,10 +28,6 @@ public interface OrderMapstructMapper {
     @Mapping(target = "id", source = "restaurantId")
     Restaurant toRestaurant(CreateOrderCommand createOrderCommand);
 
-    default Product toProduct(com.sangjun.order.domain.entity.OrderItem orderItem) {
-        return orderItem.getProduct();
-    }
-
     @Mapping(target = "id", source = "restaurantId")
     @Mapping(target = "products", source = "items")
     Restaurant toRestaurant(Order order);

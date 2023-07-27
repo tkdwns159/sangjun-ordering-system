@@ -3,9 +3,9 @@ package com.sangjun.order.domain;
 import com.sangjun.common.domain.valueobject.ProductId;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.OrderItem;
-import com.sangjun.order.domain.entity.Product;
-import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.exception.OrderDomainException;
+import com.sangjun.order.domain.valueobject.Product;
+import com.sangjun.order.domain.valueobject.Restaurant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,20 +1,21 @@
-package com.sangjun.order.domain.entity;
+package com.sangjun.order.domain.valueobject;
 
-import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.ProductId;
 
-
-public class Product extends BaseEntity<ProductId> {
+public class Product {
+    private ProductId id;
     private String name;
     private Money price;
 
-    public Product(ProductId productId) {
-        super.setId(productId);
+    public Product(ProductId id, String name, Money price) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
     }
 
     private Product(Builder builder) {
-        setId(builder.id);
+        id = builder.id;
         name = builder.name;
         price = builder.price;
     }
@@ -22,7 +23,6 @@ public class Product extends BaseEntity<ProductId> {
     public static Builder builder() {
         return new Builder();
     }
-
 
     public String getName() {
         return name;
@@ -32,9 +32,8 @@ public class Product extends BaseEntity<ProductId> {
         return price;
     }
 
-    public void updateWithConfirmedNameAndPrice(String name, Money price) {
-        this.name = name;
-        this.price = price;
+    public ProductId getId() {
+        return id;
     }
 
     public static final class Builder {

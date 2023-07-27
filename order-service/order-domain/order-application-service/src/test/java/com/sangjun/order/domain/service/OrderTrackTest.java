@@ -43,7 +43,6 @@ public class OrderTrackTest {
                 .items(new ArrayList<>())
                 .price(Money.ZERO)
                 .deliveryAddress(StreetAddress.builder()
-                        .id(UUID.randomUUID())
                         .street("Silim")
                         .city("Seoul")
                         .postalCode("14123")

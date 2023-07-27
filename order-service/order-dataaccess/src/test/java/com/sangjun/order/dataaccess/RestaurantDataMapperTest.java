@@ -3,8 +3,8 @@ package com.sangjun.order.dataaccess;
 import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.ProductId;
-import com.sangjun.order.domain.entity.Product;
-import com.sangjun.order.domain.entity.Restaurant;
+import com.sangjun.order.domain.valueobject.Product;
+import com.sangjun.order.domain.valueobject.Restaurant;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

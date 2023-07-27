@@ -9,7 +9,6 @@ import com.sangjun.order.dataaccess.customer.entity.CustomerEntity;
 import com.sangjun.order.dataaccess.customer.repository.CustomerJpaRepository;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.OrderItem;
-import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
@@ -18,6 +17,7 @@ import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.valueobject.OrderItemId;
+import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
@@ -87,7 +87,7 @@ public class OrderIntegrationTest {
             .price(PRODUCT_1.getPrice())
             .quantity(2)
             .subTotal(PRODUCT_1.getPrice().multiply(2))
-            .product(PRODUCT_1)
+            .productId(PRODUCT_1.getId())
             .build();
     private static final com.sangjun.order.domain.entity.OrderItem ORDER_ITEM_2 = com.sangjun.order.domain.entity.OrderItem.builder()
             .orderId(new OrderId(ORDER_ID))
@@ -95,7 +95,7 @@ public class OrderIntegrationTest {
             .price(PRODUCT_2.getPrice())
             .quantity(1)
             .subTotal(PRODUCT_2.getPrice())
-            .product(PRODUCT_2)
+            .productId(PRODUCT_2.getId())
             .build();
     private static final RestaurantEntity RESTAURANT_ENTITY_1 = RestaurantEntity.builder()
             .restaurantId(RESTAURANT_ID)
@@ -240,13 +240,13 @@ public class OrderIntegrationTest {
         OrderItemDto orderItemDto1 = OrderItemDto.builder()
                 .price(ORDER_ITEM_1.getPrice().getAmount())
                 .subTotal(ORDER_ITEM_1.getSubTotal().getAmount())
-                .productId(ORDER_ITEM_1.getProduct().getId().getValue())
+                .productId(ORDER_ITEM_1.getProductId().getValue())
                 .quantity(ORDER_ITEM_1.getQuantity())
                 .build();
         OrderItemDto orderItemDto2 = OrderItemDto.builder()
                 .price(ORDER_ITEM_2.getPrice().getAmount())
                 .subTotal(ORDER_ITEM_2.getSubTotal().getAmount())
-                .productId(ORDER_ITEM_2.getProduct().getId().getValue())
+                .productId(ORDER_ITEM_2.getProductId().getValue())
                 .quantity(ORDER_ITEM_2.getQuantity())
                 .build();
         List<OrderItemDto> items = new ArrayList<>(Arrays.asList(orderItemDto1, orderItemDto2));
@@ -318,7 +318,7 @@ public class OrderIntegrationTest {
     private static void checkOrderItem(OrderItemDto orderItemDto, OrderId createdOrderId, OrderItem orderItem) {
         assertThat(orderItem.getOrderId())
                 .isEqualTo(createdOrderId);
-        assertThat(orderItem.getProduct().getId().getValue())
+        assertThat(orderItem.getProductId().getValue())
                 .isEqualTo(orderItemDto.getProductId());
         assertThat(orderItem.getQuantity())
                 .isEqualTo(orderItemDto.getQuantity());

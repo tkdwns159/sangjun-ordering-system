@@ -9,22 +9,35 @@ import com.sangjun.order.domain.valueobject.TrackingId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+@Entity
+@Table(name = "p_orders", schema = "p_order")
+@Access(AccessType.FIELD)
 public class Order extends AggregateRoot<OrderId> {
-
+    @Transient
     private static final Logger log = LoggerFactory.getLogger(Order.class.getName());
-    private final CustomerId customerId;
-    private final RestaurantId restaurantId;
-    private final StreetAddress deliveryAddress;
-    private final Money price;
-    private final List<OrderItem> items;
 
+    @Embedded
+    private CustomerId customerId;
+    @Embedded
+    private RestaurantId restaurantId;
+    @Embedded
+    private StreetAddress deliveryAddress;
+    @Embedded
+    private Money price;
+    @Embedded
     private TrackingId trackingId;
+    @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
+
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private List<OrderItem> items;
     private List<String> failureMessages;
 
     public Order(CustomerId customerId, RestaurantId restaurantId, StreetAddress deliveryAddress, Money price, List<OrderItem> items) {
@@ -33,6 +46,9 @@ public class Order extends AggregateRoot<OrderId> {
         this.deliveryAddress = deliveryAddress;
         this.price = price;
         this.items = items;
+    }
+
+    protected Order() {
     }
 
     private Order(Builder builder) {

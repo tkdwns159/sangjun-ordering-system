@@ -1,16 +1,16 @@
-package com.sangjun.order.domain.entity;
+package com.sangjun.order.domain.valueobject;
 
-import com.sangjun.common.domain.entity.AggregateRoot;
 import com.sangjun.common.domain.valueobject.RestaurantId;
 
 import java.util.List;
 
-public class Restaurant extends AggregateRoot<RestaurantId> {
-    private final List<Product> products;
+public class Restaurant {
+    private RestaurantId id;
+    private List<Product> products;
     private boolean active;
 
     private Restaurant(Builder builder) {
-        setId(builder.id);
+        id = builder.id;
         products = builder.products;
         active = builder.active;
     }

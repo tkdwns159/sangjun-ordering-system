@@ -1,17 +1,15 @@
-package com.sangjun.payment.domain.entity.book;
+package com.sangjun.order.domain.entity;
 
 import com.sangjun.common.domain.entity.EmbeddedIdGenerator;
-import com.sangjun.payment.domain.valueobject.book.BookEntryId;
+import com.sangjun.order.domain.valueobject.OrderItemId;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 import java.io.Serializable;
 
-
-public class BookEntryIdGenerator extends EmbeddedIdGenerator {
-
+public class OrderItemIdGenerator extends EmbeddedIdGenerator {
     @Override
     public Serializable generate(SharedSessionContractImplementor session, Object obj) throws HibernateException {
-        return new BookEntryId((Long) super.generate(session, obj));
+        return new OrderItemId((Long) super.generate(session, obj));
     }
 }

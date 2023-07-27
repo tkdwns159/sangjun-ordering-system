@@ -1,10 +1,10 @@
 package com.sangjun.order.domain;
 
 import com.sangjun.order.domain.entity.Order;
-import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.event.OrderCancelledEvent;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.event.OrderPaidEvent;
+import com.sangjun.order.domain.valueobject.Restaurant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

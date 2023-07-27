@@ -3,7 +3,7 @@ package com.sangjun.order.domain;
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.OrderItem;
-import com.sangjun.order.domain.entity.Product;
+import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.valueobject.OrderItemId;
 import com.sangjun.order.domain.valueobject.TrackingId;

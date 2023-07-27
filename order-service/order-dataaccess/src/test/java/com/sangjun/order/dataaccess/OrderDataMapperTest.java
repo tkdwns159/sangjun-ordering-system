@@ -6,7 +6,7 @@ import com.sangjun.order.dataaccess.order.entity.OrderEntity;
 import com.sangjun.order.dataaccess.order.entity.OrderItemEntity;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.OrderItem;
-import com.sangjun.order.domain.entity.Product;
+import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.OrderItemId;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;

@@ -1,34 +1,65 @@
 package com.sangjun.order.domain.entity;
 
-import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderId;
+import com.sangjun.common.domain.valueobject.ProductId;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.valueobject.OrderItemId;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OrderItem extends BaseEntity<OrderItemId> {
-    private static final Logger log = LoggerFactory.getLogger(OrderItem.class.getName());
-    private OrderId orderId;
-    private final Product product;
-    private final int quantity;
-    private final Money price;
-    private final Money subTotal;
+import javax.persistence.*;
 
-    public OrderItem(OrderItemId orderItemId, OrderId orderId, Product product, int quantity, Money price, Money subTotal) {
-        setId(orderItemId);
+@Entity
+@Table(name = "order_items", schema = "p_order")
+@Access(AccessType.FIELD)
+public class OrderItem {
+    @Transient
+    private static final Logger log = LoggerFactory.getLogger(OrderItem.class.getName());
+
+    @GenericGenerator(
+            name = "order_item_id_gen",
+            strategy = "com.sangjun.order.domain.entity.OrderItemIdGenerator",
+            parameters = {
+                    @Parameter(name = OrderItemIdGenerator.TYPE, value = "SEQUENCE"),
+                    @Parameter(name = OrderItemIdGenerator.SEQUENCE_NAME, value = "order_item_id_seq")
+            })
+    @GeneratedValue(generator = "order_item_id_gen")
+    @EmbeddedId
+    private OrderItemId id;
+    @Embedded
+    private OrderId orderId;
+    @Embedded
+    private ProductId productId;
+    private int quantity;
+    @Embedded
+    private Money price;
+    @Embedded
+    private Money subTotal;
+
+    public OrderItem(OrderItemId orderItemId,
+                     OrderId orderId,
+                     ProductId productId,
+                     int quantity,
+                     Money price,
+                     Money subTotal) {
+        this.id = orderItemId;
         this.orderId = orderId;
-        this.product = product;
+        this.productId = productId;
         this.quantity = quantity;
         this.price = price;
         this.subTotal = subTotal;
     }
 
+    protected OrderItem() {
+    }
+
     private OrderItem(Builder builder) {
-        setId(builder.id);
+        id = builder.id;
         orderId = builder.orderId;
-        product = builder.product;
+        productId = builder.productId;
         quantity = builder.quantity;
         price = builder.price;
         subTotal = builder.subTotal;
@@ -43,10 +74,6 @@ public class OrderItem extends BaseEntity<OrderItemId> {
         return orderId;
     }
 
-    public Product getProduct() {
-        return product;
-    }
-
     public int getQuantity() {
         return quantity;
     }
@@ -59,9 +86,13 @@ public class OrderItem extends BaseEntity<OrderItemId> {
         return subTotal;
     }
 
+    public ProductId getProductId() {
+        return productId;
+    }
+
     void initializeOrderItem(OrderId orderId, OrderItemId orderItemId) {
         this.orderId = orderId;
-        super.setId(orderItemId);
+        this.id = orderItemId;
     }
 
     public void checkSubTotalIsPresent() {
@@ -92,7 +123,7 @@ public class OrderItem extends BaseEntity<OrderItemId> {
     public static final class Builder {
         private OrderItemId id;
         private OrderId orderId;
-        private Product product;
+        private ProductId productId;
         private int quantity;
         private Money price;
         private Money subTotal;
@@ -110,8 +141,8 @@ public class OrderItem extends BaseEntity<OrderItemId> {
             return this;
         }
 
-        public Builder product(Product val) {
-            product = val;
+        public Builder productId(ProductId val) {
+            productId = val;
             return this;
         }
 

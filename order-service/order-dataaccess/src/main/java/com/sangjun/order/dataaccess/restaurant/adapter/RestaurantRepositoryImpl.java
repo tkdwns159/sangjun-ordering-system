@@ -1,8 +1,8 @@
 package com.sangjun.order.dataaccess.restaurant.adapter;
 
 import com.sangjun.common.dataaccess.restaurant.repository.RestaurantJpaRepository;
-import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
+import com.sangjun.order.domain.valueobject.Restaurant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

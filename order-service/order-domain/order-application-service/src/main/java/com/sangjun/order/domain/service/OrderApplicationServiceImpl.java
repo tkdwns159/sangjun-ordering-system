@@ -2,7 +2,6 @@ package com.sangjun.order.domain.service;
 
 import com.sangjun.order.domain.OrderDomainService;
 import com.sangjun.order.domain.entity.Order;
-import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
@@ -14,6 +13,7 @@ import com.sangjun.order.domain.service.ports.input.service.OrderApplicationServ
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
+import com.sangjun.order.domain.valueobject.Restaurant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -2,9 +2,9 @@ package com.sangjun.order.dataaccess.restaurant.mapper;
 
 import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
 import com.sangjun.common.domain.valueobject.RestaurantId;
+import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.valueobject.Product;
-import com.sangjun.order.domain.valueobject.Restaurant;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;

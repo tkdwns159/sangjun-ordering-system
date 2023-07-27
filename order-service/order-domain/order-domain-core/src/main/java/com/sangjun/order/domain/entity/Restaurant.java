@@ -1,6 +1,7 @@
-package com.sangjun.order.domain.valueobject;
+package com.sangjun.order.domain.entity;
 
 import com.sangjun.common.domain.valueobject.RestaurantId;
+import com.sangjun.order.domain.valueobject.Product;
 
 import java.util.List;
 

@@ -8,7 +8,6 @@ import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.dataaccess.customer.entity.CustomerEntity;
 import com.sangjun.order.dataaccess.customer.repository.CustomerJpaRepository;
 import com.sangjun.order.domain.entity.Order;
-import com.sangjun.order.domain.entity.OrderItem;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
@@ -16,10 +15,8 @@ import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
-import com.sangjun.order.domain.valueobject.OrderItemId;
 import com.sangjun.order.domain.valueobject.Product;
-import com.sangjun.order.domain.valueobject.StreetAddress;
-import com.sangjun.order.domain.valueobject.TrackingId;
+import com.sangjun.order.domain.valueobject.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -81,17 +78,15 @@ public class OrderIntegrationTest {
             .name("product2")
             .price(Money.of(new BigDecimal("3200")))
             .build();
-    private static final com.sangjun.order.domain.entity.OrderItem ORDER_ITEM_1 = com.sangjun.order.domain.entity.OrderItem.builder()
-            .orderId(new OrderId(ORDER_ID))
-            .orderItemId(new OrderItemId(1L))
+    private static final OrderItem ORDER_ITEM_1 = OrderItem.builder()
+            .orderItemId(new OrderItemId(new OrderId(ORDER_ID), 1L))
             .price(PRODUCT_1.getPrice())
             .quantity(2)
             .subTotal(PRODUCT_1.getPrice().multiply(2))
             .productId(PRODUCT_1.getId())
             .build();
-    private static final com.sangjun.order.domain.entity.OrderItem ORDER_ITEM_2 = com.sangjun.order.domain.entity.OrderItem.builder()
-            .orderId(new OrderId(ORDER_ID))
-            .orderItemId(new OrderItemId(2L))
+    private static final OrderItem ORDER_ITEM_2 = OrderItem.builder()
+            .orderItemId(new OrderItemId(new OrderId(ORDER_ID), 2L))
             .price(PRODUCT_2.getPrice())
             .quantity(1)
             .subTotal(PRODUCT_2.getPrice())
@@ -316,7 +311,7 @@ public class OrderIntegrationTest {
 
 
     private static void checkOrderItem(OrderItemDto orderItemDto, OrderId createdOrderId, OrderItem orderItem) {
-        assertThat(orderItem.getOrderId())
+        assertThat(orderItem.getOrderItemId().getOrderId())
                 .isEqualTo(createdOrderId);
         assertThat(orderItem.getProductId().getValue())
                 .isEqualTo(orderItemDto.getProductId());

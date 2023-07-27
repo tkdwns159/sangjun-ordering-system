@@ -3,13 +3,14 @@ package com.sangjun.order.domain.service.mapper;
 import com.sangjun.common.domain.mapper.CentralConfig;
 import com.sangjun.common.domain.mapper.CommonMapper;
 import com.sangjun.order.domain.entity.Order;
+import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
+import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.Product;
-import com.sangjun.order.domain.valueobject.Restaurant;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import org.mapstruct.Mapper;
@@ -35,8 +36,7 @@ public interface OrderMapstructMapper {
     @Mapping(target = "id", source = "productId")
     Product toProduct(OrderItemDto orderItemDto);
 
-    @Mapping(target = "product.id", source = "productId")
-    com.sangjun.order.domain.entity.OrderItem toOrderItem(OrderItemDto orderItemDto);
+    OrderItem toOrderItem(OrderItemDto orderItemDto);
 
     StreetAddress toStreetAddress(OrderAddressDto orderAddressDto);
 

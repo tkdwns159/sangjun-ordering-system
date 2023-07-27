@@ -1,6 +1,6 @@
 package com.sangjun.order.domain.service.ports.output.repository;
 
-import com.sangjun.order.domain.valueobject.Restaurant;
+import com.sangjun.order.domain.entity.Restaurant;
 
 import java.util.Optional;
 

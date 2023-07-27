@@ -4,9 +4,9 @@ import com.sangjun.common.domain.valueobject.CustomerId;
 
 public class Customer {
 
-    private CustomerId customerId;
+    private CustomerId id;
 
-    public Customer(CustomerId customerId) {
-        this.customerId = customerId;
+    public Customer(CustomerId id) {
+        this.id = id;
     }
 }

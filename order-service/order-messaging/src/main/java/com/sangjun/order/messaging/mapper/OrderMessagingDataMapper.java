@@ -56,7 +56,7 @@ public class OrderMessagingDataMapper {
                 .setCreatedAt(orderPaidEvent.getCreatedAt().toInstant())
                 .setProducts(order.getItems().stream()
                         .map(item -> Product.newBuilder()
-                                .setId(item.getProduct().getId().getValue().toString())
+                                .setId(item.getProductId().getValue().toString())
                                 .setQuantity(item.getQuantity())
                                 .build())
                         .toList())

@@ -1,11 +1,13 @@
 package com.sangjun.order.domain.service;
 
 import com.sangjun.order.domain.OrderDomainService;
+import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.track.TrackOrderQuery;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
+import com.sangjun.order.domain.service.mapper.OrderMapstructMapper;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
@@ -27,6 +29,9 @@ class OrderApplicationServiceImpl implements OrderApplicationService {
 
     @Override
     public CreateOrderResponse createOrder(CreateOrderCommand createOrderCommand) {
+        Order order = OrderMapstructMapper.MAPPER.toOrder(createOrderCommand);
+        order.initialize();
+
         return null;
     }
 

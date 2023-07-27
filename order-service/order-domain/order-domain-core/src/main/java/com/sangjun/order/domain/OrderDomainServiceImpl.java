@@ -1,10 +1,10 @@
 package com.sangjun.order.domain;
 
 import com.sangjun.order.domain.entity.Order;
+import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.event.OrderCancelledEvent;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.event.OrderPaidEvent;
-import com.sangjun.order.domain.valueobject.Restaurant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ public class OrderDomainServiceImpl implements OrderDomainService {
 
     @Override
     public OrderCreatedEvent initiateOrder(Order order) {
-        order.initializeOrder();
+        order.initialize();
         log.info("Order with id: {} is initiated", order.getId().getValue());
         return new OrderCreatedEvent(order, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }

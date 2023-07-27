@@ -2,8 +2,9 @@ package com.sangjun.order.domain.entity;
 
 import com.sangjun.common.domain.entity.AggregateRoot;
 import com.sangjun.common.domain.valueobject.*;
+import com.sangjun.order.domain.FailureMessageAttributeConverter;
 import com.sangjun.order.domain.exception.OrderDomainException;
-import com.sangjun.order.domain.valueobject.OrderItemId;
+import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import org.slf4j.Logger;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Predicate;
 
 @Entity
@@ -35,9 +35,13 @@ public class Order extends AggregateRoot<OrderId> {
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY,
+            cascade = {CascadeType.PERSIST, CascadeType.REFRESH},
+            orphanRemoval = true)
     @JoinColumn(name = "order_id")
     private List<OrderItem> items;
+
+    @Convert(converter = FailureMessageAttributeConverter.class)
     private List<String> failureMessages;
 
     public Order(CustomerId customerId, RestaurantId restaurantId, StreetAddress deliveryAddress, Money price, List<OrderItem> items) {
@@ -61,10 +65,6 @@ public class Order extends AggregateRoot<OrderId> {
         trackingId = builder.trackingId;
         orderStatus = builder.orderStatus;
         failureMessages = builder.failureMessages;
-    }
-
-    public void setTrackingId(TrackingId trackingId) {
-        this.trackingId = trackingId;
     }
 
     public void setFailureMessages(List<String> failureMessages) {
@@ -107,9 +107,9 @@ public class Order extends AggregateRoot<OrderId> {
         return failureMessages;
     }
 
-    public void initializeOrder() {
-        setId(new OrderId(UUID.randomUUID()));
-        trackingId = new TrackingId(UUID.randomUUID());
+    public void initialize() {
+        setId(new OrderId(java.util.UUID.randomUUID()));
+        trackingId = new TrackingId(java.util.UUID.randomUUID());
         orderStatus = OrderStatus.PENDING;
         initializeOrderItems();
     }
@@ -117,20 +117,11 @@ public class Order extends AggregateRoot<OrderId> {
     private void initializeOrderItems() {
         long itemId = 1L;
         for (OrderItem orderItem : items) {
-            orderItem.initializeOrderItem(super.getId(), new OrderItemId(itemId++));
+            orderItem.initialize(super.getId(), itemId++);
         }
     }
 
     public void validateOrder() {
-        checkIdIsEmpty();
-        checkOrderStatusIsEmpty();
-        checkTotalPriceIsPresent();
-
-        checkItemSubTotalsArePresent();
-        checkItemPricesArePresent();
-
-        checkTotalPriceEqualsActualItemSubTotalSum();
-        checkItemSubTotalEqualsActualItemPriceSum();
     }
 
 
@@ -168,17 +159,6 @@ public class Order extends AggregateRoot<OrderId> {
         }
     }
 
-    private void checkItemSubTotalsArePresent() {
-        this.items.forEach(OrderItem::checkSubTotalIsPresent);
-    }
-
-    private void checkItemPricesArePresent() {
-        this.items.forEach(OrderItem::checkPriceIsPresent);
-    }
-
-    private void checkItemSubTotalEqualsActualItemPriceSum() {
-        this.items.forEach(OrderItem::checkSubTotalEqualsActualPriceSum);
-    }
 
     public void pay() {
         if (this.orderStatus != OrderStatus.PENDING) {

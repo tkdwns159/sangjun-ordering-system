@@ -4,6 +4,7 @@ import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.order.domain.OrderDomainService;
 import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
+import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
@@ -14,9 +15,8 @@ import com.sangjun.order.domain.service.ports.input.service.OrderApplicationServ
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
-import com.sangjun.order.domain.valueobject.OrderItemId;
+import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.Product;
-import com.sangjun.order.domain.valueobject.Restaurant;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -136,9 +136,7 @@ public class OrderCreateTest {
     void 주문이_성공적으로_생성된다() {
         UUID orderId = UUID.randomUUID();
         UUID trackingId = UUID.randomUUID();
-        com.sangjun.order.domain.entity.OrderItem orderItem = com.sangjun.order.domain.entity.OrderItem.builder()
-                .orderId(new OrderId(orderId))
-                .orderItemId(new OrderItemId(1L))
+        OrderItem orderItem = OrderItem.builder()
                 .price(PRODUCT.getPrice())
                 .quantity(1)
                 .subTotal(PRODUCT.getPrice())

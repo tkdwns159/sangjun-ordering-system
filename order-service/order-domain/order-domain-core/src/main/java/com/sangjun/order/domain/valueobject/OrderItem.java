@@ -74,6 +74,15 @@ public class OrderItem {
         return this.id;
     }
 
+    public void validate() {
+        Money subTotal = this.getPrice().multiply(this.getQuantity());
+        if (!subTotal.equals(this.subTotal)) {
+            throw new IllegalStateException(
+                    String.format("OrderItem of product(%s): subTotal(%s) is not equal to the sum(%s) of price * quantity",
+                            this.productId.getValue(), this.subTotal, subTotal));
+        }
+    }
+
 
     public static final class Builder {
         private OrderItemId orderItemId;

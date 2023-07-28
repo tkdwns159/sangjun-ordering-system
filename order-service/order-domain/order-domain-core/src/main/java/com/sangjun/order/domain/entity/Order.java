@@ -121,10 +121,21 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     public void initialize() {
+        validate();
         setId(new OrderId(UUID.randomUUID()));
         trackingId = new TrackingId(UUID.randomUUID());
         orderStatus = OrderStatus.PENDING;
         initializeOrderItems();
+    }
+
+    private void validate() {
+        validateOrderItems();
+    }
+
+    private void validateOrderItems() {
+        for (OrderItem item : items) {
+            item.validate();
+        }
     }
 
     private void initializeOrderItems() {
@@ -132,9 +143,6 @@ public class Order extends AggregateRoot<OrderId> {
         for (OrderItem orderItem : items) {
             orderItem.initialize(super.getId(), itemId++);
         }
-    }
-
-    public void validateOrder() {
     }
 
 

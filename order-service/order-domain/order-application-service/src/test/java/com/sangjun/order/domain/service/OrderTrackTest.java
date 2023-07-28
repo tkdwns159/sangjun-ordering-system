@@ -11,6 +11,7 @@ import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -22,7 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = OrderTestConfiguration.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@SpringBootTest(classes = OrderTestConfiguration.class,
+        webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class OrderTrackTest {
 
     @Autowired

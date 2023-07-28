@@ -28,9 +28,9 @@ public class CreateOrderCommand {
 
     @Valid
     @NotNull(message = "Items is required")
-    @Size(min = 1, message = "Items is required")
+    @Size(min = 1, message = "Must be [items.size() >= 1]")
     private List<OrderItemDto> items;
 
-    @NotNull(message = "Address is required")
+    @NotNull(message = "OrderAddressDto is required")
     private OrderAddressDto orderAddressDto;
 }

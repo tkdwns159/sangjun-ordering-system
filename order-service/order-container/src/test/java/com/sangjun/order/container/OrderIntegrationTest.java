@@ -251,8 +251,6 @@ public class OrderIntegrationTest {
                 .street("Sillim")
                 .build();
 
-        items.add(orderItemDto1);
-
         CreateOrderCommand command = CreateOrderCommand.builder()
                 .customerId(CUSTOMER_ID)
                 .restaurantId(RESTAURANT_ID)

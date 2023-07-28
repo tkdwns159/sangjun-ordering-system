@@ -5,12 +5,15 @@ import com.sangjun.common.domain.valueobject.OrderId;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
 import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
 @Access(AccessType.FIELD)
 public class OrderItemId implements Serializable {
+
+    @Embedded
     private OrderId orderId;
     private Long orderItemId;
 
@@ -37,5 +40,9 @@ public class OrderItemId implements Serializable {
 
     public OrderId getOrderId() {
         return this.orderId;
+    }
+
+    public Long getOrderItemId() {
+        return orderItemId;
     }
 }

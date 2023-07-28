@@ -21,8 +21,10 @@ public class OrderItem {
     private ProductId productId;
     private int quantity;
     @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "price"))
     private Money price;
     @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "sub_total"))
     private Money subTotal;
 
     public OrderItem(OrderItemId orderItemId,

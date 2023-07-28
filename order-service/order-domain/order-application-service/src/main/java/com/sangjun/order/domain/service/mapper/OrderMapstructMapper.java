@@ -43,7 +43,6 @@ public interface OrderMapstructMapper {
     @Mapping(target = "deliveryAddress", source = "orderAddressDto")
     Order toOrder(CreateOrderCommand createOrderCommand);
 
-
     @Mapping(target = "orderTrackingId", source = "trackingId.value")
     @Mapping(target = "message", constant = "Order created successfully")
     CreateOrderResponse toCreateOrderResponse(Order order);

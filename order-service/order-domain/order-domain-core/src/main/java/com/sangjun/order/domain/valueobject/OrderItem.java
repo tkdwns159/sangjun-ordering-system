@@ -83,7 +83,6 @@ public class OrderItem {
         }
     }
 
-
     public static final class Builder {
         private OrderItemId orderItemId;
         private ProductId productId;

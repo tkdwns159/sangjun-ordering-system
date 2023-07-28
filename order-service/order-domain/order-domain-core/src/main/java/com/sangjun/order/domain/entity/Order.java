@@ -239,6 +239,11 @@ public class Order extends AggregateRoot<OrderId> {
         this.orderStatus = orderStatus;
     }
 
+    public List<OrderItem> getOrderItems() {
+        return new ArrayList<>(this.items);
+    }
+
+
     public static final class Builder {
         private OrderId id;
         private CustomerId customerId;

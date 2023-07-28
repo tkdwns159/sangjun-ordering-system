@@ -262,7 +262,7 @@ public class OrderIntegrationTest {
         CreateOrderResponse resp = orderApplicationService.createOrder(command);
 
         //then
-        Order createdOrder = orderRepository.findByTrackingId(resp.getOrderTrackingId()).get();
+        Order createdOrder = orderRepository.findByTrackingId(new TrackingId(resp.getOrderTrackingId())).get();
         생성된_주문데이터_확인(price, orderAddressDto, items, createdOrder);
         결제요청_이벤트가_발행됨();
     }
@@ -309,7 +309,7 @@ public class OrderIntegrationTest {
 
 
     private static void checkOrderItem(OrderItemDto orderItemDto, OrderId createdOrderId, OrderItem orderItem) {
-        assertThat(orderItem.getOrderItemId().getOrderId())
+        assertThat(orderItem.getId().getOrderId())
                 .isEqualTo(createdOrderId);
         assertThat(orderItem.getProductId().getValue())
                 .isEqualTo(orderItemDto.getProductId());
@@ -360,8 +360,8 @@ public class OrderIntegrationTest {
     private void mockCustomerFindById() {
         CustomerEntity customerEntity = new CustomerEntity(CUSTOMER_ID);
 
-        when(customerJpaRepository.findById(CUSTOMER_ID))
-                .thenReturn(Optional.of(customerEntity));
+//        when(customerJpaRepository.findById(CUSTOMER_ID))
+//                .thenReturn(Optional.of(customerEntity));
     }
 
     private void mockFindByRestaurantIdAndProductIdIn() {

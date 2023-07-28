@@ -13,7 +13,11 @@ import org.slf4j.LoggerFactory;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Predicate;
+
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 @Entity
 @Table(name = "p_orders", schema = "p_order")
@@ -36,7 +40,9 @@ public class Order extends AggregateRoot<OrderId> {
     private OrderStatus orderStatus;
 
     @OneToMany(fetch = FetchType.LAZY,
-            cascade = {CascadeType.PERSIST, CascadeType.REFRESH},
+            cascade = {CascadeType.PERSIST,
+                    CascadeType.MERGE,
+                    CascadeType.REMOVE},
             orphanRemoval = true)
     @JoinColumn(name = "order_id")
     private List<OrderItem> items;
@@ -44,27 +50,34 @@ public class Order extends AggregateRoot<OrderId> {
     @Convert(converter = FailureMessageAttributeConverter.class)
     private List<String> failureMessages;
 
-    public Order(CustomerId customerId, RestaurantId restaurantId, StreetAddress deliveryAddress, Money price, List<OrderItem> items) {
+    private Order(
+            CustomerId customerId,
+            RestaurantId restaurantId,
+            StreetAddress deliveryAddress,
+            Money price,
+            List<OrderItem> items,
+            List<String> failureMessages) {
         this.customerId = customerId;
         this.restaurantId = restaurantId;
         this.deliveryAddress = deliveryAddress;
         this.price = price;
+        this.orderStatus = OrderStatus.PENDING;
         this.items = items;
+        this.failureMessages = failureMessages;
     }
 
     protected Order() {
     }
 
-    private Order(Builder builder) {
-        setId(builder.id);
-        customerId = builder.customerId;
-        restaurantId = builder.restaurantId;
-        deliveryAddress = builder.deliveryAddress;
-        price = builder.price;
-        items = builder.items;
-        trackingId = builder.trackingId;
-        orderStatus = builder.orderStatus;
-        failureMessages = builder.failureMessages;
+    private static Order of(Builder builder) {
+        return new Order(
+                requireNonNull(builder.customerId, "customerId"),
+                requireNonNull(builder.restaurantId, "restaurantId"),
+                requireNonNull(builder.deliveryAddress, "deliveryAddress"),
+                requireNonNull(builder.price, "price"),
+                requireNonNullElse(builder.items, new ArrayList<>()),
+                requireNonNullElse(builder.failureMessages, new ArrayList<>())
+        );
     }
 
     public void setFailureMessages(List<String> failureMessages) {
@@ -91,8 +104,8 @@ public class Order extends AggregateRoot<OrderId> {
         return price;
     }
 
-    public List<OrderItem> getItems() {
-        return items;
+    public OrderItem getItemOfIndex(int idx) {
+        return this.items.get(idx);
     }
 
     public TrackingId getTrackingId() {
@@ -108,8 +121,8 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     public void initialize() {
-        setId(new OrderId(java.util.UUID.randomUUID()));
-        trackingId = new TrackingId(java.util.UUID.randomUUID());
+        setId(new OrderId(UUID.randomUUID()));
+        trackingId = new TrackingId(UUID.randomUUID());
         orderStatus = OrderStatus.PENDING;
         initializeOrderItems();
     }
@@ -278,7 +291,7 @@ public class Order extends AggregateRoot<OrderId> {
         }
 
         public Order build() {
-            return new Order(this);
+            return Order.of(this);
         }
     }
 }

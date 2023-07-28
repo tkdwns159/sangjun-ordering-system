@@ -53,7 +53,7 @@ public class OrderTrackTest {
                 .failureMessages(new ArrayList<>())
                 .build();
 
-        when(orderRepository.findByTrackingId(trackingId))
+        when(orderRepository.findByTrackingId(new TrackingId(trackingId)))
                 .thenReturn(Optional.of(order));
 
         TrackOrderResponse response = orderApplicationService.trackOrder(trackOrderQuery);

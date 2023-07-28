@@ -9,7 +9,6 @@ import com.sangjun.order.domain.service.ports.output.message.publisher.payment.O
 import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCreatedPaymentRequestMessagePublisher;
 import com.sangjun.order.domain.service.ports.output.message.publisher.restaurant.OrderPaidRestaurantRequestMessagePublisher;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
-import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
 import org.mockito.Mockito;
 import org.springframework.boot.SpringBootConfiguration;
@@ -54,11 +53,6 @@ public class CreateOrderTestConfig {
     @Bean
     public RestaurantApprovalMessageListener restaurantApprovalMessageListener() {
         return Mockito.mock(RestaurantApprovalMessageListener.class);
-    }
-
-    @Bean
-    public OrderRepository orderRepository() {
-        return Mockito.mock(OrderRepository.class);
     }
 
     @Bean

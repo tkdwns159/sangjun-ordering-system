@@ -9,4 +9,8 @@ public class Customer {
     public Customer(CustomerId id) {
         this.id = id;
     }
+
+    public CustomerId getId() {
+        return id;
+    }
 }

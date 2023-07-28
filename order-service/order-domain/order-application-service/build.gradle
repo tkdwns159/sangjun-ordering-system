@@ -17,6 +17,7 @@ dependencies {
     testRuntimeOnly 'com.h2database:h2'
     testImplementation 'com.sangjun.common:common-dataaccess'
     testImplementation 'com.sangjun.common:common-domain'
+    testImplementation project(":order-dataaccess")
 
 }
 

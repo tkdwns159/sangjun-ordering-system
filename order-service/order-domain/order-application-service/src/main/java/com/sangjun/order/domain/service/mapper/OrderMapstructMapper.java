@@ -3,7 +3,6 @@ package com.sangjun.order.domain.service.mapper;
 import com.sangjun.common.domain.mapper.CentralConfig;
 import com.sangjun.common.domain.mapper.CommonMapper;
 import com.sangjun.order.domain.entity.Order;
-import com.sangjun.order.domain.entity.Restaurant;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
@@ -25,13 +24,6 @@ public interface OrderMapstructMapper {
     OrderMapstructMapper MAPPER = Mappers.getMapper(OrderMapstructMapper.class);
 
     TrackingId toTrackingId(UUID value);
-
-    @Mapping(target = "id", source = "restaurantId")
-    Restaurant toRestaurant(CreateOrderCommand createOrderCommand);
-
-    @Mapping(target = "id", source = "restaurantId")
-    @Mapping(target = "products", source = "items")
-    Restaurant toRestaurant(Order order);
 
     @Mapping(target = "id", source = "productId")
     Product toProduct(OrderItemDto orderItemDto);

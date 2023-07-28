@@ -3,8 +3,6 @@ package com.sangjun.order.domain.valueobject;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.ProductId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.persistence.*;
 
@@ -12,11 +10,9 @@ import javax.persistence.*;
 @Table(name = "order_items", schema = "p_order")
 @Access(AccessType.FIELD)
 public class OrderItem {
-    @Transient
-    private static final Logger log = LoggerFactory.getLogger(OrderItem.class.getName());
 
     @EmbeddedId
-    private OrderItemId orderItemId;
+    private OrderItemId id;
     @Embedded
     private ProductId productId;
     private int quantity;
@@ -27,12 +23,12 @@ public class OrderItem {
     @AttributeOverride(name = "amount", column = @Column(name = "sub_total"))
     private Money subTotal;
 
-    public OrderItem(OrderItemId orderItemId,
+    public OrderItem(OrderItemId id,
                      ProductId productId,
                      int quantity,
                      Money price,
                      Money subTotal) {
-        this.orderItemId = orderItemId;
+        this.id = id;
         this.productId = productId;
         this.quantity = quantity;
         this.price = price;
@@ -43,7 +39,7 @@ public class OrderItem {
     }
 
     private OrderItem(Builder builder) {
-        orderItemId = builder.orderItemId;
+        id = builder.orderItemId;
         productId = builder.productId;
         quantity = builder.quantity;
         price = builder.price;
@@ -55,7 +51,7 @@ public class OrderItem {
     }
 
     public void initialize(OrderId orderId, Long orderItemId) {
-        this.orderItemId = new OrderItemId(orderId, orderItemId);
+        this.id = new OrderItemId(orderId, orderItemId);
     }
 
     public Money getSubTotal() {
@@ -74,8 +70,8 @@ public class OrderItem {
         return this.quantity;
     }
 
-    public OrderItemId getOrderItemId() {
-        return this.orderItemId;
+    public OrderItemId getId() {
+        return this.id;
     }
 
 

@@ -1,5 +1,6 @@
 package com.sangjun.order.domain.service.ports.input.service;
 
+import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderStatus;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
@@ -8,11 +9,13 @@ import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.valueobject.OrderItem;
+import com.sangjun.order.domain.valueobject.TrackingId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Transactional
 @SpringBootTest(classes = CreateOrderTestConfig.class)
 class CreateOrderTest {
 
@@ -45,16 +49,16 @@ class CreateOrderTest {
         UUID restaurantId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
 
-        BigDecimal totalPrice = new BigDecimal("13800");
+        Money totalPrice = Money.of("13800");
         OrderItemDto orderItemDto1 = OrderItemDto.builder()
-                .price(new BigDecimal("3000"))
-                .subTotal(new BigDecimal("9000"))
+                .price(new BigDecimal("3000.00"))
+                .subTotal(new BigDecimal("9000.00"))
                 .productId(productId1)
                 .quantity(3)
                 .build();
         OrderItemDto orderItemDto2 = OrderItemDto.builder()
-                .price(new BigDecimal("2400"))
-                .subTotal(new BigDecimal("4800"))
+                .price(new BigDecimal("2400.00"))
+                .subTotal(new BigDecimal("4800.00"))
                 .productId(productId2)
                 .quantity(2)
                 .build();
@@ -67,7 +71,7 @@ class CreateOrderTest {
 
         CreateOrderCommand command = CreateOrderCommand.builder()
                 .items(items)
-                .price(totalPrice)
+                .price(totalPrice.getAmount())
                 .restaurantId(restaurantId)
                 .customerId(customerId)
                 .orderAddressDto(orderAddressDto)
@@ -77,10 +81,15 @@ class CreateOrderTest {
         CreateOrderResponse response = createOrderService.createOrder(command);
 
         // then
-        UUID orderTrackingId = response.getOrderTrackingId();
+        TrackingId orderTrackingId = new TrackingId(response.getOrderTrackingId());
         Order foundOrder = orderRepository.findByTrackingId(orderTrackingId).get();
+        checkOrder(restaurantId, customerId, totalPrice, orderItemDto1, orderItemDto2, orderAddressDto,
+                orderTrackingId, foundOrder);
+    }
 
-        assertThat(foundOrder.getTrackingId().getValue())
+    private void checkOrder(UUID restaurantId, UUID customerId, Money totalPrice, OrderItemDto orderItemDto1,
+                            OrderItemDto orderItemDto2, OrderAddressDto orderAddressDto, TrackingId orderTrackingId, Order foundOrder) {
+        assertThat(foundOrder.getTrackingId())
                 .isEqualTo(orderTrackingId);
         assertThat(foundOrder.getOrderStatus())
                 .isEqualTo(OrderStatus.PENDING);
@@ -90,7 +99,7 @@ class CreateOrderTest {
         assertThat(foundOrder.getCustomerId().getValue())
                 .isEqualTo(customerId);
         assertThat(foundOrder.getPrice().getAmount())
-                .isEqualTo(totalPrice);
+                .isEqualTo(totalPrice.getAmount());
         checkOrderItem(foundOrder, 0, orderItemDto1);
         checkOrderItem(foundOrder, 1, orderItemDto2);
     }
@@ -107,11 +116,11 @@ class CreateOrderTest {
     private void checkOrderItem(Order order,
                                 Integer itemNumber,
                                 OrderItemDto orderItemDto) {
-        final OrderItem orderItem = order.getItems().get(itemNumber);
+        final OrderItem orderItem = order.getItemOfIndex(itemNumber);
 
-        assertThat(orderItem.getOrderItemId().getOrderId())
+        assertThat(orderItem.getId().getOrderId())
                 .isEqualTo(order.getId());
-        assertThat(orderItem.getOrderItemId().getOrderItemId())
+        assertThat(orderItem.getId().getOrderItemId())
                 .isEqualTo(itemNumber + 1);
         assertThat(orderItem.getProductId().getValue())
                 .isEqualTo(orderItemDto.getProductId());
@@ -121,6 +130,11 @@ class CreateOrderTest {
                 .isEqualTo(orderItemDto.getPrice());
         assertThat(orderItem.getSubTotal().getAmount())
                 .isEqualTo(orderItemDto.getSubTotal());
+    }
+
+    @Test
+    void 개별주문항목의_합계가_단가X수량이_아니면_예외발생() {
+
     }
 
 

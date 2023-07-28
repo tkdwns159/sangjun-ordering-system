@@ -32,8 +32,8 @@ public interface OrderDataMapstructMapper {
 
 
     @Mapping(target = "price", source = "price.amount")
-    @Mapping(target = "productId", source = "product.id.value")
-    @Mapping(target = "id", source = "id.value")
+    @Mapping(target = "productId", source = "productId.value")
+    @Mapping(target = "id", source = "id.orderItemId")
     OrderItemEntity toOrderItemEntity(OrderItem orderItem);
 
     @InheritInverseConfiguration

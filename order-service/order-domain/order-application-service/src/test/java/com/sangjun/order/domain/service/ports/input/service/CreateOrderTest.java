@@ -14,6 +14,7 @@ import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -55,6 +57,14 @@ class CreateOrderTest {
 
     @Test
     void contextLoads() {
+    }
+
+    @BeforeAll
+    void configure() {
+        Mockito.when(restaurantService.validateProducts(Mockito.anyList()))
+                .thenReturn(ProductValidationResponse.builder()
+                        .isSuccessful(true)
+                        .build());
     }
 
     @Test
@@ -208,18 +218,54 @@ class CreateOrderTest {
                 .customerId(customerId)
                 .orderAddressDto(orderAddressDto)
                 .build();
-
-        //when
+        // when
         Mockito.when(restaurantService.validateProducts(Mockito.anyList()))
                 .thenReturn(ProductValidationResponse.builder()
                         .isSuccessful(false)
                         .errorMsg("Error occurred!")
                         .build());
 
-        //then`
-        Assertions.assertThrows(IllegalStateException.class,
-                () -> createOrderService.createOrder(command));
+        // then
+        assertThatThrownBy(() -> createOrderService.createOrder(command))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Error occurred!");
+    }
 
+    @Test
+    void 주문에_명시된_가격과_주문항목_가격의합이_다르면_예외발생() {
+        // given
+        Money totalPrice = Money.of("13500");
+        OrderItemDto orderItemDto1 = OrderItemDto.builder()
+                .price(new BigDecimal("3000.00"))
+                .subTotal(new BigDecimal("9000.00"))
+                .productId(productId1)
+                .quantity(3)
+                .build();
+        OrderItemDto orderItemDto2 = OrderItemDto.builder()
+                .price(new BigDecimal("2400.00"))
+                .subTotal(new BigDecimal("4800.00"))
+                .productId(productId2)
+                .quantity(2)
+                .build();
+        List<OrderItemDto> items = new ArrayList<>(Arrays.asList(orderItemDto1, orderItemDto2));
+        OrderAddressDto orderAddressDto = OrderAddressDto.builder()
+                .city("Seoul")
+                .postalCode("12345")
+                .street("Sillim")
+                .build();
+
+        CreateOrderCommand command = CreateOrderCommand.builder()
+                .items(items)
+                .price(totalPrice.getAmount())
+                .restaurantId(restaurantId)
+                .customerId(customerId)
+                .orderAddressDto(orderAddressDto)
+                .build();
+
+        // when, then
+        assertThatThrownBy(() -> createOrderService.createOrder(command))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not equal to the sum");
     }
 
 }

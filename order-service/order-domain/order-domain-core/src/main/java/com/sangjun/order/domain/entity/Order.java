@@ -130,11 +130,22 @@ public class Order extends AggregateRoot<OrderId> {
 
     private void validate() {
         validateOrderItems();
+        checkIfPriceEqualsSumOfOrderItemsPrice();
     }
 
     private void validateOrderItems() {
-        for (OrderItem item : items) {
+        for (OrderItem item : this.items) {
             item.validate();
+        }
+    }
+
+    private void checkIfPriceEqualsSumOfOrderItemsPrice() {
+        Money itemsPriceSum = this.items.stream().map(OrderItem::getPrice)
+                .reduce(Money.ZERO, Money::add);
+        if (!this.price.equals(itemsPriceSum)) {
+            throw new IllegalStateException(
+                    String.format("order price(%s) is not equal to the sum of order items price(%s)",
+                            this.price, itemsPriceSum));
         }
     }
 

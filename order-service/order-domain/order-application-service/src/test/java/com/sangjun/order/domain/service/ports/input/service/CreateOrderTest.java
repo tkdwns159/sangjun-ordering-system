@@ -13,7 +13,6 @@ import com.sangjun.order.domain.service.ports.output.service.RestaurantService;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -184,8 +183,10 @@ class CreateOrderTest {
                 .build();
 
         // when, then
-        Assertions.assertThrows(IllegalStateException.class,
-                () -> createOrderService.createOrder(command));
+        assertThatThrownBy(() -> createOrderService.createOrder(command))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("price * quantity")
+                .hasMessageContaining("subTotal");
     }
 
     @Test
@@ -265,7 +266,8 @@ class CreateOrderTest {
         // when, then
         assertThatThrownBy(() -> createOrderService.createOrder(command))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not equal to the sum");
+                .hasMessageContaining("order price")
+                .hasMessageContaining("the sum of order items price");
     }
 
 }

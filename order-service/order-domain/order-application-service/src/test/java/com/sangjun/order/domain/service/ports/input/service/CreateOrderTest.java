@@ -13,7 +13,7 @@ import com.sangjun.order.domain.service.ports.output.service.RestaurantService;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
@@ -58,7 +58,7 @@ class CreateOrderTest {
     void contextLoads() {
     }
 
-    @BeforeAll
+    @BeforeEach
     void configure() {
         Mockito.when(restaurantService.validateProducts(Mockito.anyList()))
                 .thenReturn(ProductValidationResponse.builder()

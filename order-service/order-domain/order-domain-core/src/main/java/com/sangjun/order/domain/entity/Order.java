@@ -140,7 +140,7 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     private void checkIfPriceEqualsSumOfOrderItemsPrice() {
-        Money itemsPriceSum = this.items.stream().map(OrderItem::getPrice)
+        Money itemsPriceSum = this.items.stream().map(OrderItem::getSubTotal)
                 .reduce(Money.ZERO, Money::add);
         if (!this.price.equals(itemsPriceSum)) {
             throw new IllegalStateException(

@@ -2,8 +2,6 @@ package com.sangjun.order.domain.service;
 
 import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.Money;
-import com.sangjun.common.domain.valueobject.OrderId;
-import com.sangjun.common.domain.valueobject.OrderStatus;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.service.dto.track.TrackOrderQuery;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
@@ -39,9 +37,6 @@ public class OrderTrackTest {
         UUID trackingId = UUID.randomUUID();
         TrackOrderQuery trackOrderQuery = new TrackOrderQuery(trackingId);
         Order order = Order.builder()
-                .id(new OrderId(UUID.randomUUID()))
-                .trackingId(new TrackingId(trackingId))
-                .orderStatus(OrderStatus.PENDING)
                 .customerId(new CustomerId(UUID.randomUUID()))
                 .items(new ArrayList<>())
                 .price(Money.ZERO)

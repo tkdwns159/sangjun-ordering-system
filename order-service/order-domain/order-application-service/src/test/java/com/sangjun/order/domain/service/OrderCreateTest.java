@@ -17,7 +17,6 @@ import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.Product;
-import com.sangjun.order.domain.valueobject.TrackingId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -149,12 +148,9 @@ public class OrderCreateTest {
                 .thenReturn(Optional.of(RESTAURANT));
         when(orderRepository.save(any(Order.class)))
                 .thenReturn(Order.builder()
-                        .id(new OrderId(orderId))
                         .restaurantId(new RestaurantId(RESTAURANT_ID))
                         .customerId(new CustomerId(CUSTOMER_ID))
-                        .trackingId(new TrackingId(trackingId))
                         .price(new Money(new BigDecimal("1000")))
-                        .orderStatus(OrderStatus.PENDING)
                         .deliveryAddress(OrderMapstructMapper.MAPPER.toStreetAddress(ORDER_ADDRESS))
                         .items(List.of(orderItem))
                         .build());

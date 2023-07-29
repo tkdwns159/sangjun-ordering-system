@@ -214,7 +214,7 @@ public class Order extends AggregateRoot<OrderId> {
         this.orderStatus = orderStatus;
     }
 
-    public List<OrderItem> getOrderItems() {
+    public List<OrderItem> getItems() {
         return new ArrayList<>(this.items);
     }
 

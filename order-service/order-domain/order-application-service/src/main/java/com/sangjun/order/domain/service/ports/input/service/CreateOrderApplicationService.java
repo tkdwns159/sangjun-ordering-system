@@ -33,7 +33,7 @@ public class CreateOrderApplicationService {
     }
 
     private void validateProducts(Order order) {
-        var productValidationRequests = toProductValidationRequestList(order.getOrderItems());
+        var productValidationRequests = toProductValidationRequestList(order.getItems());
         ProductValidationResponse response = restaurantService.validateProducts(productValidationRequests);
         if (!response.isSuccessful()) {
             throw new IllegalStateException(response.getErrorMsg());

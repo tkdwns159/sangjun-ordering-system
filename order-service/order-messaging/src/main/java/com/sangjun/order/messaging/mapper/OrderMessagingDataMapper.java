@@ -54,12 +54,6 @@ public class OrderMessagingDataMapper {
                 .setRestaurantId(order.getRestaurantId().getValue().toString())
                 .setPrice(order.getPrice().getAmount())
                 .setCreatedAt(orderPaidEvent.getCreatedAt().toInstant())
-                .setProducts(order.getItems().stream()
-                        .map(item -> Product.newBuilder()
-                                .setId(item.getProductId().getValue().toString())
-                                .setQuantity(item.getQuantity())
-                                .build())
-                        .toList())
                 .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
                 .build();
     }

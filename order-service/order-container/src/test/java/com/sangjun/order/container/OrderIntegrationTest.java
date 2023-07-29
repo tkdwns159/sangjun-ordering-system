@@ -6,13 +6,13 @@ import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
 import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.dataaccess.customer.entity.CustomerEntity;
-import com.sangjun.order.dataaccess.customer.repository.CustomerJpaRepository;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
+import com.sangjun.order.domain.service.ports.input.service.CreateOrderApplicationService;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.valueobject.Product;
@@ -116,11 +116,8 @@ public class OrderIntegrationTest {
             .postalCode("4321")
             .build();
     private static final Order ORDER = Order.builder()
-            .id(new OrderId(ORDER_ID))
             .customerId(new CustomerId(CUSTOMER_ID))
-            .trackingId(new TrackingId(ORDER_TRACKING_ID))
             .restaurantId(new RestaurantId(RESTAURANT_ID))
-            .orderStatus(OrderStatus.PENDING)
             .deliveryAddress(MAPPER.toStreetAddress(ORDER_ADDRESS))
             .failureMessages(new ArrayList<>())
             .items(List.of(ORDER_ITEM_1, ORDER_ITEM_2))
@@ -129,10 +126,8 @@ public class OrderIntegrationTest {
 
     @Autowired
     private OrderApplicationService orderApplicationService;
-
-    @MockBean
-    private CustomerJpaRepository customerJpaRepository;
-
+    @Autowired
+    private CreateOrderApplicationService createOrderService;
     @MockBean
     private RestaurantJpaRepository restaurantJpaRepository;
 
@@ -231,7 +226,7 @@ public class OrderIntegrationTest {
         mockFindByRestaurantIdAndProductIdIn();
 
         //when
-        BigDecimal price = new BigDecimal("3000");
+        Money totalPrice = ORDER_ITEM_1.getSubTotal().add(ORDER_ITEM_2.getSubTotal());
         OrderItemDto orderItemDto1 = OrderItemDto.builder()
                 .price(ORDER_ITEM_1.getPrice().getAmount())
                 .subTotal(ORDER_ITEM_1.getSubTotal().getAmount())
@@ -254,16 +249,16 @@ public class OrderIntegrationTest {
         CreateOrderCommand command = CreateOrderCommand.builder()
                 .customerId(CUSTOMER_ID)
                 .restaurantId(RESTAURANT_ID)
-                .price(price)
+                .price(totalPrice.getAmount())
                 .items(items)
                 .orderAddressDto(orderAddressDto)
                 .build();
 
-        CreateOrderResponse resp = orderApplicationService.createOrder(command);
+        CreateOrderResponse resp = createOrderService.createOrder(command);
 
         //then
         Order createdOrder = orderRepository.findByTrackingId(new TrackingId(resp.getOrderTrackingId())).get();
-        생성된_주문데이터_확인(price, orderAddressDto, items, createdOrder);
+        생성된_주문데이터_확인(totalPrice.getAmount(), orderAddressDto, items, createdOrder);
         결제요청_이벤트가_발행됨();
     }
 

@@ -7,6 +7,7 @@ import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
+import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationResponse;
 import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
@@ -24,10 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,6 +50,9 @@ class CreateOrderTest {
 
     @MockBean
     private ProductValidationService productValidationService;
+
+    @MockBean
+    private CustomerRepository customerRepository;
 
 
     @Test
@@ -270,4 +271,44 @@ class CreateOrderTest {
                 .hasMessageContaining("the sum of order items price");
     }
 
+    @Test
+    void 등록된_고객이_아니면_예외발생() {
+        // given
+        Mockito.when(customerRepository.findById(Mockito.any()))
+                .thenReturn(Optional.empty());
+
+        Money totalPrice = Money.of("13800");
+        OrderItemDto orderItemDto1 = OrderItemDto.builder()
+                .price(new BigDecimal("3000.00"))
+                .subTotal(new BigDecimal("9000.00"))
+                .productId(productId1)
+                .quantity(3)
+                .build();
+        OrderItemDto orderItemDto2 = OrderItemDto.builder()
+                .price(new BigDecimal("2400.00"))
+                .subTotal(new BigDecimal("4800.00"))
+                .productId(productId2)
+                .quantity(2)
+                .build();
+        List<OrderItemDto> items = new ArrayList<>(Arrays.asList(orderItemDto1, orderItemDto2));
+        OrderAddressDto orderAddressDto = OrderAddressDto.builder()
+                .city("Seoul")
+                .postalCode("12345")
+                .street("Sillim")
+                .build();
+
+        CreateOrderCommand command = CreateOrderCommand.builder()
+                .items(items)
+                .price(totalPrice.getAmount())
+                .restaurantId(restaurantId)
+                .customerId(customerId)
+                .orderAddressDto(orderAddressDto)
+                .build();
+
+        // when, then
+        assertThatThrownBy(() -> createOrderService.createOrder(command))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("customer")
+                .hasMessageContaining("not found");
+    }
 }

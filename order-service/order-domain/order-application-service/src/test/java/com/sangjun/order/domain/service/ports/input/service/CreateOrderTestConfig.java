@@ -8,7 +8,6 @@ import com.sangjun.order.domain.service.ports.input.message.listener.restaurant.
 import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCancelledPaymentRequestMessagePublisher;
 import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCreatedPaymentRequestMessagePublisher;
 import com.sangjun.order.domain.service.ports.output.message.publisher.restaurant.OrderPaidRestaurantRequestMessagePublisher;
-import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
 import org.mockito.Mockito;
 import org.springframework.boot.SpringBootConfiguration;
@@ -59,12 +58,6 @@ public class CreateOrderTestConfig {
     public RestaurantRepository restaurantRepository() {
         return Mockito.mock(RestaurantRepository.class);
     }
-
-    @Bean
-    public CustomerRepository customerRepository() {
-        return Mockito.mock(CustomerRepository.class);
-    }
-
 
     @Bean
     public OrderDomainService orderDomainService() {

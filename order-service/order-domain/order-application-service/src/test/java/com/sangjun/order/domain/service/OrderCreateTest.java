@@ -109,7 +109,7 @@ public class OrderCreateTest {
                 .orderAddressDto(ORDER_ADDRESS)
                 .build();
 
-        when(customerRepository.findCustomer(CUSTOMER_ID))
+        when(customerRepository.findById(CUSTOMER_ID))
                 .thenReturn(Optional.of(CUSTOMER));
         when(restaurantRepository.findRestaurantInformation(RESTAURANT))
                 .thenReturn(Optional.of(RESTAURANT));
@@ -142,7 +142,7 @@ public class OrderCreateTest {
                 .productId(new ProductId(PRODUCT_ID))
                 .build();
 
-        when(customerRepository.findCustomer(CUSTOMER_ID))
+        when(customerRepository.findById(CUSTOMER_ID))
                 .thenReturn(Optional.of(CUSTOMER));
         when(restaurantRepository.findRestaurantInformation(RESTAURANT))
                 .thenReturn(Optional.of(RESTAURANT));

@@ -1,7 +1,9 @@
 package com.sangjun.order.domain.service.ports.input.service;
 
+import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderStatus;
+import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
@@ -9,7 +11,6 @@ import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
-import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationResponse;
 import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.TrackingId;
@@ -55,16 +56,12 @@ class CreateOrderTest {
     private CustomerRepository customerRepository;
 
 
-    @Test
-    void contextLoads() {
-    }
-
     @BeforeEach
-    void configure() {
-        Mockito.when(productValidationService.validateProducts(Mockito.anyList()))
-                .thenReturn(ProductValidationResponse.builder()
-                        .isSuccessful(true)
-                        .build());
+    void contextLoads() {
+        Customer customer = new Customer(new CustomerId(customerId));
+
+        Mockito.when(customerRepository.findById(customerId))
+                .thenReturn(Optional.of(customer));
     }
 
     @Test
@@ -221,12 +218,6 @@ class CreateOrderTest {
                 .orderAddressDto(orderAddressDto)
                 .build();
         // when
-        Mockito.when(productValidationService.validateProducts(Mockito.anyList()))
-                .thenReturn(ProductValidationResponse.builder()
-                        .isSuccessful(false)
-                        .errorMsg("Error occurred!")
-                        .build());
-
         // then
         assertThatThrownBy(() -> createOrderService.createOrder(command))
                 .isInstanceOf(IllegalStateException.class)

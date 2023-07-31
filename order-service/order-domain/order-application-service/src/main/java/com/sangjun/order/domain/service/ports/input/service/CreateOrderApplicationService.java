@@ -6,12 +6,11 @@ import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.service.OrderEventShooter;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
+import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.service.customer.CustomerCheckService;
-import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationRequest;
-import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationResponse;
 import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
-import com.sangjun.order.domain.valueobject.OrderItem;
+import com.sangjun.order.domain.valueobject.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +29,10 @@ public class CreateOrderApplicationService {
 
     @Transactional
     public CreateOrderResponse createOrder(CreateOrderCommand command) {
+        checkCustomerExistence(new CustomerId(command.getCustomerId()));
+        validateProducts(command.getItems());
+
         final Order order = MAPPER.toOrder(command);
-        checkCustomerExistence(order.getCustomerId());
-        validateProducts(order);
         OrderCreatedEvent domainEvent = order.initialize();
         final Order savedOrder = orderRepository.save(domainEvent.getOrder());
         orderEventShooter.fire(domainEvent);
@@ -45,17 +45,14 @@ public class CreateOrderApplicationService {
         }
     }
 
-    private void validateProducts(Order order) {
-        var productValidationRequests = toProductValidationRequestList(order.getItems());
-        ProductValidationResponse response = productValidationService.validateProducts(productValidationRequests);
-        if (!response.isSuccessful()) {
-            throw new IllegalStateException(response.getErrorMsg());
-        }
+    private void validateProducts(List<OrderItemDto> items) {
+        var products = toProducts(items);
+        productValidationService.validateProducts(products);
     }
 
-    private List<ProductValidationRequest> toProductValidationRequestList(List<OrderItem> items) {
+    private List<Product> toProducts(List<OrderItemDto> items) {
         return items.stream()
-                .map(MAPPER::toProductValidationRequest)
+                .map(MAPPER::toProduct)
                 .toList();
     }
 }

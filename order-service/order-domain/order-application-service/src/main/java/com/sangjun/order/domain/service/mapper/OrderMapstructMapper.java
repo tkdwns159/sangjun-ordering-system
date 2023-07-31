@@ -8,7 +8,6 @@ import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
-import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationRequest;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.StreetAddress;
@@ -39,8 +38,6 @@ public interface OrderMapstructMapper {
     @Mapping(target = "orderTrackingId", source = "trackingId.value")
     @Mapping(target = "message", constant = "Order created successfully")
     CreateOrderResponse toCreateOrderResponse(Order order);
-
-    ProductValidationRequest toProductValidationRequest(OrderItem orderItem);
 
     @Mapping(target = "orderTrackingId", source = "trackingId.value")
     TrackOrderResponse toTrackOrderResponse(Order order);

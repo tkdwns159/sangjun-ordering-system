@@ -5,7 +5,7 @@ import com.sangjun.common.dataaccess.restaurant.repository.RestaurantJpaReposito
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
 import com.sangjun.kafka.order.avro.model.*;
-import com.sangjun.order.dataaccess.customer.entity.CustomerEntity;
+import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
@@ -14,6 +14,7 @@ import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.input.service.CreateOrderApplicationService;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
+import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationResponse;
 import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
@@ -138,7 +139,8 @@ public class OrderIntegrationTest {
 
     @Autowired
     private OrderRepository orderRepository;
-
+    @Autowired
+    private CustomerRepository customerRepository;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -234,20 +236,9 @@ public class OrderIntegrationTest {
                         .isSuccessful(true)
                         .build());
 
-        //when
         Money totalPrice = ORDER_ITEM_1.getSubTotal().add(ORDER_ITEM_2.getSubTotal());
-        OrderItemDto orderItemDto1 = OrderItemDto.builder()
-                .price(ORDER_ITEM_1.getPrice().getAmount())
-                .subTotal(ORDER_ITEM_1.getSubTotal().getAmount())
-                .productId(ORDER_ITEM_1.getProductId().getValue())
-                .quantity(ORDER_ITEM_1.getQuantity())
-                .build();
-        OrderItemDto orderItemDto2 = OrderItemDto.builder()
-                .price(ORDER_ITEM_2.getPrice().getAmount())
-                .subTotal(ORDER_ITEM_2.getSubTotal().getAmount())
-                .productId(ORDER_ITEM_2.getProductId().getValue())
-                .quantity(ORDER_ITEM_2.getQuantity())
-                .build();
+        OrderItemDto orderItemDto1 = createOrderItemDto(ORDER_ITEM_1);
+        OrderItemDto orderItemDto2 = createOrderItemDto(ORDER_ITEM_2);
         List<OrderItemDto> items = new ArrayList<>(Arrays.asList(orderItemDto1, orderItemDto2));
         OrderAddressDto orderAddressDto = OrderAddressDto.builder()
                 .city("Seoul")
@@ -262,13 +253,22 @@ public class OrderIntegrationTest {
                 .items(items)
                 .orderAddressDto(orderAddressDto)
                 .build();
-
+        //when
         CreateOrderResponse resp = createOrderService.createOrder(command);
 
         //then
         Order createdOrder = orderRepository.findByTrackingId(new TrackingId(resp.getOrderTrackingId())).get();
         생성된_주문데이터_확인(totalPrice.getAmount(), orderAddressDto, items, createdOrder);
         결제요청_이벤트가_발행됨(createdOrder);
+    }
+
+    private static OrderItemDto createOrderItemDto(OrderItem orderItem) {
+        return OrderItemDto.builder()
+                .price(orderItem.getPrice().getAmount())
+                .subTotal(orderItem.getSubTotal().getAmount())
+                .productId(orderItem.getProductId().getValue())
+                .quantity(orderItem.getQuantity())
+                .build();
     }
 
     private void 생성된_주문데이터_확인(BigDecimal price,
@@ -363,10 +363,10 @@ public class OrderIntegrationTest {
 
 
     private void mockCustomerFindById() {
-        CustomerEntity customerEntity = new CustomerEntity(CUSTOMER_ID);
+        Customer customer = new Customer(new CustomerId(CUSTOMER_ID));
 
-//        when(customerJpaRepository.findById(CUSTOMER_ID))
-//                .thenReturn(Optional.of(customerEntity));
+        when(customerRepository.findById(CUSTOMER_ID))
+                .thenReturn(Optional.of(customer));
     }
 
     private void mockFindByRestaurantIdAndProductIdIn() {

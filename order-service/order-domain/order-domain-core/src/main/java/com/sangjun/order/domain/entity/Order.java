@@ -3,6 +3,7 @@ package com.sangjun.order.domain.entity;
 import com.sangjun.common.domain.entity.AggregateRoot;
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.order.domain.FailureMessageAttributeConverter;
+import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.StreetAddress;
@@ -11,11 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.*;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
@@ -120,12 +124,13 @@ public class Order extends AggregateRoot<OrderId> {
         return failureMessages;
     }
 
-    public void initialize() {
+    public OrderCreatedEvent initialize() {
         validate();
         setId(new OrderId(UUID.randomUUID()));
         trackingId = new TrackingId(UUID.randomUUID());
         orderStatus = OrderStatus.PENDING;
         initializeOrderItems();
+        return new OrderCreatedEvent(this, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
 
     private void validate() {

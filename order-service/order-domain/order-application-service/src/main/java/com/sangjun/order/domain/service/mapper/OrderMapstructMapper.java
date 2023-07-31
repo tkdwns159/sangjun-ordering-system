@@ -8,7 +8,7 @@ import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
-import com.sangjun.order.domain.service.ports.output.service.ProductValidationRequest;
+import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationRequest;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.StreetAddress;

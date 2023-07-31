@@ -22,6 +22,7 @@ public class OrderMessagingDataMapper {
         return PaymentRequestAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setSagaId("")
+                .setRestaurantId(order.getRestaurantId().getValue().toString())
                 .setCustomerId(order.getCustomerId().getValue().toString())
                 .setOrderId(order.getId().getValue().toString())
                 .setCreatedAt(orderCreatedEvent.getCreatedAt().toInstant())

@@ -1,8 +1,8 @@
-package com.sangjun.order.domain.service.ports.output.service;
+package com.sangjun.order.domain.service.ports.output.service.product;
 
 import java.util.List;
 
-public interface RestaurantService {
+public interface ProductValidationService {
     ProductValidationResponse validateProducts(List<ProductValidationRequest> requests);
 
 }

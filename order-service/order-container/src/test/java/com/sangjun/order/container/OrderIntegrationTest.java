@@ -15,6 +15,8 @@ import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.input.service.CreateOrderApplicationService;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
+import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationResponse;
+import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
 import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.*;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,7 @@ import java.util.*;
 
 import static com.sangjun.order.domain.service.mapper.OrderMapstructMapper.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 
@@ -128,6 +131,8 @@ public class OrderIntegrationTest {
     private OrderApplicationService orderApplicationService;
     @Autowired
     private CreateOrderApplicationService createOrderService;
+    @Autowired
+    private ProductValidationService productValidationService;
     @MockBean
     private RestaurantJpaRepository restaurantJpaRepository;
 
@@ -169,6 +174,7 @@ public class OrderIntegrationTest {
 
     @BeforeAll
     void setUp() throws Exception {
+        log.info("setting up consumers");
         paymentRequestConsumer = paymentCf.createConsumer("test-payment-request", "1");
         paymentRequestConsumer.subscribe(List.of(paymentRequestTopic));
 
@@ -223,7 +229,10 @@ public class OrderIntegrationTest {
     void 주문_성공() {
         //given
         mockCustomerFindById();
-        mockFindByRestaurantIdAndProductIdIn();
+        when(productValidationService.validateProducts(anyList()))
+                .thenReturn(ProductValidationResponse.builder()
+                        .isSuccessful(true)
+                        .build());
 
         //when
         Money totalPrice = ORDER_ITEM_1.getSubTotal().add(ORDER_ITEM_2.getSubTotal());
@@ -259,13 +268,13 @@ public class OrderIntegrationTest {
         //then
         Order createdOrder = orderRepository.findByTrackingId(new TrackingId(resp.getOrderTrackingId())).get();
         생성된_주문데이터_확인(totalPrice.getAmount(), orderAddressDto, items, createdOrder);
-        결제요청_이벤트가_발행됨();
+        결제요청_이벤트가_발행됨(createdOrder);
     }
 
-    private static void 생성된_주문데이터_확인(BigDecimal price,
-                                     OrderAddressDto orderAddressDto,
-                                     List<OrderItemDto> itemDtoList,
-                                     Order createdOrder) {
+    private void 생성된_주문데이터_확인(BigDecimal price,
+                              OrderAddressDto orderAddressDto,
+                              List<OrderItemDto> itemDtoList,
+                              Order createdOrder) {
         assertThat(createdOrder.getOrderStatus())
                 .isEqualTo(OrderStatus.PENDING);
         assertThat(createdOrder.getPrice())
@@ -286,24 +295,25 @@ public class OrderIntegrationTest {
         }
     }
 
-    private void 결제요청_이벤트가_발행됨() {
+    private void 결제요청_이벤트가_발행됨(Order order) {
         Map<String, PaymentRequestAvroModel> map = readPaymentRequestRecords();
-        PaymentRequestAvroModel msg = map.get(ORDER_ID.toString());
+        UUID orderId = order.getId().getValue();
+        PaymentRequestAvroModel msg = map.get(orderId.toString());
 
         assertThat(msg.getOrderId())
-                .isEqualTo(ORDER_ID.toString());
+                .isEqualTo(orderId.toString());
         assertThat(msg.getPaymentOrderStatus())
                 .isEqualTo(PaymentOrderStatus.PENDING);
         assertThat(msg.getPrice())
-                .isEqualTo(ORDER.getPrice().getAmount());
+                .isEqualTo(order.getPrice().getAmount());
         assertThat(msg.getCustomerId())
-                .isEqualTo(CUSTOMER_ID.toString());
+                .isEqualTo(order.getCustomerId().getValue().toString());
         assertThat(msg.getRestaurantId())
-                .isEqualTo(ORDER.getRestaurantId().toString());
+                .isEqualTo(order.getRestaurantId().getValue().toString());
     }
 
 
-    private static void checkOrderItem(OrderItemDto orderItemDto, OrderId createdOrderId, OrderItem orderItem) {
+    private void checkOrderItem(OrderItemDto orderItemDto, OrderId createdOrderId, OrderItem orderItem) {
         assertThat(orderItem.getId().getOrderId())
                 .isEqualTo(createdOrderId);
         assertThat(orderItem.getProductId().getValue())
@@ -410,7 +420,8 @@ public class OrderIntegrationTest {
     }
 
     private Map<String, PaymentRequestAvroModel> readPaymentRequestRecords() {
-        ConsumerRecords<String, PaymentRequestAvroModel> result = KafkaTestUtils.getRecords(paymentRequestConsumer, 100);
+        ConsumerRecords<String, PaymentRequestAvroModel> result =
+                KafkaTestUtils.getRecords(paymentRequestConsumer, 100);
         Map<String, PaymentRequestAvroModel> resultTable = new HashMap<>();
         result.forEach(rec -> resultTable.put(rec.key(), rec.value()));
         paymentRequestConsumer.commitSync();

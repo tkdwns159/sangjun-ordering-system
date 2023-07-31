@@ -1,4 +1,4 @@
-package com.sangjun.order.domain.service.ports.output.service;
+package com.sangjun.order.domain.service.ports.output.service.product;
 
 import lombok.Builder;
 import lombok.Getter;

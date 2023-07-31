@@ -8,8 +8,8 @@ import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
-import com.sangjun.order.domain.service.ports.output.service.ProductValidationResponse;
-import com.sangjun.order.domain.service.ports.output.service.RestaurantService;
+import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationResponse;
+import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +51,7 @@ class CreateOrderTest {
     UUID customerId = UUID.randomUUID();
 
     @MockBean
-    private RestaurantService restaurantService;
+    private ProductValidationService productValidationService;
 
 
     @Test
@@ -60,7 +60,7 @@ class CreateOrderTest {
 
     @BeforeEach
     void configure() {
-        Mockito.when(restaurantService.validateProducts(Mockito.anyList()))
+        Mockito.when(productValidationService.validateProducts(Mockito.anyList()))
                 .thenReturn(ProductValidationResponse.builder()
                         .isSuccessful(true)
                         .build());
@@ -220,7 +220,7 @@ class CreateOrderTest {
                 .orderAddressDto(orderAddressDto)
                 .build();
         // when
-        Mockito.when(restaurantService.validateProducts(Mockito.anyList()))
+        Mockito.when(productValidationService.validateProducts(Mockito.anyList()))
                 .thenReturn(ProductValidationResponse.builder()
                         .isSuccessful(false)
                         .errorMsg("Error occurred!")

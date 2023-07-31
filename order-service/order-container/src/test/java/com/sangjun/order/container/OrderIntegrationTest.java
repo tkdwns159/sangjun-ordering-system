@@ -231,10 +231,7 @@ public class OrderIntegrationTest {
     void 주문_성공() {
         //given
         mockCustomerFindById();
-        when(productValidationService.validateProducts(anyList()))
-                .thenReturn(ProductValidationResponse.builder()
-                        .isSuccessful(true)
-                        .build());
+        mockValidateProducts();
 
         Money totalPrice = ORDER_ITEM_1.getSubTotal().add(ORDER_ITEM_2.getSubTotal());
         OrderItemDto orderItemDto1 = createOrderItemDto(ORDER_ITEM_1);
@@ -262,7 +259,14 @@ public class OrderIntegrationTest {
         결제요청_이벤트가_발행됨(createdOrder);
     }
 
-    private static OrderItemDto createOrderItemDto(OrderItem orderItem) {
+    private void mockValidateProducts() {
+        when(productValidationService.validateProducts(anyList()))
+                .thenReturn(ProductValidationResponse.builder()
+                        .isSuccessful(true)
+                        .build());
+    }
+
+    private OrderItemDto createOrderItemDto(OrderItem orderItem) {
         return OrderItemDto.builder()
                 .price(orderItem.getPrice().getAmount())
                 .subTotal(orderItem.getSubTotal().getAmount())

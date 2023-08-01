@@ -33,7 +33,6 @@ public class ProductValidationServiceImpl implements ProductValidationService {
     private void validateProduct(RestaurantId restaurantId, Product product, Product rProduct) {
         handleProductNotFound(restaurantId, product, rProduct);
         hasSamePrice(product, rProduct);
-        hasSameName(product, rProduct);
         checkProductStock(product, rProduct);
     }
 
@@ -50,14 +49,6 @@ public class ProductValidationServiceImpl implements ProductValidationService {
             throw new IllegalArgumentException(
                     String.format("requested product(%s) price(%s) is different from the original product price(%s)",
                             product.getId().getValue(), product.getPrice(), rProduct.getPrice()));
-        }
-    }
-
-    private void hasSameName(Product product, Product rProduct) {
-        if (!rProduct.hasSameName(product)) {
-            throw new IllegalArgumentException(
-                    String.format("original product(%s) name is %s, but %s",
-                            rProduct.getId().getValue(), rProduct.getName(), product.getName()));
         }
     }
 

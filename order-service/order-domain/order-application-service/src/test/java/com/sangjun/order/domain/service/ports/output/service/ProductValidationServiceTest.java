@@ -36,19 +36,15 @@ class ProductValidationServiceTest {
     Money price2 = Money.of("4000");
     int quantity1 = 3;
     int quantity2 = 9;
-    String name1 = "치킨";
-    String name2 = "피자";
     Product product1 = Product.builder()
             .id(productId1)
             .price(price1)
             .quantity(quantity1)
-            .name(name1)
             .build();
     Product product2 = Product.builder()
             .id(productId2)
             .price(price2)
             .quantity(quantity2)
-            .name(name2)
             .build();
 
     @Test
@@ -60,7 +56,6 @@ class ProductValidationServiceTest {
                         Product.builder()
                                 .id(productId1)
                                 .price(price1)
-                                .name(name1)
                                 .quantity(quantity1 + 10)
                                 .build()));
 
@@ -77,7 +72,6 @@ class ProductValidationServiceTest {
                 .thenReturn(List.of(Product.builder()
                         .id(productId1)
                         .quantity(quantity1 - 1)
-                        .name(name1)
                         .price(price1)
                         .build()));
         //then
@@ -94,26 +88,7 @@ class ProductValidationServiceTest {
                 .thenReturn(List.of(Product.builder()
                         .id(productId1)
                         .quantity(quantity1)
-                        .name(name1)
                         .price(price1.subtract(Money.of("100")))
-                        .build()));
-
-        //then
-        Assertions.assertThatThrownBy(() ->
-                productValidationService.validateProducts(restaurantId, List.of(product1)));
-    }
-
-    @Test
-    void 제품이름이_불일치하는경우_예외발생() {
-        //given
-
-        //when
-        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
-                .thenReturn(List.of(Product.builder()
-                        .id(productId1)
-                        .quantity(quantity1)
-                        .name("피자")
-                        .price(price1)
                         .build()));
 
         //then

@@ -3,6 +3,7 @@ package com.sangjun.order.domain.service.ports.input.service;
 import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderStatus;
+import com.sangjun.common.domain.valueobject.ProductId;
 import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
@@ -11,8 +12,9 @@ import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
-import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
+import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
 import com.sangjun.order.domain.valueobject.OrderItem;
+import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +32,9 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.when;
 
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -48,20 +53,35 @@ class CreateOrderTest {
     UUID productId2 = UUID.randomUUID();
     UUID restaurantId = UUID.randomUUID();
     UUID customerId = UUID.randomUUID();
-
-    @MockBean
-    private ProductValidationService productValidationService;
+    Money price1 = Money.of("3000");
+    Money price2 = Money.of("2400");
 
     @MockBean
     private CustomerRepository customerRepository;
 
+    @MockBean
+    private RestaurantRepository restaurantRepository;
+
 
     @BeforeEach
-    void contextLoads() {
+    void preCondition() {
         Customer customer = new Customer(new CustomerId(customerId));
 
-        Mockito.when(customerRepository.findById(customerId))
+        when(customerRepository.findById(customerId))
                 .thenReturn(Optional.of(customer));
+        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+                .thenReturn(List.of(
+                        Product.builder()
+                                .id(new ProductId(productId1))
+                                .price(price1)
+                                .quantity(100)
+                                .build(),
+                        Product.builder()
+                                .id(new ProductId(productId2))
+                                .price(price2)
+                                .quantity(100)
+                                .build()
+                ));
     }
 
     @Test
@@ -69,14 +89,14 @@ class CreateOrderTest {
         // given
         Money totalPrice = Money.of("13800");
         OrderItemDto orderItemDto1 = OrderItemDto.builder()
-                .price(new BigDecimal("3000.00"))
-                .subTotal(new BigDecimal("9000.00"))
+                .price(price1.getAmount())
+                .subTotal(price1.multiply(3).getAmount())
                 .productId(productId1)
                 .quantity(3)
                 .build();
         OrderItemDto orderItemDto2 = OrderItemDto.builder()
-                .price(new BigDecimal("2400.00"))
-                .subTotal(new BigDecimal("4800.00"))
+                .price(price2.getAmount())
+                .subTotal(price2.multiply(2).getAmount())
                 .productId(productId2)
                 .quantity(2)
                 .build();
@@ -218,10 +238,22 @@ class CreateOrderTest {
                 .orderAddressDto(orderAddressDto)
                 .build();
         // when
+        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+                .thenReturn(List.of(
+                        Product.builder()
+                                .id(new ProductId(productId1))
+                                .quantity(100)
+                                .price(Money.of("4000"))
+                                .build(),
+                        Product.builder()
+                                .id(new ProductId(productId2))
+                                .quantity(100)
+                                .price(Money.of("2400"))
+                                .build()));
+
         // then
         assertThatThrownBy(() -> createOrderService.createOrder(command))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Error occurred!");
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -265,9 +297,6 @@ class CreateOrderTest {
     @Test
     void 등록된_고객이_아니면_예외발생() {
         // given
-        Mockito.when(customerRepository.findById(Mockito.any()))
-                .thenReturn(Optional.empty());
-
         Money totalPrice = Money.of("13800");
         OrderItemDto orderItemDto1 = OrderItemDto.builder()
                 .price(new BigDecimal("3000.00"))
@@ -296,7 +325,11 @@ class CreateOrderTest {
                 .orderAddressDto(orderAddressDto)
                 .build();
 
-        // when, then
+        // when
+        when(customerRepository.findById(Mockito.any()))
+                .thenReturn(Optional.empty());
+
+        // then
         assertThatThrownBy(() -> createOrderService.createOrder(command))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("customer")

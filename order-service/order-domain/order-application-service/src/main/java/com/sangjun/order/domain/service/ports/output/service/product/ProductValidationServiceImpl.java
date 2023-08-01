@@ -21,38 +21,51 @@ public class ProductValidationServiceImpl implements ProductValidationService {
 
     @Override
     public void validateProducts(RestaurantId restaurantId, List<Product> products) {
-        List<Product> foundProducts = restaurantRepository
-                .findProductsByRestaurantIdInProductIds(restaurantId, getProductIds(products));
-
-        Map<ProductId, Product> foundProductMap = toHashMap(foundProducts);
+        Map<ProductId, Product> foundProductMap = toHashMap(restaurantRepository
+                .findProductsByRestaurantIdInProductIds(restaurantId, getProductIds(products)));
 
         for (var product : products) {
             Product rProduct = foundProductMap.get(product.getId());
+            validateProduct(restaurantId, product, rProduct);
+        }
+    }
 
-            if (rProduct == null) {
-                throw new IllegalArgumentException(
-                        String.format("product(%s) not found in restaurant(%s)",
-                                product.getId().getValue(), restaurantId.getValue()));
-            }
+    private void validateProduct(RestaurantId restaurantId, Product product, Product rProduct) {
+        handleProductNotFound(restaurantId, product, rProduct);
+        hasSamePrice(product, rProduct);
+        hasSameName(product, rProduct);
+        checkProductStock(product, rProduct);
+    }
 
-            if (!rProduct.getPrice().equals(product.getPrice())) {
-                throw new IllegalArgumentException(
-                        String.format("requested product(%s) price(%s) is different from the original product price(%s)",
-                                product.getId().getValue(), product.getPrice(), rProduct.getPrice()));
-            }
+    private void handleProductNotFound(RestaurantId restaurantId, Product product, Product rProduct) {
+        if (rProduct == null) {
+            throw new IllegalArgumentException(
+                    String.format("product(%s) not found in restaurant(%s)",
+                            product.getId().getValue(), restaurantId.getValue()));
+        }
+    }
 
-            if (!rProduct.getName().equalsIgnoreCase(product.getName())) {
-                throw new IllegalArgumentException(
-                        String.format("original product(%s) name is %s, but %s",
-                                rProduct.getId().getValue(), rProduct.getName(), product.getName()));
-            }
+    private void hasSamePrice(Product product, Product rProduct) {
+        if (!rProduct.hasSamePrice(product)) {
+            throw new IllegalArgumentException(
+                    String.format("requested product(%s) price(%s) is different from the original product price(%s)",
+                            product.getId().getValue(), product.getPrice(), rProduct.getPrice()));
+        }
+    }
 
+    private void hasSameName(Product product, Product rProduct) {
+        if (!rProduct.hasSameName(product)) {
+            throw new IllegalArgumentException(
+                    String.format("original product(%s) name is %s, but %s",
+                            rProduct.getId().getValue(), rProduct.getName(), product.getName()));
+        }
+    }
 
-            if (rProduct.getQuantity() < product.getQuantity()) {
-                throw new IllegalArgumentException(
-                        String.format("product stock(%d) is lower than requested quantity(%d)",
-                                rProduct.getQuantity(), product.getQuantity()));
-            }
+    private void checkProductStock(Product product, Product rProduct) {
+        if (rProduct.getQuantity() < product.getQuantity()) {
+            throw new IllegalArgumentException(
+                    String.format("product stock(%d) is lower than requested quantity(%d)",
+                            rProduct.getQuantity(), product.getQuantity()));
         }
     }
 

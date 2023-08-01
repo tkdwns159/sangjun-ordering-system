@@ -2,6 +2,9 @@ package com.sangjun.order.domain.valueobject;
 
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.ProductId;
+import org.springframework.util.Assert;
+
+import static java.util.Objects.requireNonNull;
 
 public class Product {
     private ProductId id;
@@ -9,7 +12,7 @@ public class Product {
     private Money price;
     private int quantity;
 
-    public Product(ProductId id, String name, Money price, int quantity) {
+    private Product(ProductId id, String name, Money price, int quantity) {
         this.id = id;
         this.name = name;
         this.price = price;
@@ -17,10 +20,17 @@ public class Product {
     }
 
     private Product(Builder builder) {
+        validate(builder);
         id = builder.id;
         price = builder.price;
         quantity = builder.quantity;
         name = builder.name;
+    }
+
+    private void validate(Builder builder) {
+        requireNonNull(builder.id, "productId");
+        requireNonNull(builder.price, "price");
+        Assert.hasText(builder.name, "name");
     }
 
     public static Builder builder() {
@@ -41,6 +51,14 @@ public class Product {
 
     public String getName() {
         return name;
+    }
+
+    public boolean hasSameName(Product product) {
+        return this.name.equalsIgnoreCase(product.getName());
+    }
+
+    public boolean hasSamePrice(Product product) {
+        return this.price.equals(product.getPrice());
     }
 
     public static final class Builder {

@@ -16,8 +16,10 @@ import com.sangjun.order.domain.service.ports.input.service.OrderApplicationServ
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
+import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.Product;
-import com.sangjun.order.domain.valueobject.*;
+import com.sangjun.order.domain.valueobject.StreetAddress;
+import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -66,7 +68,6 @@ import static org.mockito.Mockito.when;
 public class OrderIntegrationTest {
     private static final UUID CUSTOMER_ID = UUID.fromString("f6316e90-1837-4940-b5db-a3c49a9a10ca");
     private static final UUID RESTAURANT_ID = UUID.fromString("ad68afcc-e55e-4e6a-bc6d-95a26a5410ff");
-    private static final UUID ORDER_ID = UUID.fromString("f3b19e90-b5f3-4f68-bbfa-6aa1101ae3e1");
     private static final UUID ORDER_TRACKING_ID = UUID.fromString("4d510cac-290c-408a-a7fc-abc2f3c0efbb");
     private static final UUID PRODUCT_ID_1 = UUID.fromString("cb48e255-cc1c-4fc3-b80c-c4d73ca187dd");
     private static final UUID PRODUCT_ID_2 = UUID.fromString("d9e55ab9-68dc-4af5-b66f-a875b2df95fd");
@@ -81,14 +82,12 @@ public class OrderIntegrationTest {
             .quantity(100)
             .build();
     private static final OrderItem ORDER_ITEM_1 = OrderItem.builder()
-            .orderItemId(new OrderItemId(new OrderId(ORDER_ID), 1L))
             .price(PRODUCT_1.getPrice())
             .quantity(2)
             .subTotal(PRODUCT_1.getPrice().multiply(2))
             .productId(PRODUCT_1.getId())
             .build();
     private static final OrderItem ORDER_ITEM_2 = OrderItem.builder()
-            .orderItemId(new OrderItemId(new OrderId(ORDER_ID), 2L))
             .price(PRODUCT_2.getPrice())
             .quantity(1)
             .subTotal(PRODUCT_2.getPrice())
@@ -170,6 +169,12 @@ public class OrderIntegrationTest {
     private Consumer<String, RestaurantApprovalRequestAvroModel> restaurantRequestConsumer;
 
     @BeforeAll
+    void setFixtures() {
+        ORDER.initialize();
+    }
+
+
+    @BeforeAll
     void setUp() throws Exception {
         log.info("setting up consumers");
         paymentRequestConsumer = paymentCf.createConsumer("test-payment-request", "1");
@@ -225,8 +230,6 @@ public class OrderIntegrationTest {
     @Test
     void 주문_성공() {
         //given
-        mockCustomerFindById();
-
         Money totalPrice = ORDER_ITEM_1.getSubTotal().add(ORDER_ITEM_2.getSubTotal());
         OrderItemDto orderItemDto1 = createOrderItemDto(ORDER_ITEM_1);
         OrderItemDto orderItemDto2 = createOrderItemDto(ORDER_ITEM_2);
@@ -247,6 +250,7 @@ public class OrderIntegrationTest {
         //when
         when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
                 .thenReturn(List.of(PRODUCT_1, PRODUCT_2));
+        mockCustomerFindById();
 
         CreateOrderResponse resp = createOrderService.createOrder(command);
 
@@ -319,6 +323,38 @@ public class OrderIntegrationTest {
     }
 
     @Test
+    void 결제요청에대한_완료메세지_처리() throws InterruptedException {
+        //given
+        orderRepository.save(ORDER);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        OrderId orderId = ORDER.getId();
+        UUID paymentId = UUID.randomUUID();
+        PaymentResponseAvroModel msg = PaymentResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(orderId.getValue().toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .setCustomerId(CUSTOMER_ID.toString())
+                .setPaymentId(paymentId.toString())
+                .setPaymentStatus(PaymentStatus.COMPLETED)
+                .setSagaId("")
+                .setPrice(ORDER.getPrice().getAmount())
+                .setCreatedAt(Instant.now())
+                .setFailureMessages(Collections.emptyList())
+                .build();
+
+        //when
+        paymentResponseKt.send(paymentResponseTopic, orderId.getValue().toString(), msg);
+        Thread.sleep(200);
+
+        //then
+        Order foundOrder = orderRepository.findById(orderId).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.PAID);
+    }
+
+    @Test
     void 주문_취소() {
         //given
         orderRepository.save(ORDER);
@@ -336,6 +372,7 @@ public class OrderIntegrationTest {
     }
 
     private void 주문취소_이벤트가_발행됨() {
+
 
     }
 
@@ -383,7 +420,7 @@ public class OrderIntegrationTest {
     private PaymentResponseAvroModel getPaymentResponseAvroModel(UUID paymentId, BigDecimal price) {
         PaymentResponseAvroModel response = PaymentResponseAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
-                .setOrderId(ORDER_ID.toString())
+//                .setOrderId(ORDER_ID.toString())
                 .setPaymentId(paymentId.toString())
                 .setCreatedAt(Instant.now())
                 .setCustomerId(CUSTOMER_ID.toString())

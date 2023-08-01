@@ -39,7 +39,6 @@ public class OrderItem {
     }
 
     private OrderItem(Builder builder) {
-        id = builder.orderItemId;
         productId = builder.productId;
         quantity = builder.quantity;
         price = builder.price;
@@ -84,18 +83,12 @@ public class OrderItem {
     }
 
     public static final class Builder {
-        private OrderItemId orderItemId;
         private ProductId productId;
         private int quantity;
         private Money price;
         private Money subTotal;
 
         private Builder() {
-        }
-
-        public Builder orderItemId(OrderItemId val) {
-            orderItemId = val;
-            return this;
         }
 
         public Builder productId(ProductId val) {

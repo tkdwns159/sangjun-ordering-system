@@ -1,7 +1,6 @@
 package com.sangjun.order.container;
 
 import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
-import com.sangjun.common.dataaccess.restaurant.repository.RestaurantJpaRepository;
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
 import com.sangjun.kafka.order.avro.model.*;
@@ -16,7 +15,7 @@ import com.sangjun.order.domain.service.ports.input.service.CreateOrderApplicati
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
-import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
+import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
 import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.*;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,6 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
@@ -45,6 +43,8 @@ import java.util.*;
 
 import static com.sangjun.order.domain.service.mapper.OrderMapstructMapper.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 
@@ -73,10 +73,12 @@ public class OrderIntegrationTest {
     private static final Product PRODUCT_1 = Product.builder()
             .id(new ProductId(PRODUCT_ID_1))
             .price(Money.of(new BigDecimal("1000")))
+            .quantity(100)
             .build();
     private static final Product PRODUCT_2 = Product.builder()
             .id(new ProductId(PRODUCT_ID_2))
             .price(Money.of(new BigDecimal("3200")))
+            .quantity(100)
             .build();
     private static final OrderItem ORDER_ITEM_1 = OrderItem.builder()
             .orderItemId(new OrderItemId(new OrderId(ORDER_ID), 1L))
@@ -129,10 +131,7 @@ public class OrderIntegrationTest {
     @Autowired
     private CreateOrderApplicationService createOrderService;
     @Autowired
-    private ProductValidationService productValidationService;
-    @MockBean
-    private RestaurantJpaRepository restaurantJpaRepository;
-
+    private RestaurantRepository restaurantRepository;
     @Autowired
     private OrderRepository orderRepository;
     @Autowired
@@ -246,6 +245,9 @@ public class OrderIntegrationTest {
                 .orderAddressDto(orderAddressDto)
                 .build();
         //when
+        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+                .thenReturn(List.of(PRODUCT_1, PRODUCT_2));
+
         CreateOrderResponse resp = createOrderService.createOrder(command);
 
         //then
@@ -359,12 +361,6 @@ public class OrderIntegrationTest {
 
         when(customerRepository.findById(CUSTOMER_ID))
                 .thenReturn(Optional.of(customer));
-    }
-
-    private void mockFindByRestaurantIdAndProductIdIn() {
-        when(restaurantJpaRepository
-                .findByRestaurantIdAndProductIdIn(RESTAURANT_ID, List.of(PRODUCT_ID_1, PRODUCT_ID_2)))
-                .thenReturn(Optional.of(List.of(RESTAURANT_ENTITY_1, RESTAURANT_ENTITY_2)));
     }
 
 

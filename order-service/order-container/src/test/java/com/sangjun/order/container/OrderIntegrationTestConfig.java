@@ -2,7 +2,6 @@ package com.sangjun.order.container;
 
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
-import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
 import org.mockito.Mockito;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -31,11 +30,6 @@ public class OrderIntegrationTestConfig {
     @Bean
     public CustomerRepository customerRepository() {
         return Mockito.mock(CustomerRepository.class);
-    }
-
-    @Bean
-    public ProductValidationService productValidationService() {
-        return Mockito.mock(ProductValidationService.class);
     }
 
 }

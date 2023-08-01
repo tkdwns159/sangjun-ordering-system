@@ -40,11 +40,13 @@ class ProductValidationServiceTest {
             .id(productId1)
             .price(price1)
             .quantity(quantity1)
+            .name("치킨")
             .build();
     Product product2 = Product.builder()
             .id(productId2)
             .price(price2)
             .quantity(quantity2)
+            .name("햄버거")
             .build();
 
 
@@ -108,5 +110,29 @@ class ProductValidationServiceTest {
                 .hasMessageContaining("different")
                 .hasMessageContaining("requested product");
     }
+
+    @Test
+    void 제품이름이_불일치하는경우_예외발생() {
+        //given
+
+        //when
+        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+                .thenReturn(List.of(Product.builder()
+                        .id(productId1)
+                        .quantity(quantity1)
+                        .name("피자")
+                        .price(price1)
+                        .build()));
+
+        //then
+        Assertions.assertThatThrownBy(() ->
+                        productValidationService.validateProducts(restaurantId, List.of(product1)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("original product")
+                .hasMessageContaining("name")
+                .hasMessageContaining("but");
+
+    }
+
 
 }

@@ -38,8 +38,13 @@ public class ProductValidationServiceImpl implements ProductValidationService {
             if (!rProduct.getPrice().equals(product.getPrice())) {
                 throw new IllegalArgumentException(
                         String.format("requested product(%s) price(%s) is different from the original product price(%s)",
-                                product.getId().getValue(), product.getPrice(), rProduct.getPrice())
-                );
+                                product.getId().getValue(), product.getPrice(), rProduct.getPrice()));
+            }
+
+            if (!rProduct.getName().equalsIgnoreCase(product.getName())) {
+                throw new IllegalArgumentException(
+                        String.format("original product(%s) name is %s, but %s",
+                                rProduct.getId().getValue(), rProduct.getName(), product.getName()));
             }
 
 

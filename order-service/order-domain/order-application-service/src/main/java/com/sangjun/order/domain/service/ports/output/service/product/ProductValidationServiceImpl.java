@@ -35,6 +35,14 @@ public class ProductValidationServiceImpl implements ProductValidationService {
                                 product.getId().getValue(), restaurantId.getValue()));
             }
 
+            if (!rProduct.getPrice().equals(product.getPrice())) {
+                throw new IllegalArgumentException(
+                        String.format("requested product(%s) price(%s) is different from the original product price(%s)",
+                                product.getId().getValue(), product.getPrice(), rProduct.getPrice())
+                );
+            }
+
+
             if (rProduct.getQuantity() < product.getQuantity()) {
                 throw new IllegalArgumentException(
                         String.format("product stock(%d) is lower than requested quantity(%d)",

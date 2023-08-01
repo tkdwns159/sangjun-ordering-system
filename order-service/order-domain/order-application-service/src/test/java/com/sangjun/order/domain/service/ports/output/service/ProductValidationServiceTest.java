@@ -88,4 +88,25 @@ class ProductValidationServiceTest {
                 .hasMessageContaining("lower than requested quantity");
     }
 
+    @Test
+    void 제품가격정보가_불일치하는경우_예외발생() {
+        //given
+
+        //when
+        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+                .thenReturn(List.of(Product.builder()
+                        .id(productId1)
+                        .quantity(quantity1)
+                        .price(price1.subtract(Money.of("100")))
+                        .build()));
+
+        //then
+        Assertions.assertThatThrownBy(() ->
+                        productValidationService.validateProducts(restaurantId, List.of(product1)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("original product")
+                .hasMessageContaining("different")
+                .hasMessageContaining("requested product");
+    }
+
 }

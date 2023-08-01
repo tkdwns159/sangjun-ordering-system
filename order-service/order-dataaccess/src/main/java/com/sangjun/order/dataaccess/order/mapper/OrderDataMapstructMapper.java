@@ -46,11 +46,11 @@ public interface OrderDataMapstructMapper {
     OrderEntity toOrderEntity(Order order);
 
 
-    @InheritInverseConfiguration
-    @Mapping(target = "failureMessages",
-            expression = "java(Optional.ofNullable(orderEntity.getFailureMessages())" +
-                    ".map(s -> s.split(CommonConstants.FAILURE_MESSAGE_DELIMITER))" +
-                    ".map(Arrays::asList)" +
-                    ".orElse(Collections.emptyList()))")
-    Order toOrder(OrderEntity orderEntity);
+//    @InheritInverseConfiguration
+//    @Mapping(target = "failureMessages",
+//            expression = "java(Optional.ofNullable(orderEntity.getFailureMessages())" +
+//                    ".map(s -> s.split(CommonConstants.FAILURE_MESSAGE_DELIMITER))" +
+//                    ".map(Arrays::asList)" +
+//                    ".orElse(Collections.emptyList()))")
+//    Order toOrder(OrderEntity orderEntity);
 }

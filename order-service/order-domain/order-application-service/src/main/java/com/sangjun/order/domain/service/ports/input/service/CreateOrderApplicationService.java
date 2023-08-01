@@ -1,6 +1,7 @@
 package com.sangjun.order.domain.service.ports.input.service;
 
 import com.sangjun.common.domain.valueobject.CustomerId;
+import com.sangjun.common.domain.valueobject.RestaurantId;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.service.OrderEventShooter;
@@ -29,10 +30,10 @@ public class CreateOrderApplicationService {
 
     @Transactional
     public CreateOrderResponse createOrder(CreateOrderCommand command) {
-        checkCustomerExistence(new CustomerId(command.getCustomerId()));
-        validateProducts(command.getItems());
-
         final Order order = MAPPER.toOrder(command);
+        checkCustomerExistence(order.getCustomerId());
+        validateProducts(order.getRestaurantId(), command.getItems());
+
         OrderCreatedEvent domainEvent = order.initialize();
         final Order savedOrder = orderRepository.save(domainEvent.getOrder());
         orderEventShooter.fire(domainEvent);
@@ -45,9 +46,9 @@ public class CreateOrderApplicationService {
         }
     }
 
-    private void validateProducts(List<OrderItemDto> items) {
+    private void validateProducts(RestaurantId restaurantId, List<OrderItemDto> items) {
         var products = toProducts(items);
-        productValidationService.validateProducts(products);
+        productValidationService.validateProducts(restaurantId, products);
     }
 
     private List<Product> toProducts(List<OrderItemDto> items) {

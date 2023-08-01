@@ -5,27 +5,23 @@ import com.sangjun.common.domain.valueobject.ProductId;
 
 public class Product {
     private ProductId id;
-    private String name;
     private Money price;
+    private int quantity;
 
-    public Product(ProductId id, String name, Money price) {
+    public Product(ProductId id, Money price, int quantity) {
         this.id = id;
-        this.name = name;
         this.price = price;
+        this.quantity = quantity;
     }
 
     private Product(Builder builder) {
         id = builder.id;
-        name = builder.name;
         price = builder.price;
+        quantity = builder.quantity;
     }
 
     public static Builder builder() {
         return new Builder();
-    }
-
-    public String getName() {
-        return name;
     }
 
     public Money getPrice() {
@@ -36,10 +32,15 @@ public class Product {
         return id;
     }
 
+    public int getQuantity() {
+        return quantity;
+    }
+
     public static final class Builder {
         private ProductId id;
-        private String name;
         private Money price;
+
+        private int quantity;
 
         private Builder() {
         }
@@ -49,13 +50,13 @@ public class Product {
             return this;
         }
 
-        public Builder name(String val) {
-            name = val;
+        public Builder price(Money val) {
+            price = val;
             return this;
         }
 
-        public Builder price(Money val) {
-            price = val;
+        public Builder quantity(int val) {
+            quantity = val;
             return this;
         }
 

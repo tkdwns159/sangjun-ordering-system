@@ -72,12 +72,10 @@ public class OrderIntegrationTest {
     private static final UUID PRODUCT_ID_2 = UUID.fromString("d9e55ab9-68dc-4af5-b66f-a875b2df95fd");
     private static final Product PRODUCT_1 = Product.builder()
             .id(new ProductId(PRODUCT_ID_1))
-            .name("product1")
             .price(Money.of(new BigDecimal("1000")))
             .build();
     private static final Product PRODUCT_2 = Product.builder()
             .id(new ProductId(PRODUCT_ID_2))
-            .name("product2")
             .price(Money.of(new BigDecimal("3200")))
             .build();
     private static final OrderItem ORDER_ITEM_1 = OrderItem.builder()

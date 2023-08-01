@@ -65,7 +65,6 @@ public class ProductValidationTestConfig {
         return Mockito.mock(CustomerRepository.class);
     }
 
-
     @Bean
     public OrderDomainService orderDomainService() {
         return new OrderDomainServiceImpl();

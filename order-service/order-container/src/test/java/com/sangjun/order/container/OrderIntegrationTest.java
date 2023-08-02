@@ -269,6 +269,13 @@ public class OrderIntegrationTest {
         결제요청_이벤트가_발행됨(createdOrder);
     }
 
+    private void mockCustomerFindById() {
+        Customer customer = new Customer(new CustomerId(CUSTOMER_ID));
+
+        when(customerRepository.findById(CUSTOMER_ID))
+                .thenReturn(Optional.of(customer));
+    }
+
     private OrderItemDto createOrderItemDto(OrderItem orderItem) {
         return OrderItemDto.builder()
                 .price(orderItem.getPrice().getAmount())
@@ -395,75 +402,6 @@ public class OrderIntegrationTest {
                 .hasSize(1);
     }
 
-
-//    private void 결제취소_이벤트_발행_확인() {
-//        Map<String, PaymentRequestAvroModel> map = readPaymentRequestRecords();
-//        PaymentRequestAvroModel requestMsg = map.get(ORDER_ID.toString());
-//
-//        assertThat(requestMsg.getOrderId())
-//                .isEqualTo(ORDER_ID.toString());
-//        assertThat(requestMsg.getPaymentOrderStatus())
-//                .isEqualTo(PaymentOrderStatus.CANCELLED);
-//        assertThat(requestMsg.getPrice())
-//                .isEqualTo(ORDER.getPrice().getAmount());
-//        assertThat(requestMsg.getCustomerId())
-//                .isEqualTo(CUSTOMER_ID.toString());
-//        assertThat(requestMsg.getRestaurantId())
-//                .isEqualTo(ORDER.getRestaurantId().toString());
-//    }
-
-
-    private void mockCustomerFindById() {
-        Customer customer = new Customer(new CustomerId(CUSTOMER_ID));
-
-        when(customerRepository.findById(CUSTOMER_ID))
-                .thenReturn(Optional.of(customer));
-    }
-
-
-    private OrderItemDto getOrderItem(Product product, int quantity) {
-        return OrderItemDto.builder()
-                .productId(product.getId().getValue())
-                .quantity(quantity)
-                .price(product.getPrice().getAmount())
-                .subTotal(product.getPrice().multiply(quantity).getAmount())
-                .build();
-    }
-
-    private void savePendingOrder() {
-        TestTransaction.flagForCommit();
-        orderRepository.save(ORDER);
-        entityManager.flush();
-        TestTransaction.end();
-    }
-
-    private PaymentResponseAvroModel getPaymentResponseAvroModel(UUID paymentId, BigDecimal price) {
-        PaymentResponseAvroModel response = PaymentResponseAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-//                .setOrderId(ORDER_ID.toString())
-                .setPaymentId(paymentId.toString())
-                .setCreatedAt(Instant.now())
-                .setCustomerId(CUSTOMER_ID.toString())
-                .setFailureMessages(new ArrayList<>())
-                .setSagaId("")
-                .setPrice(price)
-                .setPaymentStatus(PaymentStatus.COMPLETED)
-                .build();
-        return response;
-    }
-
-
-    private void savePaidOrder() {
-        TestTransaction.flagForCommit();
-
-        Order savedOrder = orderRepository.save(ORDER);
-        savedOrder.setOrderStatus(OrderStatus.PAID);
-        orderRepository.save(savedOrder);
-        entityManager.flush();
-
-        TestTransaction.end();
-    }
-
     private Map<String, PaymentRequestAvroModel> readPaymentRequestRecords() {
         ConsumerRecords<String, PaymentRequestAvroModel> result =
                 KafkaTestUtils.getRecords(paymentRequestConsumer, 100);
@@ -480,6 +418,4 @@ public class OrderIntegrationTest {
         restaurantRequestConsumer.commitSync();
         return resultTable;
     }
-
-
 }

@@ -1,6 +1,7 @@
 package com.sangjun.order.domain.exception;
 
 import com.sangjun.common.domain.exception.DomainException;
+import com.sangjun.order.domain.valueobject.TrackingId;
 
 public class OrderNotFoundException extends DomainException {
 
@@ -8,7 +9,8 @@ public class OrderNotFoundException extends DomainException {
         super(message);
     }
 
-    public OrderNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+    public OrderNotFoundException(TrackingId trackingId) {
+        super(String.format("Order not found with trackingId: %s", trackingId.getValue()));
     }
+
 }

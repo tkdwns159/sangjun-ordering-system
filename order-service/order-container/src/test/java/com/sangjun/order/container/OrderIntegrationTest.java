@@ -6,11 +6,13 @@ import com.sangjun.kafka.order.avro.model.PaymentStatus;
 import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
+import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
+import com.sangjun.order.domain.service.ports.input.service.CancelOrderApplicationService;
 import com.sangjun.order.domain.service.ports.input.service.CreateOrderApplicationService;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
@@ -33,6 +35,8 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,6 +69,7 @@ import static org.mockito.Mockito.when;
 @TestMethodOrder(value = MethodOrderer.Random.class)
 @Transactional
 @Slf4j
+@RecordApplicationEvents
 public class OrderIntegrationTest {
     private static final UUID CUSTOMER_ID = UUID.fromString("f6316e90-1837-4940-b5db-a3c49a9a10ca");
     private static final UUID RESTAURANT_ID = UUID.fromString("ad68afcc-e55e-4e6a-bc6d-95a26a5410ff");
@@ -130,6 +135,8 @@ public class OrderIntegrationTest {
     @Autowired
     private CreateOrderApplicationService createOrderService;
     @Autowired
+    private CancelOrderApplicationService cancelOrderService;
+    @Autowired
     private RestaurantRepository restaurantRepository;
     @Autowired
     private OrderRepository orderRepository;
@@ -137,6 +144,8 @@ public class OrderIntegrationTest {
     private CustomerRepository customerRepository;
     @PersistenceContext
     private EntityManager entityManager;
+    @Autowired
+    private ApplicationEvents applicationEvents;
 
     @Autowired
     private EmbeddedKafkaBroker embeddedKafka;
@@ -361,20 +370,31 @@ public class OrderIntegrationTest {
 
         //when
         CancelOrderCommand command = CancelOrderCommand.builder()
-                .orderTrackingId(ORDER_TRACKING_ID)
+                .orderTrackingId(ORDER.getTrackingId().getValue())
                 .customerId(CUSTOMER_ID)
                 .build();
 
-        orderApplicationService.cancelOrder(command);
+        cancelOrderService.cancelOrder(command);
 
         //then
+        Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
         주문취소_이벤트가_발행됨();
     }
 
+    /**
+     * Todo
+     * 주문취소를 완료하기위해 주문취소 이벤트를 구독하여 다른 BoundedContext에 메세지를 보내도록 구현
+     */
     private void 주문취소_이벤트가_발행됨() {
-
-
+        var cancellingEventList = applicationEvents.stream()
+                .filter(event -> event instanceof OrderCancellingEvent)
+                .toList();
+        assertThat(cancellingEventList)
+                .hasSize(1);
     }
+
 
 //    private void 결제취소_이벤트_발행_확인() {
 //        Map<String, PaymentRequestAvroModel> map = readPaymentRequestRecords();

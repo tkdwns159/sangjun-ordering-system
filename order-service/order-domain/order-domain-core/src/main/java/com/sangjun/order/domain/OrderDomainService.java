@@ -2,7 +2,7 @@ package com.sangjun.order.domain;
 
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.Restaurant;
-import com.sangjun.order.domain.event.OrderCancelledEvent;
+import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.event.OrderPaidEvent;
 
@@ -17,7 +17,7 @@ public interface OrderDomainService {
 
     void approveOrder(Order order);
 
-    OrderCancelledEvent initiateOrderCancel(Order order, List<String> failureMessages);
+    OrderCancellingEvent initiateOrderCancel(Order order, List<String> failureMessages);
 
     void cancelOrder(Order order, List<String> failureMessages);
 }

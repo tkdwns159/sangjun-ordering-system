@@ -183,16 +183,8 @@ public class Order extends AggregateRoot<OrderId> {
         this.orderStatus = OrderStatus.APPROVED;
     }
 
-    public void initCancel(List<String> failureMessages) {
-        if (orderStatus != OrderStatus.PAID) {
-            log.error("Order must be in PAID state for cancel operation! Order status: {}",
-                    this.orderStatus);
-            throw new OrderDomainException("Order must be in PAID state for cancel operation! " +
-                    "Order status: " + this.orderStatus);
-        }
-
+    public void initCancel() {
         this.orderStatus = OrderStatus.CANCELLING;
-        updateFailureMessages(failureMessages);
     }
 
     private void updateFailureMessages(List<String> failureMessages) {

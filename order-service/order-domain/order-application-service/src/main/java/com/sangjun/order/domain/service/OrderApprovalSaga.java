@@ -33,15 +33,16 @@ public class OrderApprovalSaga implements SagaStep<RestaurantApprovalResponse, E
     @Transactional
     @Override
     public OrderCancelledEvent rollback(RestaurantApprovalResponse data) {
-        log.info("Cancelling order with id: {}", data.getOrderId());
-        Order order = orderSagaHelper.findOrder(data.getOrderId());
-        OrderCancelledEvent orderCancelledEvent = orderDomainService.initiateOrderCancel(
-                order,
-                data.getFailureMessages()
-        );
-        orderSagaHelper.saveOrder(order);
-        log.info("Order with id: {} is cancelling", order.getId().getValue());
-
-        return orderCancelledEvent;
+//        log.info("Cancelling order with id: {}", data.getOrderId());
+//        Order order = orderSagaHelper.findOrder(data.getOrderId());
+//        OrderCancelledEvent orderCancelledEvent = orderDomainService.initiateOrderCancel(
+//                order,
+//                data.getFailureMessages()
+//        );
+//        orderSagaHelper.saveOrder(order);
+//        log.info("Order with id: {} is cancelling", order.getId().getValue());
+//
+//        return orderCancelledEvent;
+        return null;
     }
 }

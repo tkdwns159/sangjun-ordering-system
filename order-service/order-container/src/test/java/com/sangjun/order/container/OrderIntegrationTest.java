@@ -2,6 +2,7 @@ package com.sangjun.order.container;
 
 import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
 import com.sangjun.common.domain.valueobject.*;
+import com.sangjun.kafka.order.avro.model.OrderApprovalStatus;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
 import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
 import com.sangjun.kafka.order.avro.model.*;
@@ -179,7 +180,7 @@ public class OrderIntegrationTest {
     private Consumer<String, PaymentRequestAvroModel> paymentRequestConsumer;
     private Consumer<String, RestaurantApprovalRequestAvroModel> restaurantRequestConsumer;
 
-    @BeforeAll
+    @BeforeEach
     void setFixtures() {
         ORDER.initialize();
     }
@@ -431,6 +432,83 @@ public class OrderIntegrationTest {
         Order foundOrder = orderRepository.findById(orderId).get();
         assertThat(foundOrder.getOrderStatus())
                 .isEqualTo(OrderStatus.CANCELLED);
+    }
+
+    @Test
+    void 식당승인요청_성공메세지_처리() throws InterruptedException {
+        //given
+        ORDER.pay();
+        orderRepository.save(ORDER);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        var key = ORDER.getId().getValue().toString();
+        var msg = RestaurantApprovalResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderApprovalStatus(OrderApprovalStatus.APPROVED)
+                .setOrderId(ORDER.getId().getValue().toString())
+                .setRestaurantId(ORDER.getRestaurantId().getValue().toString())
+                .setFailureMessages(new ArrayList<>())
+                .setSagaId("")
+                .setCreatedAt(Instant.now())
+                .build();
+
+        //when
+        restaurantResponseKt.send(restaurantResponseTopic, key, msg);
+        Thread.sleep(200);
+
+        //then
+        Order order = orderRepository.findByTrackingId(ORDER.getTrackingId()).get();
+        assertThat(order.getOrderStatus())
+                .isEqualTo(OrderStatus.APPROVED);
+    }
+
+    @Test
+    void 식당승인요청_실패메세지_처리() throws InterruptedException {
+        //given
+        ORDER.pay();
+        orderRepository.save(ORDER);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        var key = ORDER.getId().getValue().toString();
+        var msg = RestaurantApprovalResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderApprovalStatus(OrderApprovalStatus.REJECTED)
+                .setOrderId(ORDER.getId().getValue().toString())
+                .setRestaurantId(ORDER.getRestaurantId().getValue().toString())
+                .setFailureMessages(new ArrayList<>())
+                .setSagaId("")
+                .setCreatedAt(Instant.now())
+                .build();
+
+        //when
+        restaurantResponseKt.send(restaurantResponseTopic, key, msg);
+        Thread.sleep(200);
+
+        //then
+        Order order = orderRepository.findByTrackingId(ORDER.getTrackingId()).get();
+        assertThat(order.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
+        결제취소요청_메세지가_전송됨(order);
+    }
+
+    private void 결제취소요청_메세지가_전송됨(Order order) {
+        var recordMap = readPaymentRequestRecords();
+        var key = order.getId().getValue().toString();
+        var msg = recordMap.get(key);
+        assertThat(msg.getOrderId())
+                .isEqualTo(order.getId().getValue().toString());
+        assertThat(msg.getRestaurantId())
+                .isEqualTo(order.getRestaurantId().getValue().toString());
+        assertThat(msg.getPrice())
+                .isEqualTo(order.getPrice().getAmount());
+        assertThat(msg.getCustomerId())
+                .isEqualTo(order.getCustomerId().getValue().toString());
+        assertThat(msg.getPaymentOrderStatus())
+                .isEqualTo(PaymentOrderStatus.CANCELLED);
     }
 
 

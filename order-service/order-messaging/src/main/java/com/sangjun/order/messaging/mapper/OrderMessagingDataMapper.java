@@ -4,13 +4,14 @@ import com.sangjun.common.domain.valueobject.OrderApprovalStatus;
 import com.sangjun.common.domain.valueobject.PaymentStatus;
 import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.domain.entity.Order;
-import com.sangjun.order.domain.event.OrderCancelledEvent;
+import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.event.OrderPaidEvent;
 import com.sangjun.order.domain.service.dto.message.PaymentResponse;
 import com.sangjun.order.domain.service.dto.message.RestaurantApprovalResponse;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.UUID;
 
 
@@ -32,14 +33,15 @@ public class OrderMessagingDataMapper {
     }
 
     public PaymentRequestAvroModel orderCancelledEventToPaymentRequestAvroModel(
-            OrderCancelledEvent orderCancelledEvent) {
+            OrderCancellingEvent orderCancelledEvent) {
         Order order = orderCancelledEvent.getOrder();
         return PaymentRequestAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setSagaId("")
                 .setCustomerId(order.getCustomerId().getValue().toString())
                 .setOrderId(order.getId().getValue().toString())
-                .setCreatedAt(orderCancelledEvent.getCreatedAt().toInstant())
+                .setRestaurantId(order.getRestaurantId().getValue().toString())
+                .setCreatedAt(Instant.ofEpochMilli(orderCancelledEvent.getTimestamp()))
                 .setPaymentOrderStatus(PaymentOrderStatus.CANCELLED)
                 .setPrice(orderCancelledEvent.getOrder().getPrice().getAmount())
                 .build();

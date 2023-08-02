@@ -266,7 +266,7 @@ public class OrderIntegrationTest {
         //then
         Order createdOrder = orderRepository.findByTrackingId(new TrackingId(resp.getOrderTrackingId())).get();
         생성된_주문데이터_확인(totalPrice.getAmount(), orderAddressDto, items, createdOrder);
-        결제요청_이벤트가_발행됨(createdOrder);
+        결제요청_메세지가_전송됨(createdOrder);
     }
 
     private void mockCustomerFindById() {
@@ -309,7 +309,7 @@ public class OrderIntegrationTest {
         }
     }
 
-    private void 결제요청_이벤트가_발행됨(Order order) {
+    private void 결제요청_메세지가_전송됨(Order order) {
         Map<String, PaymentRequestAvroModel> map = readPaymentRequestRecords();
         UUID orderId = order.getId().getValue();
         PaymentRequestAvroModel msg = map.get(orderId.toString());
@@ -369,6 +369,40 @@ public class OrderIntegrationTest {
         assertThat(foundOrder.getOrderStatus())
                 .isEqualTo(OrderStatus.PAID);
     }
+
+    @Test
+    void 결제요청에대한_실패메세지_처리() throws InterruptedException {
+        //given
+        orderRepository.save(ORDER);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        OrderId orderId = ORDER.getId();
+        UUID paymentId = UUID.randomUUID();
+        PaymentResponseAvroModel msg = PaymentResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(orderId.getValue().toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .setCustomerId(CUSTOMER_ID.toString())
+                .setPaymentId(paymentId.toString())
+                .setPaymentStatus(PaymentStatus.FAILED)
+                .setSagaId("")
+                .setPrice(ORDER.getPrice().getAmount())
+                .setCreatedAt(Instant.now())
+                .setFailureMessages(Collections.emptyList())
+                .build();
+
+        //when
+        paymentResponseKt.send(paymentResponseTopic, orderId.getValue().toString(), msg);
+        Thread.sleep(200);
+
+        //then
+        //then
+        Order foundOrder = orderRepository.findById(orderId).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLED);
+    }
+
 
     @Test
     void 주문_취소() {

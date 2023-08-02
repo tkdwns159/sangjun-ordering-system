@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-@Table(name = "p_orders", schema = "p_order")
-@Entity
 @Getter
 @Setter
 @AllArgsConstructor

@@ -3,16 +3,12 @@ package com.sangjun.common.dataaccess.restaurant.entity;
 
 import lombok.*;
 
-import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
-import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
-@Entity
-@Table(name = "order_restaurant_m_view", schema = "restaurant")
 @Getter
 @Setter
 @AllArgsConstructor

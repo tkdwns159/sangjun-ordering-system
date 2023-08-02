@@ -1,8 +1,8 @@
 package com.sangjun.order.domain.service;
 
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
-import com.sangjun.order.domain.service.dto.create.OrderAddress;
-import com.sangjun.order.domain.service.dto.create.OrderItem;
+import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
+import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.dto.track.TrackOrderQuery;
 import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ public class OrderInputValidationTest {
 
     private static final UUID CUSTOMER_ID = UUID.randomUUID();
     private static final UUID RESTAURANT_ID = UUID.randomUUID();
-    private static final OrderAddress ORDER_ADDRESS = OrderAddress.builder()
+    private static final OrderAddressDto ORDER_ADDRESS = OrderAddressDto.builder()
             .city("Seoul")
             .postalCode("432")
             .street("Sillim")
@@ -36,7 +36,7 @@ public class OrderInputValidationTest {
         CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
                 .restaurantId(RESTAURANT_ID)
                 .price(BigDecimal.ZERO)
-                .orderAddress(ORDER_ADDRESS)
+                .orderAddressDto(ORDER_ADDRESS)
                 .items(new ArrayList<>())
                 .build();
 
@@ -49,7 +49,7 @@ public class OrderInputValidationTest {
         CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
                 .customerId(CUSTOMER_ID)
                 .price(BigDecimal.ZERO)
-                .orderAddress(ORDER_ADDRESS)
+                .orderAddressDto(ORDER_ADDRESS)
                 .items(new ArrayList<>())
                 .build();
 
@@ -62,7 +62,7 @@ public class OrderInputValidationTest {
         CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
                 .restaurantId(RESTAURANT_ID)
                 .customerId(CUSTOMER_ID)
-                .orderAddress(ORDER_ADDRESS)
+                .orderAddressDto(ORDER_ADDRESS)
                 .items(new ArrayList<>())
                 .build();
 
@@ -110,13 +110,13 @@ public class OrderInputValidationTest {
 
     @Test
     void 주문시_주문물품의_상품번호가_NULL이면_예외가_발생한다() {
-        OrderItem orderItem = OrderItem.builder()
+        OrderItemDto orderItemDto = OrderItemDto.builder()
                 .quantity(2)
                 .price(new BigDecimal(1000))
                 .subTotal(new BigDecimal(1000))
                 .build();
-        List<OrderItem> items = new ArrayList<>();
-        items.add(orderItem);
+        List<OrderItemDto> items = new ArrayList<>();
+        items.add(orderItemDto);
 
         CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
                 .restaurantId(RESTAURANT_ID)
@@ -131,13 +131,13 @@ public class OrderInputValidationTest {
 
     @Test
     void 주문시_주문물품의_수량이_NULL이면_예외가_발생한다() {
-        OrderItem orderItem = OrderItem.builder()
+        OrderItemDto orderItemDto = OrderItemDto.builder()
                 .productId(UUID.randomUUID())
                 .price(new BigDecimal(1000))
                 .subTotal(new BigDecimal(1000))
                 .build();
-        List<OrderItem> items = new ArrayList<>();
-        items.add(orderItem);
+        List<OrderItemDto> items = new ArrayList<>();
+        items.add(orderItemDto);
 
         CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
                 .restaurantId(RESTAURANT_ID)
@@ -152,13 +152,13 @@ public class OrderInputValidationTest {
 
     @Test
     void 주문시_주문물품의_가격이_NULL이면_예외가_발생한다() {
-        OrderItem orderItem = OrderItem.builder()
+        OrderItemDto orderItemDto = OrderItemDto.builder()
                 .productId(UUID.randomUUID())
                 .quantity(2)
                 .subTotal(new BigDecimal(1000))
                 .build();
-        List<OrderItem> items = new ArrayList<>();
-        items.add(orderItem);
+        List<OrderItemDto> items = new ArrayList<>();
+        items.add(orderItemDto);
 
         CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
                 .restaurantId(RESTAURANT_ID)
@@ -173,13 +173,13 @@ public class OrderInputValidationTest {
 
     @Test
     void 주문시_주문물품의_subtotal이_NULL이면_예외가_발생한다() {
-        OrderItem orderItem = OrderItem.builder()
+        OrderItemDto orderItemDto = OrderItemDto.builder()
                 .productId(UUID.randomUUID())
                 .quantity(2)
                 .price(new BigDecimal(1000))
                 .build();
-        List<OrderItem> items = new ArrayList<>();
-        items.add(orderItem);
+        List<OrderItemDto> items = new ArrayList<>();
+        items.add(orderItemDto);
 
         CreateOrderCommand createOrderCommand = CreateOrderCommand.builder()
                 .restaurantId(RESTAURANT_ID)

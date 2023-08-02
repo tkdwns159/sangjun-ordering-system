@@ -9,14 +9,10 @@ import com.sangjun.payment.domain.event.PaymentCancelledEvent;
 import com.sangjun.payment.domain.event.PaymentEvent;
 import com.sangjun.payment.domain.event.PaymentFailedEvent;
 import com.sangjun.payment.domain.exception.IllegalPaymentStateException;
-import com.sangjun.payment.domain.exception.PaymentNotFoundException;
-import com.sangjun.payment.domain.valueobject.book.BookShelveId;
+import com.sangjun.payment.service.PaymentEventShooter;
+import com.sangjun.payment.service.RepositoryManager;
 import com.sangjun.payment.service.dto.PaymentRequest;
-import com.sangjun.payment.service.exception.BookNotFoundException;
 import com.sangjun.payment.service.ports.output.repository.BookOwnerType;
-import com.sangjun.payment.service.ports.output.repository.BookRepository;
-import com.sangjun.payment.service.ports.output.repository.BookShelveRepository;
-import com.sangjun.payment.service.ports.output.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,18 +31,18 @@ public class PaymentRequestMessageListener {
     private final PaymentEventShooter paymentEventShooter;
     private final PaymentInitDomainService paymentInitDomainService;
     private final PaymentCancelDomainService paymentCancelDomainService;
-    private final BookRepository bookRepository;
-    private final BookShelveRepository bookShelveRepository;
-    private final PaymentRepository paymentRepository;
+    private final RepositoryManager repositoryManager;
 
     @Transactional
     public void completePayment(PaymentRequest paymentRequest) {
         final Payment payment = PaymentRequestMapper.MAPPER.toPayment(paymentRequest);
-        final Book customerBook = getBook(BookOwnerType.CUSTOMER, payment.getCustomerId().getValue());
-        final Book restaurantBook = getBook(BookOwnerType.RESTAURANT, payment.getRestaurantId().getValue());
+        final Book customerBook =
+                repositoryManager.getBook(BookOwnerType.CUSTOMER, payment.getCustomerId().getValue());
+        final Book restaurantBook =
+                repositoryManager.getBook(BookOwnerType.RESTAURANT, payment.getRestaurantId().getValue());
 
         final PaymentEvent paymentEvent = executePayment(payment, customerBook, restaurantBook);
-        paymentRepository.save(paymentEvent.getPayment());
+        repositoryManager.save(paymentEvent.getPayment());
         paymentEventShooter.fire(paymentEvent);
     }
 
@@ -59,28 +55,19 @@ public class PaymentRequestMessageListener {
         }
     }
 
-    Book getBook(BookOwnerType bookOwnerType, UUID bookOwnerId) {
-        BookShelveId bookShelveId = new BookShelveId(bookShelveRepository.findIdByOwnerType(bookOwnerType));
-        return bookRepository
-                .findByBookShelveIdAndBookOwner_uuid(bookShelveId, bookOwnerId)
-                .orElseThrow(() -> new BookNotFoundException(bookShelveId.getValue(), bookOwnerId));
-    }
-
     @Transactional
     public void cancelPayment(PaymentRequest paymentRequest) {
         final OrderId orderId = new OrderId(UUID.fromString(paymentRequest.getOrderId()));
-        final Payment payment = getPayment(orderId);
-        final Book customerBook = getBook(BookOwnerType.CUSTOMER, payment.getCustomerId().getValue());
-        final Book restaurantBook = getBook(BookOwnerType.RESTAURANT, payment.getRestaurantId().getValue());
+        final Payment payment =
+                repositoryManager.getPayment(orderId);
+        final Book customerBook =
+                repositoryManager.getBook(BookOwnerType.CUSTOMER, payment.getCustomerId().getValue());
+        final Book restaurantBook =
+                repositoryManager.getBook(BookOwnerType.RESTAURANT, payment.getRestaurantId().getValue());
 
         final PaymentCancelledEvent paymentCancelledEvent =
                 paymentCancelDomainService.cancelPayment(payment, restaurantBook, customerBook);
-        paymentRepository.save(paymentCancelledEvent.getPayment());
+        repositoryManager.save(paymentCancelledEvent.getPayment());
         paymentEventShooter.fire(paymentCancelledEvent);
-    }
-
-    private Payment getPayment(OrderId orderId) {
-        return paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new PaymentNotFoundException(orderId.getValue()));
     }
 }

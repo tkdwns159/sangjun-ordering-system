@@ -1,23 +1,27 @@
 package com.sangjun.order.domain.valueobject;
 
+import javax.persistence.Access;
+import javax.persistence.AccessType;
+import javax.persistence.Embeddable;
 import java.util.Objects;
-import java.util.UUID;
 
+@Embeddable
+@Access(AccessType.FIELD)
 public class StreetAddress {
-    private final UUID id;
-    private final String street;
-    private final String postalCode;
-    private final String city;
+    private String street;
+    private String postalCode;
+    private String city;
 
-    public StreetAddress(UUID id, String street, String postalCode, String city) {
-        this.id = id;
+    public StreetAddress(String street, String postalCode, String city) {
         this.street = street;
         this.postalCode = postalCode;
         this.city = city;
     }
 
+    protected StreetAddress() {
+    }
+
     private StreetAddress(Builder builder) {
-        id = builder.id;
         street = builder.street;
         postalCode = builder.postalCode;
         city = builder.city;
@@ -27,10 +31,6 @@ public class StreetAddress {
         return new Builder();
     }
 
-
-    public UUID getId() {
-        return id;
-    }
 
     public String getStreet() {
         return street;
@@ -59,17 +59,11 @@ public class StreetAddress {
 
 
     public static final class Builder {
-        private UUID id;
         private String street;
         private String postalCode;
         private String city;
 
         private Builder() {
-        }
-
-        public Builder id(UUID val) {
-            id = val;
-            return this;
         }
 
         public Builder street(String val) {

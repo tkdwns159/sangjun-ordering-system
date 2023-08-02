@@ -6,8 +6,8 @@ import com.sangjun.common.utils.CommonConstants;
 import com.sangjun.order.dataaccess.order.entity.OrderEntity;
 import com.sangjun.order.dataaccess.order.entity.OrderItemEntity;
 import com.sangjun.order.domain.entity.Order;
-import com.sangjun.order.domain.entity.OrderItem;
 import com.sangjun.order.domain.service.mapper.OrderMapstructMapper;
+import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
@@ -32,8 +32,8 @@ public interface OrderDataMapstructMapper {
 
 
     @Mapping(target = "price", source = "price.amount")
-    @Mapping(target = "productId", source = "product.id.value")
-    @Mapping(target = "id", source = "id.value")
+    @Mapping(target = "productId", source = "productId.value")
+    @Mapping(target = "id", source = "id.orderItemId")
     OrderItemEntity toOrderItemEntity(OrderItem orderItem);
 
     @InheritInverseConfiguration
@@ -46,11 +46,11 @@ public interface OrderDataMapstructMapper {
     OrderEntity toOrderEntity(Order order);
 
 
-    @InheritInverseConfiguration
-    @Mapping(target = "failureMessages",
-            expression = "java(Optional.ofNullable(orderEntity.getFailureMessages())" +
-                    ".map(s -> s.split(CommonConstants.FAILURE_MESSAGE_DELIMITER))" +
-                    ".map(Arrays::asList)" +
-                    ".orElse(Collections.emptyList()))")
-    Order toOrder(OrderEntity orderEntity);
+//    @InheritInverseConfiguration
+//    @Mapping(target = "failureMessages",
+//            expression = "java(Optional.ofNullable(orderEntity.getFailureMessages())" +
+//                    ".map(s -> s.split(CommonConstants.FAILURE_MESSAGE_DELIMITER))" +
+//                    ".map(Arrays::asList)" +
+//                    ".orElse(Collections.emptyList()))")
+//    Order toOrder(OrderEntity orderEntity);
 }

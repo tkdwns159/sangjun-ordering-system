@@ -60,9 +60,7 @@ spring:
     password: admin
   sql:
     init:
-      # ddl-auto와 schema init 중에 한 가지만 사용해야한다. 서로 충돌 할 수 있다. 그러므로 ddl-auto 옵션을 꺼두자.
-      # (참고사항 : ddl-auto 기본값은, embedded db일때는 create-drop 아닐때는 none)
       platform: postgres
       schema-locations:
-        - classpath*:init-schema.sql
+        - classpath*:init-schema-prod.sql
       mode: always

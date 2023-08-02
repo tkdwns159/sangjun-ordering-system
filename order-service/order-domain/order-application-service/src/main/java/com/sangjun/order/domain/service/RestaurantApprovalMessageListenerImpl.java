@@ -1,7 +1,6 @@
 package com.sangjun.order.domain.service;
 
 import com.sangjun.common.utils.CommonConstants;
-import com.sangjun.order.domain.event.OrderCancelledEvent;
 import com.sangjun.order.domain.service.dto.message.RestaurantApprovalResponse;
 import com.sangjun.order.domain.service.ports.input.message.listener.restaurant.RestaurantApprovalMessageListener;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +24,10 @@ public class RestaurantApprovalMessageListenerImpl implements RestaurantApproval
 
     @Override
     public void orderRejected(RestaurantApprovalResponse restaurantApprovalResponse) {
-        OrderCancelledEvent orderCancelledEvent = orderApprovalSaga.rollback(restaurantApprovalResponse);
+        var orderCancellingEvent = orderApprovalSaga.rollback(restaurantApprovalResponse);
         log.info("Publishing order cancelled event for order id: {} with failure messages: {}",
-                orderCancelledEvent.getOrder().getId().getValue(),
+                orderCancellingEvent.getOrder().getId().getValue(),
                 String.join(CommonConstants.FAILURE_MESSAGE_DELIMITER, restaurantApprovalResponse.getFailureMessages()));
-        orderEventShooter.fire(orderCancelledEvent);
+        orderEventShooter.fire(orderCancellingEvent);
     }
 }

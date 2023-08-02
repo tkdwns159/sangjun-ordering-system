@@ -8,7 +8,7 @@
 {
   "customerId": "49f72dbd-ae1d-4f6b-b17c-122d402e55c5",  // 고객 ID (UUID 형식)
   "restaurantId": "d215b5f8-0249-4dc5-89a3-51fd148cfb45",  // 음식점 ID (UUID 형식)
-  "orderAddress": {
+  "orderAddressDto": {
     "street": "street_1",  // 도로명 주소
     "postalCode": "1000AB",  // 우편번호
     "city": "Amsterdam"  // 도시명

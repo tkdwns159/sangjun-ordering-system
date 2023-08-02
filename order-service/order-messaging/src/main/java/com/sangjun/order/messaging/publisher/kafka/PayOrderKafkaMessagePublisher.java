@@ -5,6 +5,7 @@ import com.sangjun.kafka.producer.service.KafkaProducer;
 import com.sangjun.order.domain.event.OrderPaidEvent;
 import com.sangjun.order.domain.service.config.OrderServiceConfigData;
 import com.sangjun.order.domain.service.ports.output.message.publisher.restaurant.OrderPaidRestaurantRequestMessagePublisher;
+import com.sangjun.order.messaging.mapper.OrderMessageMapper;
 import com.sangjun.order.messaging.mapper.OrderMessagingDataMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,8 @@ public class PayOrderKafkaMessagePublisher implements OrderPaidRestaurantRequest
         String orderId = domainEvent.getOrder().getId().getValue().toString();
 
         try {
-            RestaurantApprovalRequestAvroModel restaurantApprovalRequestAvroModel = orderMessagingDataMapper.orderPaidEventToRestaurantApprovalRequestAvroModel(domainEvent);
+            RestaurantApprovalRequestAvroModel restaurantApprovalRequestAvroModel =
+                    OrderMessageMapper.MAPPER.toRestaurantApprovalRequestAvroModel(domainEvent);
 
             kafkaProducer.send(orderServiceConfigData.getRestaurantApprovalRequestTopicName(),
                     orderId,

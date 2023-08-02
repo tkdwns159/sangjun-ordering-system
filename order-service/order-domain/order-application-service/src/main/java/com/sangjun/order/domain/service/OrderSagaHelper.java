@@ -4,6 +4,7 @@ import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.exception.OrderNotFoundException;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
+import com.sangjun.order.domain.valueobject.OrderItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,10 @@ public class OrderSagaHelper {
                     log.error("Order with id: {} could not be found", orderId);
                     throw new OrderNotFoundException("Order with id: " + orderId + " could not be found");
                 });
+    }
+
+    public void loadOrderItems(Order order) {
+        order.getItems().forEach(OrderItem::getPrice);
     }
 
     public void saveOrder(Order order) {

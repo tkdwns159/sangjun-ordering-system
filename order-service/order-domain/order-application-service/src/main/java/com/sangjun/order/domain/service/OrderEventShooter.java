@@ -1,8 +1,7 @@
 package com.sangjun.order.domain.service;
 
-import com.sangjun.order.domain.event.OrderCancelledEvent;
+import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
-import com.sangjun.order.domain.event.OrderEvent;
 import com.sangjun.order.domain.event.OrderPaidEvent;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCancelledPaymentRequestMessagePublisher;
@@ -21,11 +20,11 @@ public class OrderEventShooter {
     private final OrderCancelledPaymentRequestMessagePublisher orderCancelledPaymentRequestMessagePublisher;
     private final OrderPaidRestaurantRequestMessagePublisher orderPaidRestaurantRequestMessagePublisher;
 
-    public void fire(OrderEvent event) {
+    public void fire(Object event) {
         if (event instanceof OrderCreatedEvent) {
             orderCreatedPaymentRequestMessagePublisher.publish((OrderCreatedEvent) event);
-        } else if (event instanceof OrderCancelledEvent) {
-            orderCancelledPaymentRequestMessagePublisher.publish((OrderCancelledEvent) event);
+        } else if (event instanceof OrderCancellingEvent) {
+            orderCancelledPaymentRequestMessagePublisher.publish((OrderCancellingEvent) event);
         } else if (event instanceof OrderPaidEvent) {
             orderPaidRestaurantRequestMessagePublisher.publish((OrderPaidEvent) event);
         } else {

@@ -11,8 +11,15 @@ spring:
       ddl-auto: create
 
   datasource:
-    url: jdbc:h2:mem:psql;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;INIT=DROP SCHEMA IF EXISTS payment CASCADE\;CREATE SCHEMA payment\;DROP SCHEMA IF EXISTS restaurant CASCADE\;CREATE SCHEMA restaurant\;
+    url: jdbc:h2:mem:psql;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;
     username: sa
+
+  sql:
+    init:
+      platform: postgres
+      schema-locations:
+        - classpath*:init-schema-test.sql
+      mode: always
 
 logging:
   level:

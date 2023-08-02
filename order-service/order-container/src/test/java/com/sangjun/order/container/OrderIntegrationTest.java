@@ -3,6 +3,7 @@ package com.sangjun.order.container;
 import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
+import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
 import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
@@ -46,6 +47,7 @@ import javax.persistence.Query;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.sangjun.order.domain.service.mapper.OrderMapstructMapper.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -362,12 +364,40 @@ public class OrderIntegrationTest {
 
         //when
         paymentResponseKt.send(paymentResponseTopic, orderId.getValue().toString(), msg);
-        Thread.sleep(200);
+        Thread.sleep(250);
 
         //then
+        TestTransaction.start();
         Order foundOrder = orderRepository.findById(orderId).get();
         assertThat(foundOrder.getOrderStatus())
                 .isEqualTo(OrderStatus.PAID);
+        식당승인요청_메세지_전송(foundOrder);
+    }
+
+    private void 식당승인요청_메세지_전송(Order order) {
+        Map<ProductId, Integer> productMap = order.getItems().stream()
+                .collect(Collectors.toMap(OrderItem::getProductId, OrderItem::getQuantity));
+        var key = order.getId().getValue().toString();
+        var recordMap = readRestaurantRequestRecords();
+        var request = recordMap.get(key);
+        assertThat(request.getOrderId())
+                .isEqualTo(order.getId().getValue().toString());
+        assertThat(request.getRestaurantId())
+                .isEqualTo(order.getRestaurantId().getValue().toString());
+        assertThat(request.getRestaurantOrderStatus())
+                .isEqualTo(RestaurantOrderStatus.PAID);
+        assertThat(request.getPrice())
+                .isEqualTo(order.getPrice().getAmount());
+        assertThat(request.getProducts().size())
+                .isEqualTo(order.getItems().size());
+
+        for (var product : request.getProducts()) {
+            ProductId productId = new ProductId(UUID.fromString(product.getId()));
+            assertThat(productMap.containsKey(productId))
+                    .isTrue();
+            assertThat(productMap.getOrDefault(productId, -100))
+                    .isEqualTo(product.getQuantity());
+        }
     }
 
     @Test
@@ -435,6 +465,7 @@ public class OrderIntegrationTest {
         assertThat(cancellingEventList)
                 .hasSize(1);
     }
+
 
     private Map<String, PaymentRequestAvroModel> readPaymentRequestRecords() {
         ConsumerRecords<String, PaymentRequestAvroModel> result =

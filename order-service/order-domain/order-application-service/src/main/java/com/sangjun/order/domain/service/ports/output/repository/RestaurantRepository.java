@@ -1,10 +1,13 @@
 package com.sangjun.order.domain.service.ports.output.repository;
 
-import com.sangjun.order.domain.entity.Restaurant;
+import com.sangjun.common.domain.valueobject.ProductId;
+import com.sangjun.common.domain.valueobject.RestaurantId;
+import com.sangjun.order.domain.valueobject.Product;
 
-import java.util.Optional;
+import java.util.List;
 
 public interface RestaurantRepository {
 
-    Optional<Restaurant> findRestaurantInformation(Restaurant restaurant);
+    List<Product> findProductsByRestaurantIdInProductIds(RestaurantId restaurantId, List<ProductId> productIds);
+
 }

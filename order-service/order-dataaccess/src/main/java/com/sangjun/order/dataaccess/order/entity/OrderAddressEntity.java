@@ -2,12 +2,13 @@ package com.sangjun.order.dataaccess.order.entity;
 
 import lombok.*;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import java.util.Objects;
 import java.util.UUID;
 
-@Table(name = "order_address", schema = "p_order")
-@Entity
 @Getter
 @Setter
 @AllArgsConstructor

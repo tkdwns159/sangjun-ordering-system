@@ -7,8 +7,6 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
-@Table(name = "order_items", schema = "p_order")
-@Entity
 @Getter
 @Setter
 @AllArgsConstructor

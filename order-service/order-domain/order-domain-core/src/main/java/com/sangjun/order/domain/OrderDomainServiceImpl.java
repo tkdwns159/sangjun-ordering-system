@@ -2,12 +2,13 @@ package com.sangjun.order.domain;
 
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.entity.Restaurant;
-import com.sangjun.order.domain.event.OrderCancelledEvent;
+import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.event.OrderPaidEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Clock;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -20,12 +21,11 @@ public class OrderDomainServiceImpl implements OrderDomainService {
 
     @Override
     public void validateOrder(Order order, Restaurant restaurant) {
-        OrderValidator.validate(order, restaurant);
     }
 
     @Override
     public OrderCreatedEvent initiateOrder(Order order) {
-        order.initializeOrder();
+        order.initialize();
         log.info("Order with id: {} is initiated", order.getId().getValue());
         return new OrderCreatedEvent(order, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
@@ -44,10 +44,10 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     }
 
     @Override
-    public OrderCancelledEvent initiateOrderCancel(Order order, List<String> failureMessages) {
-        order.initCancel(failureMessages);
+    public OrderCancellingEvent initiateOrderCancel(Order order, List<String> failureMessages) {
+        order.initCancel();
         log.info("Order payment is cancelling for order id: {}", order.getId().getValue());
-        return new OrderCancelledEvent(order, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
+        return new OrderCancellingEvent(order, Clock.system(ZoneId.of(ZONE_ID)));
     }
 
     @Override

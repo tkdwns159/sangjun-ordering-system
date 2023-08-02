@@ -6,6 +6,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Mapper(config = CentralConfig.class)
@@ -38,6 +40,11 @@ public interface CommonMapper {
 
     default UUID toUUID(RestaurantId restaurantId) {
         return restaurantId.getValue();
+    }
+
+
+    default Instant toInstant(ZonedDateTime zonedDateTime) {
+        return zonedDateTime.toInstant();
     }
 
 }

@@ -1,14 +1,16 @@
 package com.sangjun.order.domain.entity;
 
-import com.sangjun.common.domain.entity.AggregateRoot;
 import com.sangjun.common.domain.valueobject.CustomerId;
 
-public class Customer extends AggregateRoot<CustomerId> {
+public class Customer {
 
-    public Customer() {
+    private CustomerId id;
+
+    public Customer(CustomerId id) {
+        this.id = id;
     }
 
-    public Customer(CustomerId customerId) {
-        super.setId(customerId);
+    public CustomerId getId() {
+        return id;
     }
 }

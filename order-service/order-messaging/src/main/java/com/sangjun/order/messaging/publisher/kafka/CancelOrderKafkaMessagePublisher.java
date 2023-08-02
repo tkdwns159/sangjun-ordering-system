@@ -2,7 +2,7 @@ package com.sangjun.order.messaging.publisher.kafka;
 
 import com.sangjun.kafka.order.avro.model.PaymentRequestAvroModel;
 import com.sangjun.kafka.producer.service.KafkaProducer;
-import com.sangjun.order.domain.event.OrderCancelledEvent;
+import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.service.config.OrderServiceConfigData;
 import com.sangjun.order.domain.service.ports.output.message.publisher.payment.OrderCancelledPaymentRequestMessagePublisher;
 import com.sangjun.order.messaging.mapper.OrderMessagingDataMapper;
@@ -21,13 +21,14 @@ public class CancelOrderKafkaMessagePublisher implements OrderCancelledPaymentRe
     private final OrderKafkaMessageHelper orderKafkaMessageHelper;
 
     @Override
-    public void publish(OrderCancelledEvent domainEvent) {
+    public void publish(OrderCancellingEvent domainEvent) {
 
         String orderId = domainEvent.getOrder().getId().getValue().toString();
         log.info("Received OrderCancelledEvent for order id : {}", orderId);
 
         try {
-            PaymentRequestAvroModel paymentRequestAvroModel = orderMessagingDataMapper.orderCancelledEventToPaymentRequestAvroModel(domainEvent);
+            PaymentRequestAvroModel paymentRequestAvroModel =
+                    orderMessagingDataMapper.orderCancelledEventToPaymentRequestAvroModel(domainEvent);
 
             kafkaProducer.send(orderServiceConfigData.getPaymentRequestTopicName(),
                     orderId,

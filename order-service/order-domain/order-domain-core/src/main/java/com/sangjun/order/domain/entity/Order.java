@@ -2,53 +2,86 @@ package com.sangjun.order.domain.entity;
 
 import com.sangjun.common.domain.entity.AggregateRoot;
 import com.sangjun.common.domain.valueobject.*;
+import com.sangjun.order.domain.FailureMessageAttributeConverter;
+import com.sangjun.order.domain.event.OrderCreatedEvent;
 import com.sangjun.order.domain.exception.OrderDomainException;
-import com.sangjun.order.domain.valueobject.OrderItemId;
+import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.*;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
+
+@Entity
+@Table(name = "p_orders", schema = "p_order")
+@Access(AccessType.FIELD)
 public class Order extends AggregateRoot<OrderId> {
-
+    @Transient
     private static final Logger log = LoggerFactory.getLogger(Order.class.getName());
-    private final CustomerId customerId;
-    private final RestaurantId restaurantId;
-    private final StreetAddress deliveryAddress;
-    private final Money price;
-    private final List<OrderItem> items;
 
+    @Embedded
+    private CustomerId customerId;
+    @Embedded
+    private RestaurantId restaurantId;
+    @Embedded
+    private StreetAddress deliveryAddress;
+    @Embedded
+    private Money price;
+    @Embedded
     private TrackingId trackingId;
+    @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            cascade = {CascadeType.PERSIST,
+                    CascadeType.MERGE,
+                    CascadeType.REMOVE},
+            orphanRemoval = true)
+    @JoinColumn(name = "order_id")
+    private List<OrderItem> items;
+
+    @Convert(converter = FailureMessageAttributeConverter.class)
     private List<String> failureMessages;
 
-    public Order(CustomerId customerId, RestaurantId restaurantId, StreetAddress deliveryAddress, Money price, List<OrderItem> items) {
+    private Order(
+            CustomerId customerId,
+            RestaurantId restaurantId,
+            StreetAddress deliveryAddress,
+            Money price,
+            List<OrderItem> items,
+            List<String> failureMessages) {
         this.customerId = customerId;
         this.restaurantId = restaurantId;
         this.deliveryAddress = deliveryAddress;
         this.price = price;
+        this.orderStatus = OrderStatus.PENDING;
         this.items = items;
+        this.failureMessages = failureMessages;
     }
 
-    private Order(Builder builder) {
-        setId(builder.id);
-        customerId = builder.customerId;
-        restaurantId = builder.restaurantId;
-        deliveryAddress = builder.deliveryAddress;
-        price = builder.price;
-        items = builder.items;
-        trackingId = builder.trackingId;
-        orderStatus = builder.orderStatus;
-        failureMessages = builder.failureMessages;
+    protected Order() {
     }
 
-    public void setTrackingId(TrackingId trackingId) {
-        this.trackingId = trackingId;
+    private static Order of(Builder builder) {
+        return new Order(
+                requireNonNull(builder.customerId, "customerId"),
+                requireNonNull(builder.restaurantId, "restaurantId"),
+                requireNonNull(builder.deliveryAddress, "deliveryAddress"),
+                requireNonNull(builder.price, "price"),
+                requireNonNullElse(builder.items, new ArrayList<>()),
+                requireNonNullElse(builder.failureMessages, new ArrayList<>())
+        );
     }
 
     public void setFailureMessages(List<String> failureMessages) {
@@ -75,8 +108,8 @@ public class Order extends AggregateRoot<OrderId> {
         return price;
     }
 
-    public List<OrderItem> getItems() {
-        return items;
+    public OrderItem getItemOfIndex(int idx) {
+        return this.items.get(idx);
     }
 
     public TrackingId getTrackingId() {
@@ -91,77 +124,41 @@ public class Order extends AggregateRoot<OrderId> {
         return failureMessages;
     }
 
-    public void initializeOrder() {
+    public OrderCreatedEvent initialize() {
+        validate();
         setId(new OrderId(UUID.randomUUID()));
         trackingId = new TrackingId(UUID.randomUUID());
         orderStatus = OrderStatus.PENDING;
         initializeOrderItems();
+        return new OrderCreatedEvent(this, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
+    }
+
+    private void validate() {
+        validateOrderItems();
+        checkIfPriceEqualsSumOfOrderItemsPrice();
+    }
+
+    private void validateOrderItems() {
+        for (OrderItem item : this.items) {
+            item.validate();
+        }
+    }
+
+    private void checkIfPriceEqualsSumOfOrderItemsPrice() {
+        Money itemsPriceSum = this.items.stream().map(OrderItem::getSubTotal)
+                .reduce(Money.ZERO, Money::add);
+        if (!this.price.equals(itemsPriceSum)) {
+            throw new IllegalStateException(
+                    String.format("order price(%s) is not equal to the sum of order items price(%s)",
+                            this.price, itemsPriceSum));
+        }
     }
 
     private void initializeOrderItems() {
         long itemId = 1L;
         for (OrderItem orderItem : items) {
-            orderItem.initializeOrderItem(super.getId(), new OrderItemId(itemId++));
+            orderItem.initialize(super.getId(), itemId++);
         }
-    }
-
-    public void validateOrder() {
-        checkIdIsEmpty();
-        checkOrderStatusIsEmpty();
-        checkTotalPriceIsPresent();
-
-        checkItemSubTotalsArePresent();
-        checkItemPricesArePresent();
-
-        checkTotalPriceEqualsActualItemSubTotalSum();
-        checkItemSubTotalEqualsActualItemPriceSum();
-    }
-
-
-    public void checkIdIsEmpty() {
-        if (this.getId() != null) {
-            log.error("Order id is not null! {}", this.getId().getValue());
-            throw new OrderDomainException("Order id is not null! " + this.getId().getValue());
-        }
-    }
-
-    private void checkOrderStatusIsEmpty() {
-        if (this.orderStatus != null) {
-            log.error("Order status is not null! {}", this.orderStatus);
-            throw new OrderDomainException("Order status is not null! " + this.orderStatus);
-        }
-    }
-
-    private void checkTotalPriceIsPresent() {
-        if (this.price == null) {
-            log.error("Total price is null!");
-            throw new OrderDomainException("Total price is null!");
-        }
-    }
-
-    private void checkTotalPriceEqualsActualItemSubTotalSum() {
-        Money orderItemsTotal = items.stream()
-                .map(OrderItem::getSubTotal)
-                .reduce(Money.ZERO, Money::add);
-
-        if (!this.price.equals(orderItemsTotal)) {
-            log.error("Total price: {} is not equal to Order items total: {}",
-                    price.getAmount(), orderItemsTotal.getAmount());
-            throw new OrderDomainException("Total price: " + price.getAmount()
-                    + " is not equal to Order items total: " + orderItemsTotal.getAmount());
-        }
-    }
-
-    private void checkItemSubTotalsArePresent() {
-        this.items.forEach(OrderItem::checkSubTotalIsPresent);
-    }
-
-    private void checkItemPricesArePresent() {
-        this.items.forEach(OrderItem::checkPriceIsPresent);
-    }
-
-    private void checkItemSubTotalEqualsActualItemPriceSum() {
-        this.items.forEach(OrderItem::checkSubTotalEqualsActualPriceSum);
     }
 
     public void pay() {
@@ -186,16 +183,8 @@ public class Order extends AggregateRoot<OrderId> {
         this.orderStatus = OrderStatus.APPROVED;
     }
 
-    public void initCancel(List<String> failureMessages) {
-        if (orderStatus != OrderStatus.PAID) {
-            log.error("Order must be in PAID state for cancel operation! Order status: {}",
-                    this.orderStatus);
-            throw new OrderDomainException("Order must be in PAID state for cancel operation! " +
-                    "Order status: " + this.orderStatus);
-        }
-
+    public void initCancel() {
         this.orderStatus = OrderStatus.CANCELLING;
-        updateFailureMessages(failureMessages);
     }
 
     private void updateFailureMessages(List<String> failureMessages) {
@@ -222,23 +211,20 @@ public class Order extends AggregateRoot<OrderId> {
         this.orderStatus = orderStatus;
     }
 
+    public List<OrderItem> getItems() {
+        return new ArrayList<>(this.items);
+    }
+
+
     public static final class Builder {
-        private OrderId id;
         private CustomerId customerId;
         private RestaurantId restaurantId;
         private StreetAddress deliveryAddress;
         private Money price;
         private List<OrderItem> items;
-        private TrackingId trackingId;
-        private OrderStatus orderStatus;
         private List<String> failureMessages;
 
         private Builder() {
-        }
-
-        public Builder id(OrderId val) {
-            id = val;
-            return this;
         }
 
         public Builder customerId(CustomerId val) {
@@ -266,23 +252,13 @@ public class Order extends AggregateRoot<OrderId> {
             return this;
         }
 
-        public Builder trackingId(TrackingId val) {
-            trackingId = val;
-            return this;
-        }
-
-        public Builder orderStatus(OrderStatus val) {
-            orderStatus = val;
-            return this;
-        }
-
         public Builder failureMessages(List<String> val) {
             failureMessages = val;
             return this;
         }
 
         public Order build() {
-            return new Order(this);
+            return Order.of(this);
         }
     }
 }

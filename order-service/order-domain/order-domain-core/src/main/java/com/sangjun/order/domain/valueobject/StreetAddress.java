@@ -1,16 +1,24 @@
 package com.sangjun.order.domain.valueobject;
 
+import javax.persistence.Access;
+import javax.persistence.AccessType;
+import javax.persistence.Embeddable;
 import java.util.Objects;
 
+@Embeddable
+@Access(AccessType.FIELD)
 public class StreetAddress {
-    private final String street;
-    private final String postalCode;
-    private final String city;
+    private String street;
+    private String postalCode;
+    private String city;
 
     public StreetAddress(String street, String postalCode, String city) {
         this.street = street;
         this.postalCode = postalCode;
         this.city = city;
+    }
+
+    protected StreetAddress() {
     }
 
     private StreetAddress(Builder builder) {

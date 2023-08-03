@@ -8,7 +8,6 @@ import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
 import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
-import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
@@ -402,6 +401,48 @@ public class OrderIntegrationTest {
     }
 
     @Test
+    void 주문취소명령_이후_결제요청에대한_완료메세지_처리() throws InterruptedException {
+        //given
+        ORDER.initCancel();
+        orderRepository.save(ORDER);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        OrderId orderId = ORDER.getId();
+        UUID paymentId = UUID.randomUUID();
+        PaymentResponseAvroModel msg = PaymentResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(orderId.getValue().toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .setCustomerId(CUSTOMER_ID.toString())
+                .setPaymentId(paymentId.toString())
+                .setPaymentStatus(PaymentStatus.COMPLETED)
+                .setSagaId("")
+                .setPrice(ORDER.getPrice().getAmount())
+                .setCreatedAt(Instant.now())
+                .setFailureMessages(Collections.emptyList())
+                .build();
+
+        //when
+        paymentResponseKt.send(paymentResponseTopic, orderId.getValue().toString(), msg);
+        Thread.sleep(250);
+
+        //then
+        TestTransaction.start();
+        Order foundOrder = orderRepository.findById(orderId).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
+        식당승인요청_메세지_전송안함(foundOrder);
+    }
+
+    private void 식당승인요청_메세지_전송안함(Order order) {
+        var key = order.getId().getValue().toString();
+        var recordMap = readRestaurantRequestRecords();
+        assertThat(recordMap.containsKey(key))
+                .isFalse();
+    }
+
+    @Test
     void 결제요청에대한_실패메세지_처리() throws InterruptedException {
         //given
         orderRepository.save(ORDER);
@@ -512,8 +553,13 @@ public class OrderIntegrationTest {
     }
 
 
+    /**
+     * 결제완료전의 상태는 2가지가 될 수 있다.
+     * 1. 결제가 완료되었으나 아직 주문 상태가 결제완료로 바뀌지 않은 경우
+     * 2. 결제가 아직 완료되지 않은 경우
+     */
     @Test
-    void 주문_취소() {
+    void 결제완료전_주문_취소() {
         //given
         orderRepository.save(ORDER);
 
@@ -529,19 +575,45 @@ public class OrderIntegrationTest {
         Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
         assertThat(foundOrder.getOrderStatus())
                 .isEqualTo(OrderStatus.CANCELLING);
-        주문취소_이벤트가_발행됨();
+        주문취소요청_메세지가_전송됨(foundOrder);
     }
 
-    /**
-     * Todo
-     * 주문취소를 완료하기위해 주문취소 이벤트를 구독하여 다른 BoundedContext에 메세지를 보내도록 구현
-     */
-    private void 주문취소_이벤트가_발행됨() {
-        var cancellingEventList = applicationEvents.stream()
-                .filter(event -> event instanceof OrderCancellingEvent)
-                .toList();
-        assertThat(cancellingEventList)
-                .hasSize(1);
+    private void 주문취소요청_메세지가_전송됨(Order order) {
+        var recordMap = readPaymentRequestRecords();
+        var key = order.getId().getValue().toString();
+        var msg = recordMap.get(key);
+
+        assertThat(msg.getOrderId())
+                .isEqualTo(order.getId().getValue().toString());
+        assertThat(msg.getRestaurantId())
+                .isEqualTo(order.getRestaurantId().getValue().toString());
+        assertThat(msg.getCustomerId())
+                .isEqualTo(order.getCustomerId().getValue().toString());
+        assertThat(msg.getPaymentOrderStatus())
+                .isEqualTo(PaymentOrderStatus.CANCELLED);
+        assertThat(msg.getPrice())
+                .isEqualTo(order.getPrice().getAmount());
+    }
+
+    @Test
+    void 결제완료후_주문_취소() {
+        //given
+        orderRepository.save(ORDER);
+        ORDER.pay();
+
+        //when
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .orderTrackingId(ORDER.getTrackingId().getValue())
+                .customerId(CUSTOMER_ID)
+                .build();
+
+        cancelOrderService.cancelOrder(command);
+
+        //then
+        Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
+        주문취소요청_메세지가_전송됨(foundOrder);
     }
 
 

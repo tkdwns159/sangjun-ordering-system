@@ -2,9 +2,11 @@ package com.sangjun.order.messaging.mapper;
 
 import com.sangjun.common.domain.mapper.CentralConfig;
 import com.sangjun.common.domain.mapper.CommonMapper;
+import com.sangjun.common.domain.valueobject.OrderStatus;
 import com.sangjun.common.domain.valueobject.ProductId;
 import com.sangjun.kafka.order.avro.model.Product;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalRequestAvroModel;
+import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
 import com.sangjun.order.domain.event.OrderPaidEvent;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import org.mapstruct.Mapper;
@@ -24,11 +26,20 @@ public interface OrderMessageMapper {
     @Mapping(target = "id", source = "productId")
     Product toProduct(OrderItem orderItem);
 
+
+    default RestaurantOrderStatus toRestaurantOrderStatus(OrderStatus orderStatus) {
+        if (orderStatus == OrderStatus.CANCELLING) {
+            return RestaurantOrderStatus.CANCELLED;
+        }
+
+        return RestaurantOrderStatus.PAID;
+    }
+
     @Mapping(target = ".", source = "order")
     @Mapping(target = "orderId", source = "order.id")
     @Mapping(target = "products", source = "order.items")
     @Mapping(target = "id", expression = "java(java.util.UUID.randomUUID().toString())")
     @Mapping(target = "sagaId", constant = "")
-    @Mapping(target = "restaurantOrderStatus", expression = "java(com.sangjun.kafka.order.avro.model.RestaurantOrderStatus.PAID)")
+    @Mapping(target = "restaurantOrderStatus", source = "order.orderStatus")
     RestaurantApprovalRequestAvroModel toRestaurantApprovalRequestAvroModel(OrderPaidEvent orderPaidEvent);
 }

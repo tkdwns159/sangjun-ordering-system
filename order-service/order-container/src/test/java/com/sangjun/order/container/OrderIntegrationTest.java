@@ -595,11 +595,14 @@ public class OrderIntegrationTest {
                 .isEqualTo(order.getPrice().getAmount());
     }
 
+    /**
+     * "결제완료후" = "식당승인완료 이전"
+     */
     @Test
     void 결제완료후_주문_취소() {
         //given
-        orderRepository.save(ORDER);
         ORDER.pay();
+        orderRepository.save(ORDER);
 
         //when
         CancelOrderCommand command = CancelOrderCommand.builder()
@@ -614,8 +617,20 @@ public class OrderIntegrationTest {
         assertThat(foundOrder.getOrderStatus())
                 .isEqualTo(OrderStatus.CANCELLING);
         주문취소요청_메세지가_전송됨(foundOrder);
+        식당승인요청철회_메세지가_전송됨(foundOrder);
     }
 
+    private void 식당승인요청철회_메세지가_전송됨(Order order) {
+        var key = order.getId().getValue().toString();
+        var recordMap = readRestaurantRequestRecords();
+        var request = recordMap.get(key);
+        assertThat(request.getOrderId())
+                .isEqualTo(order.getId().getValue().toString());
+        assertThat(request.getRestaurantId())
+                .isEqualTo(order.getRestaurantId().getValue().toString());
+        assertThat(request.getRestaurantOrderStatus())
+                .isEqualTo(RestaurantOrderStatus.CANCELLED);
+    }
 
     private Map<String, PaymentRequestAvroModel> readPaymentRequestRecords() {
         ConsumerRecords<String, PaymentRequestAvroModel> result =

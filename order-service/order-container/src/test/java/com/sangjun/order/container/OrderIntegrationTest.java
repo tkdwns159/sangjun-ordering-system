@@ -1,6 +1,5 @@
 package com.sangjun.order.container;
 
-import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.OrderApprovalStatus;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
@@ -75,7 +74,6 @@ import static org.mockito.Mockito.when;
 public class OrderIntegrationTest {
     private static final UUID CUSTOMER_ID = UUID.fromString("f6316e90-1837-4940-b5db-a3c49a9a10ca");
     private static final UUID RESTAURANT_ID = UUID.fromString("ad68afcc-e55e-4e6a-bc6d-95a26a5410ff");
-    private static final UUID ORDER_TRACKING_ID = UUID.fromString("4d510cac-290c-408a-a7fc-abc2f3c0efbb");
     private static final UUID PRODUCT_ID_1 = UUID.fromString("cb48e255-cc1c-4fc3-b80c-c4d73ca187dd");
     private static final UUID PRODUCT_ID_2 = UUID.fromString("d9e55ab9-68dc-4af5-b66f-a875b2df95fd");
     private static final Product PRODUCT_1 = Product.builder()
@@ -99,24 +97,6 @@ public class OrderIntegrationTest {
             .quantity(1)
             .subTotal(PRODUCT_2.getPrice())
             .productId(PRODUCT_2.getId())
-            .build();
-    private static final RestaurantEntity RESTAURANT_ENTITY_1 = RestaurantEntity.builder()
-            .restaurantId(RESTAURANT_ID)
-            .restaurantActive(true)
-            .restaurantName("restaurant")
-            .productId(PRODUCT_ID_1)
-            .productName("product1")
-            .productPrice(PRODUCT_1.getPrice().getAmount())
-            .productAvailable(true)
-            .build();
-    private static final RestaurantEntity RESTAURANT_ENTITY_2 = RestaurantEntity.builder()
-            .restaurantId(RESTAURANT_ID)
-            .restaurantActive(true)
-            .restaurantName("restaurant")
-            .productId(PRODUCT_ID_2)
-            .productName("product2")
-            .productPrice(PRODUCT_2.getPrice().getAmount())
-            .productAvailable(true)
             .build();
     private static final OrderAddressDto ORDER_ADDRESS = OrderAddressDto.builder()
             .street("Sillim")
@@ -506,6 +486,36 @@ public class OrderIntegrationTest {
     }
 
     @Test
+    void 결제취소명령_이후_식당승인요청_성공메세지_처리() throws InterruptedException {
+        //given
+        ORDER.initCancel();
+        orderRepository.save(ORDER);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        var key = ORDER.getId().getValue().toString();
+        var msg = RestaurantApprovalResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderApprovalStatus(OrderApprovalStatus.APPROVED)
+                .setOrderId(ORDER.getId().getValue().toString())
+                .setRestaurantId(ORDER.getRestaurantId().getValue().toString())
+                .setFailureMessages(new ArrayList<>())
+                .setSagaId("")
+                .setCreatedAt(Instant.now())
+                .build();
+
+        //when
+        restaurantResponseKt.send(restaurantResponseTopic, key, msg);
+        Thread.sleep(200);
+
+        //then
+        Order order = orderRepository.findByTrackingId(ORDER.getTrackingId()).get();
+        assertThat(order.getOrderStatus())
+                .isEqualTo(OrderStatus.APPROVED);
+    }
+
+    @Test
     void 식당승인요청_실패메세지_처리() throws InterruptedException {
         //given
         ORDER.pay();
@@ -552,6 +562,37 @@ public class OrderIntegrationTest {
                 .isEqualTo(PaymentOrderStatus.CANCELLED);
     }
 
+    @Test
+    void 결제취소명령_이후_식당승인요청_실패메세지_처리() throws InterruptedException {
+        //given
+        ORDER.initCancel();
+        orderRepository.save(ORDER);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        var key = ORDER.getId().getValue().toString();
+        var msg = RestaurantApprovalResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderApprovalStatus(OrderApprovalStatus.REJECTED)
+                .setOrderId(ORDER.getId().getValue().toString())
+                .setRestaurantId(ORDER.getRestaurantId().getValue().toString())
+                .setFailureMessages(new ArrayList<>())
+                .setSagaId("")
+                .setCreatedAt(Instant.now())
+                .build();
+
+        //when
+        restaurantResponseKt.send(restaurantResponseTopic, key, msg);
+        Thread.sleep(200);
+
+        //then
+        Order order = orderRepository.findByTrackingId(ORDER.getTrackingId()).get();
+        assertThat(order.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
+        결제취소요청_메세지가_전송됨(order);
+    }
+
 
     /**
      * 결제완료전의 상태는 2가지가 될 수 있다.
@@ -595,11 +636,8 @@ public class OrderIntegrationTest {
                 .isEqualTo(order.getPrice().getAmount());
     }
 
-    /**
-     * "결제완료후" = "식당승인완료 이전"
-     */
     @Test
-    void 결제완료후_주문_취소() {
+    void 결제완료후_주문상태변경후_주문취소() {
         //given
         ORDER.pay();
         orderRepository.save(ORDER);
@@ -616,7 +654,6 @@ public class OrderIntegrationTest {
         Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
         assertThat(foundOrder.getOrderStatus())
                 .isEqualTo(OrderStatus.CANCELLING);
-        주문취소요청_메세지가_전송됨(foundOrder);
         식당승인요청철회_메세지가_전송됨(foundOrder);
     }
 
@@ -631,6 +668,67 @@ public class OrderIntegrationTest {
         assertThat(request.getRestaurantOrderStatus())
                 .isEqualTo(RestaurantOrderStatus.CANCELLED);
     }
+
+    @Test
+    void 식당승인후_주문취소() {
+        //given
+        ORDER.approve();
+        orderRepository.save(ORDER);
+
+        //when
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .orderTrackingId(ORDER.getTrackingId().getValue())
+                .customerId(CUSTOMER_ID)
+                .build();
+
+        cancelOrderService.cancelOrder(command);
+
+        //then
+        Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.APPROVED);
+    }
+
+    @Test
+    void 결제실패후_주문취소() {
+        //given
+        ORDER.cancel();
+        orderRepository.save(ORDER);
+
+        //when
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .orderTrackingId(ORDER.getTrackingId().getValue())
+                .customerId(CUSTOMER_ID)
+                .build();
+
+        cancelOrderService.cancelOrder(command);
+
+        //then
+        Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLED);
+    }
+
+    @Test
+    void 식당승인실패후_주문취소() {
+        //given
+        ORDER.initCancel();
+        orderRepository.save(ORDER);
+
+        //when
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .orderTrackingId(ORDER.getTrackingId().getValue())
+                .customerId(CUSTOMER_ID)
+                .build();
+
+        cancelOrderService.cancelOrder(command);
+
+        //then
+        Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
+    }
+
 
     private Map<String, PaymentRequestAvroModel> readPaymentRequestRecords() {
         ConsumerRecords<String, PaymentRequestAvroModel> result =

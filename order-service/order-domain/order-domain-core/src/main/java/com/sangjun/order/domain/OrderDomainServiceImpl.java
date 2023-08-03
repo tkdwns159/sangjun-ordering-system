@@ -52,7 +52,7 @@ public class OrderDomainServiceImpl implements OrderDomainService {
 
     @Override
     public void cancelOrder(Order order, List<String> failureMessages) {
-        order.cancel(failureMessages);
+        order.cancel();
         log.info("Order id: {} has been cancelled", order.getId().getValue());
     }
 }

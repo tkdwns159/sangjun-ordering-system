@@ -1,6 +1,8 @@
 package com.sangjun.order.domain.service;
 
+import com.sangjun.common.domain.event.DomainEvent;
 import com.sangjun.common.domain.event.EmptyEvent;
+import com.sangjun.common.domain.valueobject.OrderStatus;
 import com.sangjun.order.domain.OrderDomainService;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.event.OrderPaidEvent;
@@ -14,15 +16,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderPaymentSaga implements SagaStep<PaymentResponse, OrderPaidEvent, EmptyEvent> {
+public class OrderPaymentSaga implements SagaStep<PaymentResponse, DomainEvent, EmptyEvent> {
     private final OrderDomainService orderDomainService;
     private final OrderSagaHelper orderSagaHelper;
 
     @Override
     @Transactional
-    public OrderPaidEvent process(PaymentResponse data) {
+    public DomainEvent process(PaymentResponse data) {
         log.info("Completing payment with order id: {}", data.getOrderId());
         Order order = orderSagaHelper.findOrder(data.getOrderId());
+        if (order.getOrderStatus() == OrderStatus.CANCELLING) {
+            log.info("Order with id: {} is being cancelled", data.getOrderId());
+            return EmptyEvent.INSTANCE;
+        }
+
         OrderPaidEvent orderPaidEvent = orderDomainService.payOrder(order);
         orderSagaHelper.saveOrder(order);
         log.info("Order with id: {} is paid", order.getId().getValue());

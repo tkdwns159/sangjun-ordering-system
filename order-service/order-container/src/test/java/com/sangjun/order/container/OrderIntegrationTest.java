@@ -1,6 +1,5 @@
 package com.sangjun.order.container;
 
-import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.OrderApprovalStatus;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
@@ -75,7 +74,6 @@ import static org.mockito.Mockito.when;
 public class OrderIntegrationTest {
     private static final UUID CUSTOMER_ID = UUID.fromString("f6316e90-1837-4940-b5db-a3c49a9a10ca");
     private static final UUID RESTAURANT_ID = UUID.fromString("ad68afcc-e55e-4e6a-bc6d-95a26a5410ff");
-    private static final UUID ORDER_TRACKING_ID = UUID.fromString("4d510cac-290c-408a-a7fc-abc2f3c0efbb");
     private static final UUID PRODUCT_ID_1 = UUID.fromString("cb48e255-cc1c-4fc3-b80c-c4d73ca187dd");
     private static final UUID PRODUCT_ID_2 = UUID.fromString("d9e55ab9-68dc-4af5-b66f-a875b2df95fd");
     private static final Product PRODUCT_1 = Product.builder()
@@ -99,24 +97,6 @@ public class OrderIntegrationTest {
             .quantity(1)
             .subTotal(PRODUCT_2.getPrice())
             .productId(PRODUCT_2.getId())
-            .build();
-    private static final RestaurantEntity RESTAURANT_ENTITY_1 = RestaurantEntity.builder()
-            .restaurantId(RESTAURANT_ID)
-            .restaurantActive(true)
-            .restaurantName("restaurant")
-            .productId(PRODUCT_ID_1)
-            .productName("product1")
-            .productPrice(PRODUCT_1.getPrice().getAmount())
-            .productAvailable(true)
-            .build();
-    private static final RestaurantEntity RESTAURANT_ENTITY_2 = RestaurantEntity.builder()
-            .restaurantId(RESTAURANT_ID)
-            .restaurantActive(true)
-            .restaurantName("restaurant")
-            .productId(PRODUCT_ID_2)
-            .productName("product2")
-            .productPrice(PRODUCT_2.getPrice().getAmount())
-            .productAvailable(true)
             .build();
     private static final OrderAddressDto ORDER_ADDRESS = OrderAddressDto.builder()
             .street("Sillim")

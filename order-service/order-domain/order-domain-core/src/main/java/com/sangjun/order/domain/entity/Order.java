@@ -173,13 +173,6 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     public void approve() {
-        if (this.orderStatus != OrderStatus.PAID) {
-            log.error("Order must be in PAID state for approve operation! Order status: {}",
-                    this.orderStatus);
-            throw new OrderDomainException("Order must be in PAID state for approve operation! Order status: "
-                    + this.orderStatus);
-        }
-
         this.orderStatus = OrderStatus.APPROVED;
     }
 
@@ -195,16 +188,8 @@ public class Order extends AggregateRoot<OrderId> {
                 .toList());
     }
 
-    public void cancel(List<String> failureMessages) {
-        if (orderStatus == OrderStatus.APPROVED || orderStatus == OrderStatus.CANCELLED) {
-            log.error("Order must be in PAID or CANCELLING or PENDING for cancel operation! Order Status: {}",
-                    this.orderStatus);
-            throw new OrderDomainException("Order must be in PAID or CANCELLING or PENDING state " +
-                    "for cancel operation! Order Status: " + this.orderStatus);
-        }
-
+    public void cancel() {
         this.orderStatus = OrderStatus.CANCELLED;
-        updateFailureMessages(failureMessages);
     }
 
     public void setOrderStatus(OrderStatus orderStatus) {

@@ -1,5 +1,7 @@
 package com.sangjun.order.domain.service;
 
+import com.sangjun.common.domain.event.DomainEvent;
+import com.sangjun.common.domain.event.EmptyEvent;
 import com.sangjun.order.domain.event.OrderPaidEvent;
 import com.sangjun.order.domain.service.dto.message.PaymentResponse;
 import com.sangjun.order.domain.service.ports.input.message.listener.payment.PaymentResponseMessageListener;
@@ -21,7 +23,12 @@ public class PaymentResponseMessageListenerImpl implements PaymentResponseMessag
 
     @Override
     public void paymentCompleted(PaymentResponse paymentResponse) {
-        OrderPaidEvent orderPaidEvent = orderPaymentSaga.process(paymentResponse);
+        DomainEvent event = orderPaymentSaga.process(paymentResponse);
+        if (event instanceof EmptyEvent) {
+            return;
+        }
+
+        OrderPaidEvent orderPaidEvent = (OrderPaidEvent) event;
         log.info("Publishing OrderPaidEvent with order id :{}", orderPaidEvent.getOrder().getId().getValue());
         orderEventShooter.fire(orderPaidEvent);
     }

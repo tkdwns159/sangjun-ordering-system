@@ -1,6 +1,5 @@
 package com.sangjun.order.container;
 
-import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.kafka.order.avro.model.OrderApprovalStatus;
 import com.sangjun.kafka.order.avro.model.PaymentStatus;
@@ -8,7 +7,6 @@ import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
 import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
-import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
@@ -16,7 +14,6 @@ import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.input.service.CancelOrderApplicationService;
 import com.sangjun.order.domain.service.ports.input.service.CreateOrderApplicationService;
-import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
@@ -36,8 +33,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +52,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 
-@ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = OrderIntegrationTestConfig.class,
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
@@ -76,7 +70,6 @@ import static org.mockito.Mockito.when;
 public class OrderIntegrationTest {
     private static final UUID CUSTOMER_ID = UUID.fromString("f6316e90-1837-4940-b5db-a3c49a9a10ca");
     private static final UUID RESTAURANT_ID = UUID.fromString("ad68afcc-e55e-4e6a-bc6d-95a26a5410ff");
-    private static final UUID ORDER_TRACKING_ID = UUID.fromString("4d510cac-290c-408a-a7fc-abc2f3c0efbb");
     private static final UUID PRODUCT_ID_1 = UUID.fromString("cb48e255-cc1c-4fc3-b80c-c4d73ca187dd");
     private static final UUID PRODUCT_ID_2 = UUID.fromString("d9e55ab9-68dc-4af5-b66f-a875b2df95fd");
     private static final Product PRODUCT_1 = Product.builder()
@@ -101,24 +94,6 @@ public class OrderIntegrationTest {
             .subTotal(PRODUCT_2.getPrice())
             .productId(PRODUCT_2.getId())
             .build();
-    private static final RestaurantEntity RESTAURANT_ENTITY_1 = RestaurantEntity.builder()
-            .restaurantId(RESTAURANT_ID)
-            .restaurantActive(true)
-            .restaurantName("restaurant")
-            .productId(PRODUCT_ID_1)
-            .productName("product1")
-            .productPrice(PRODUCT_1.getPrice().getAmount())
-            .productAvailable(true)
-            .build();
-    private static final RestaurantEntity RESTAURANT_ENTITY_2 = RestaurantEntity.builder()
-            .restaurantId(RESTAURANT_ID)
-            .restaurantActive(true)
-            .restaurantName("restaurant")
-            .productId(PRODUCT_ID_2)
-            .productName("product2")
-            .productPrice(PRODUCT_2.getPrice().getAmount())
-            .productAvailable(true)
-            .build();
     private static final OrderAddressDto ORDER_ADDRESS = OrderAddressDto.builder()
             .street("Sillim")
             .city("Seoul")
@@ -134,8 +109,6 @@ public class OrderIntegrationTest {
             .build();
 
     @Autowired
-    private OrderApplicationService orderApplicationService;
-    @Autowired
     private CreateOrderApplicationService createOrderService;
     @Autowired
     private CancelOrderApplicationService cancelOrderService;
@@ -147,9 +120,6 @@ public class OrderIntegrationTest {
     private CustomerRepository customerRepository;
     @PersistenceContext
     private EntityManager entityManager;
-    @Autowired
-    private ApplicationEvents applicationEvents;
-
     @Autowired
     private EmbeddedKafkaBroker embeddedKafka;
 
@@ -243,6 +213,7 @@ public class OrderIntegrationTest {
     void 주문_성공() {
         //given
         Money totalPrice = ORDER_ITEM_1.getSubTotal().add(ORDER_ITEM_2.getSubTotal());
+        Customer customer = new Customer(new CustomerId(CUSTOMER_ID));
         OrderItemDto orderItemDto1 = createOrderItemDto(ORDER_ITEM_1);
         OrderItemDto orderItemDto2 = createOrderItemDto(ORDER_ITEM_2);
         List<OrderItemDto> items = new ArrayList<>(Arrays.asList(orderItemDto1, orderItemDto2));
@@ -262,7 +233,8 @@ public class OrderIntegrationTest {
         //when
         when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
                 .thenReturn(List.of(PRODUCT_1, PRODUCT_2));
-        mockCustomerFindById();
+        when(customerRepository.findById(CUSTOMER_ID))
+                .thenReturn(Optional.of(customer));
 
         CreateOrderResponse resp = createOrderService.createOrder(command);
 
@@ -270,13 +242,6 @@ public class OrderIntegrationTest {
         Order createdOrder = orderRepository.findByTrackingId(new TrackingId(resp.getOrderTrackingId())).get();
         생성된_주문데이터_확인(totalPrice.getAmount(), orderAddressDto, items, createdOrder);
         결제요청_메세지가_전송됨(createdOrder);
-    }
-
-    private void mockCustomerFindById() {
-        Customer customer = new Customer(new CustomerId(CUSTOMER_ID));
-
-        when(customerRepository.findById(CUSTOMER_ID))
-                .thenReturn(Optional.of(customer));
     }
 
     private OrderItemDto createOrderItemDto(OrderItem orderItem) {
@@ -342,7 +307,7 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    void 결제요청에대한_완료메세지_처리() throws InterruptedException {
+    void 결제요청에대한_완료메세지_수신처리() throws InterruptedException {
         //given
         orderRepository.save(ORDER);
         TestTransaction.flagForCommit();
@@ -402,7 +367,49 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    void 결제요청에대한_실패메세지_처리() throws InterruptedException {
+    void 주문취소명령_이후_결제요청에대한_완료메세지_수신처리() throws InterruptedException {
+        //given
+        ORDER.initCancel();
+        orderRepository.save(ORDER);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        OrderId orderId = ORDER.getId();
+        UUID paymentId = UUID.randomUUID();
+        PaymentResponseAvroModel msg = PaymentResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(orderId.getValue().toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .setCustomerId(CUSTOMER_ID.toString())
+                .setPaymentId(paymentId.toString())
+                .setPaymentStatus(PaymentStatus.COMPLETED)
+                .setSagaId("")
+                .setPrice(ORDER.getPrice().getAmount())
+                .setCreatedAt(Instant.now())
+                .setFailureMessages(Collections.emptyList())
+                .build();
+
+        //when
+        paymentResponseKt.send(paymentResponseTopic, orderId.getValue().toString(), msg);
+        Thread.sleep(250);
+
+        //then
+        TestTransaction.start();
+        Order foundOrder = orderRepository.findById(orderId).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
+        식당승인요청_메세지_전송안함(foundOrder);
+    }
+
+    private void 식당승인요청_메세지_전송안함(Order order) {
+        var key = order.getId().getValue().toString();
+        var recordMap = readRestaurantRequestRecords();
+        assertThat(recordMap.containsKey(key))
+                .isFalse();
+    }
+
+    @Test
+    void 결제요청에대한_실패메세지_수신처리() throws InterruptedException {
         //given
         orderRepository.save(ORDER);
         TestTransaction.flagForCommit();
@@ -428,6 +435,38 @@ public class OrderIntegrationTest {
         Thread.sleep(200);
 
         //then
+        Order foundOrder = orderRepository.findById(orderId).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLED);
+    }
+
+    @Test
+    void 주문취소명령_이후_결제실패메세지_수신처리() throws InterruptedException {
+        //given
+        ORDER.initCancel();
+        orderRepository.save(ORDER);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        OrderId orderId = ORDER.getId();
+        UUID paymentId = UUID.randomUUID();
+        PaymentResponseAvroModel msg = PaymentResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(orderId.getValue().toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .setCustomerId(CUSTOMER_ID.toString())
+                .setPaymentId(paymentId.toString())
+                .setPaymentStatus(PaymentStatus.FAILED)
+                .setSagaId("")
+                .setPrice(ORDER.getPrice().getAmount())
+                .setCreatedAt(Instant.now())
+                .setFailureMessages(Collections.emptyList())
+                .build();
+
+        //when
+        paymentResponseKt.send(paymentResponseTopic, orderId.getValue().toString(), msg);
+        Thread.sleep(200);
+
         //then
         Order foundOrder = orderRepository.findById(orderId).get();
         assertThat(foundOrder.getOrderStatus())
@@ -435,9 +474,39 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    void 식당승인요청_성공메세지_처리() throws InterruptedException {
+    void 식당승인요청_성공메세지_수신처리() throws InterruptedException {
         //given
         ORDER.pay();
+        orderRepository.save(ORDER);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        var key = ORDER.getId().getValue().toString();
+        var msg = RestaurantApprovalResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderApprovalStatus(OrderApprovalStatus.APPROVED)
+                .setOrderId(ORDER.getId().getValue().toString())
+                .setRestaurantId(ORDER.getRestaurantId().getValue().toString())
+                .setFailureMessages(new ArrayList<>())
+                .setSagaId("")
+                .setCreatedAt(Instant.now())
+                .build();
+
+        //when
+        restaurantResponseKt.send(restaurantResponseTopic, key, msg);
+        Thread.sleep(200);
+
+        //then
+        Order order = orderRepository.findByTrackingId(ORDER.getTrackingId()).get();
+        assertThat(order.getOrderStatus())
+                .isEqualTo(OrderStatus.APPROVED);
+    }
+
+    @Test
+    void 결제취소명령_이후_식당승인요청_성공메세지_처리() throws InterruptedException {
+        //given
+        ORDER.initCancel();
         orderRepository.save(ORDER);
 
         TestTransaction.flagForCommit();
@@ -511,9 +580,45 @@ public class OrderIntegrationTest {
                 .isEqualTo(PaymentOrderStatus.CANCELLED);
     }
 
-
     @Test
-    void 주문_취소() {
+    void 결제취소명령_이후_식당승인요청_실패메세지_처리() throws InterruptedException {
+        //given
+        ORDER.initCancel();
+        orderRepository.save(ORDER);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        var key = ORDER.getId().getValue().toString();
+        var msg = RestaurantApprovalResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderApprovalStatus(OrderApprovalStatus.REJECTED)
+                .setOrderId(ORDER.getId().getValue().toString())
+                .setRestaurantId(ORDER.getRestaurantId().getValue().toString())
+                .setFailureMessages(new ArrayList<>())
+                .setSagaId("")
+                .setCreatedAt(Instant.now())
+                .build();
+
+        //when
+        restaurantResponseKt.send(restaurantResponseTopic, key, msg);
+        Thread.sleep(200);
+
+        //then
+        Order order = orderRepository.findByTrackingId(ORDER.getTrackingId()).get();
+        assertThat(order.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
+        결제취소요청_메세지가_전송됨(order);
+    }
+
+
+    /**
+     * 결제완료전의 상태는 2가지가 될 수 있다.
+     * 1. 결제가 완료되었으나 아직 주문 상태가 결제완료로 바뀌지 않은 경우
+     * 2. 결제가 아직 완료되지 않은 경우
+     */
+    @Test
+    void 결제완료전_주문_취소() {
         //given
         orderRepository.save(ORDER);
 
@@ -529,19 +634,117 @@ public class OrderIntegrationTest {
         Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
         assertThat(foundOrder.getOrderStatus())
                 .isEqualTo(OrderStatus.CANCELLING);
-        주문취소_이벤트가_발행됨();
+        주문취소요청_메세지가_전송됨(foundOrder);
     }
 
-    /**
-     * Todo
-     * 주문취소를 완료하기위해 주문취소 이벤트를 구독하여 다른 BoundedContext에 메세지를 보내도록 구현
-     */
-    private void 주문취소_이벤트가_발행됨() {
-        var cancellingEventList = applicationEvents.stream()
-                .filter(event -> event instanceof OrderCancellingEvent)
-                .toList();
-        assertThat(cancellingEventList)
-                .hasSize(1);
+    private void 주문취소요청_메세지가_전송됨(Order order) {
+        var recordMap = readPaymentRequestRecords();
+        var key = order.getId().getValue().toString();
+        var msg = recordMap.get(key);
+
+        assertThat(msg.getOrderId())
+                .isEqualTo(order.getId().getValue().toString());
+        assertThat(msg.getRestaurantId())
+                .isEqualTo(order.getRestaurantId().getValue().toString());
+        assertThat(msg.getCustomerId())
+                .isEqualTo(order.getCustomerId().getValue().toString());
+        assertThat(msg.getPaymentOrderStatus())
+                .isEqualTo(PaymentOrderStatus.CANCELLED);
+        assertThat(msg.getPrice())
+                .isEqualTo(order.getPrice().getAmount());
+    }
+
+    @Test
+    void 결제완료후_주문상태변경후_주문취소() {
+        //given
+        ORDER.pay();
+        orderRepository.save(ORDER);
+
+        //when
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .orderTrackingId(ORDER.getTrackingId().getValue())
+                .customerId(CUSTOMER_ID)
+                .build();
+
+        cancelOrderService.cancelOrder(command);
+
+        //then
+        Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
+        식당승인요청철회_메세지가_전송됨(foundOrder);
+    }
+
+    private void 식당승인요청철회_메세지가_전송됨(Order order) {
+        var key = order.getId().getValue().toString();
+        var recordMap = readRestaurantRequestRecords();
+        var request = recordMap.get(key);
+        assertThat(request.getOrderId())
+                .isEqualTo(order.getId().getValue().toString());
+        assertThat(request.getRestaurantId())
+                .isEqualTo(order.getRestaurantId().getValue().toString());
+        assertThat(request.getRestaurantOrderStatus())
+                .isEqualTo(RestaurantOrderStatus.CANCELLED);
+    }
+
+    @Test
+    void 식당승인후_주문취소() {
+        //given
+        ORDER.approve();
+        orderRepository.save(ORDER);
+
+        //when
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .orderTrackingId(ORDER.getTrackingId().getValue())
+                .customerId(CUSTOMER_ID)
+                .build();
+
+        cancelOrderService.cancelOrder(command);
+
+        //then
+        Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.APPROVED);
+    }
+
+    @Test
+    void 결제실패후_주문취소() {
+        //given
+        ORDER.cancel();
+        orderRepository.save(ORDER);
+
+        //when
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .orderTrackingId(ORDER.getTrackingId().getValue())
+                .customerId(CUSTOMER_ID)
+                .build();
+
+        cancelOrderService.cancelOrder(command);
+
+        //then
+        Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLED);
+    }
+
+    @Test
+    void 식당승인실패후_주문취소() {
+        //given
+        ORDER.initCancel();
+        orderRepository.save(ORDER);
+
+        //when
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .orderTrackingId(ORDER.getTrackingId().getValue())
+                .customerId(CUSTOMER_ID)
+                .build();
+
+        cancelOrderService.cancelOrder(command);
+
+        //then
+        Order foundOrder = orderRepository.findByTrackingId(new TrackingId(command.getOrderTrackingId())).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLING);
     }
 
 

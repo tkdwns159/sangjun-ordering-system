@@ -2,8 +2,10 @@ package com.sangjun.order.service.application.rest;
 
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
+import com.sangjun.order.domain.service.dto.track.TrackOrderQuery;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
 import com.sangjun.order.domain.service.ports.input.service.CreateOrderApplicationService;
+import com.sangjun.order.domain.service.ports.input.service.TrackOrderApplicationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.util.UUID;
 @RequestMapping(value = "/orders", produces = "application/vnd.api.v1+json")
 public class OrderController {
     private final CreateOrderApplicationService createOrderService;
+    private final TrackOrderApplicationService trackOrderService;
 
     @PostMapping
     public ResponseEntity<CreateOrderResponse> createOrder(@RequestBody CreateOrderCommand createOrderCommand) {
@@ -28,12 +31,9 @@ public class OrderController {
 
     @GetMapping("/{trackingId}")
     public ResponseEntity<TrackOrderResponse> getOrderByTrackingId(@PathVariable UUID trackingId) {
-//        TrackOrderResponse trackOrderResponse = orderApplicationService.trackOrder(TrackOrderQuery.builder()
-//                .orderTrackingId(trackingId).build());
-//        log.info("Returning order status with tracking id: {}", trackOrderResponse.getOrderTrackingId());
-//        return ResponseEntity.ok(trackOrderResponse);
-        return ResponseEntity.ok(null);
+        TrackOrderResponse trackOrderResponse = trackOrderService.trackOrder(TrackOrderQuery.builder()
+                .orderTrackingId(trackingId).build());
+        log.info("Returning order status with tracking id: {}", trackOrderResponse.getOrderTrackingId());
+        return ResponseEntity.ok(trackOrderResponse);
     }
-
-
 }

@@ -18,12 +18,10 @@ public class OrderSagaHelper {
     private final OrderRepository orderRepository;
 
     public Order findOrder(String orderId) {
+        OrderId id = new OrderId(UUID.fromString(orderId));
         return orderRepository
-                .findById(new OrderId(UUID.fromString(orderId)))
-                .orElseThrow(() -> {
-                    log.error("Order with id: {} could not be found", orderId);
-                    throw new OrderNotFoundException("Order with id: " + orderId + " could not be found");
-                });
+                .findById(id)
+                .orElseThrow(() -> new OrderNotFoundException(id));
     }
 
     public void loadOrderItems(Order order) {

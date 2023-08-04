@@ -222,6 +222,7 @@ public class OrderIntegrationTest {
     void 주문_성공() {
         //given
         Money totalPrice = ORDER_ITEM_1.getSubTotal().add(ORDER_ITEM_2.getSubTotal());
+        Customer customer = new Customer(new CustomerId(CUSTOMER_ID));
         OrderItemDto orderItemDto1 = createOrderItemDto(ORDER_ITEM_1);
         OrderItemDto orderItemDto2 = createOrderItemDto(ORDER_ITEM_2);
         List<OrderItemDto> items = new ArrayList<>(Arrays.asList(orderItemDto1, orderItemDto2));
@@ -241,7 +242,8 @@ public class OrderIntegrationTest {
         //when
         when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
                 .thenReturn(List.of(PRODUCT_1, PRODUCT_2));
-        mockCustomerFindById();
+        when(customerRepository.findById(CUSTOMER_ID))
+                .thenReturn(Optional.of(customer));
 
         CreateOrderResponse resp = createOrderService.createOrder(command);
 
@@ -249,13 +251,6 @@ public class OrderIntegrationTest {
         Order createdOrder = orderRepository.findByTrackingId(new TrackingId(resp.getOrderTrackingId())).get();
         생성된_주문데이터_확인(totalPrice.getAmount(), orderAddressDto, items, createdOrder);
         결제요청_메세지가_전송됨(createdOrder);
-    }
-
-    private void mockCustomerFindById() {
-        Customer customer = new Customer(new CustomerId(CUSTOMER_ID));
-
-        when(customerRepository.findById(CUSTOMER_ID))
-                .thenReturn(Optional.of(customer));
     }
 
     private OrderItemDto createOrderItemDto(OrderItem orderItem) {
@@ -321,7 +316,7 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    void 결제요청에대한_완료메세지_처리() throws InterruptedException {
+    void 결제요청에대한_완료메세지_수신처리() throws InterruptedException {
         //given
         orderRepository.save(ORDER);
         TestTransaction.flagForCommit();
@@ -381,7 +376,7 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    void 주문취소명령_이후_결제요청에대한_완료메세지_처리() throws InterruptedException {
+    void 주문취소명령_이후_결제요청에대한_완료메세지_수신처리() throws InterruptedException {
         //given
         ORDER.initCancel();
         orderRepository.save(ORDER);
@@ -423,7 +418,7 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    void 결제요청에대한_실패메세지_처리() throws InterruptedException {
+    void 결제요청에대한_실패메세지_수신처리() throws InterruptedException {
         //given
         orderRepository.save(ORDER);
         TestTransaction.flagForCommit();
@@ -449,6 +444,38 @@ public class OrderIntegrationTest {
         Thread.sleep(200);
 
         //then
+        Order foundOrder = orderRepository.findById(orderId).get();
+        assertThat(foundOrder.getOrderStatus())
+                .isEqualTo(OrderStatus.CANCELLED);
+    }
+
+    @Test
+    void 주문취소명령_이후_결제실패메세지_수신처리() throws InterruptedException {
+        //given
+        ORDER.initCancel();
+        orderRepository.save(ORDER);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        OrderId orderId = ORDER.getId();
+        UUID paymentId = UUID.randomUUID();
+        PaymentResponseAvroModel msg = PaymentResponseAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(orderId.getValue().toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .setCustomerId(CUSTOMER_ID.toString())
+                .setPaymentId(paymentId.toString())
+                .setPaymentStatus(PaymentStatus.FAILED)
+                .setSagaId("")
+                .setPrice(ORDER.getPrice().getAmount())
+                .setCreatedAt(Instant.now())
+                .setFailureMessages(Collections.emptyList())
+                .build();
+
+        //when
+        paymentResponseKt.send(paymentResponseTopic, orderId.getValue().toString(), msg);
+        Thread.sleep(200);
+
         //then
         Order foundOrder = orderRepository.findById(orderId).get();
         assertThat(foundOrder.getOrderStatus())
@@ -456,7 +483,7 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    void 식당승인요청_성공메세지_처리() throws InterruptedException {
+    void 식당승인요청_성공메세지_수신처리() throws InterruptedException {
         //given
         ORDER.pay();
         orderRepository.save(ORDER);

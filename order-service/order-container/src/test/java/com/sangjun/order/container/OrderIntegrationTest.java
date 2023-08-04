@@ -14,7 +14,6 @@ import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.input.service.CancelOrderApplicationService;
 import com.sangjun.order.domain.service.ports.input.service.CreateOrderApplicationService;
-import com.sangjun.order.domain.service.ports.input.service.OrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
@@ -35,7 +34,6 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
@@ -113,8 +111,6 @@ public class OrderIntegrationTest {
             .build();
 
     @Autowired
-    private OrderApplicationService orderApplicationService;
-    @Autowired
     private CreateOrderApplicationService createOrderService;
     @Autowired
     private CancelOrderApplicationService cancelOrderService;
@@ -126,9 +122,6 @@ public class OrderIntegrationTest {
     private CustomerRepository customerRepository;
     @PersistenceContext
     private EntityManager entityManager;
-    @Autowired
-    private ApplicationEvents applicationEvents;
-
     @Autowired
     private EmbeddedKafkaBroker embeddedKafka;
 

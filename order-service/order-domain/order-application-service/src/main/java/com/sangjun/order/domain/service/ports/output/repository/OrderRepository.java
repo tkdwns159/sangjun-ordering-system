@@ -16,4 +16,6 @@ public interface OrderRepository {
     Optional<Order> findById(OrderId orderId);
 
     Optional<OrderStatus> findOrderStatusByTrackingId(TrackingId trackingId);
+    
+    Optional<Order> findByIdWithOrderItems(OrderId orderId);
 }

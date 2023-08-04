@@ -5,6 +5,7 @@ import com.sangjun.common.domain.valueobject.OrderStatus;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
 import com.sangjun.order.domain.valueobject.TrackingId;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -23,4 +24,9 @@ public interface OrderJpaRepository extends OrderRepository, Repository<Order, O
     @Override
     @Query("select order.orderStatus from Order order where order.trackingId = ?1")
     Optional<OrderStatus> findOrderStatusByTrackingId(TrackingId trackingId);
+
+    @Override
+    @Query("select order from Order order where order.id = ?1")
+    @EntityGraph(attributePaths = "items")
+    Optional<Order> findByIdWithOrderItems(OrderId orderId);
 }

@@ -31,8 +31,6 @@ public class OrderPaymentSaga implements SagaStep<PaymentResponse, DomainEvent, 
         }
 
         OrderPaidEvent orderPaidEvent = orderDomainService.payOrder(order);
-        orderSagaHelper.saveOrder(order);
-        log.info("Order with id: {} is paid", order.getId().getValue());
         orderSagaHelper.loadOrderItems(order);
 
         return orderPaidEvent;
@@ -41,14 +39,8 @@ public class OrderPaymentSaga implements SagaStep<PaymentResponse, DomainEvent, 
     @Override
     @Transactional
     public EmptyEvent rollback(PaymentResponse data) {
-        log.info("Cancelling order with id: {}", data.getOrderId());
         Order order = orderSagaHelper.findOrder(data.getOrderId());
         orderDomainService.cancelOrder(order, data.getFailureMessages());
-        orderSagaHelper.saveOrder(order);
-        log.info("Order with id: {} is cancelled", data.getOrderId());
-
         return EmptyEvent.INSTANCE;
     }
-
-
 }

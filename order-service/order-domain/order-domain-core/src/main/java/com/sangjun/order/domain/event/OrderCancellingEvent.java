@@ -1,21 +1,12 @@
 package com.sangjun.order.domain.event;
 
 import com.sangjun.order.domain.entity.Order;
-import org.springframework.context.ApplicationEvent;
 
-import java.time.Clock;
+import java.time.ZonedDateTime;
 
-public class OrderCancellingEvent extends ApplicationEvent {
+public class OrderCancellingEvent extends OrderEvent {
 
-    public OrderCancellingEvent(Object source) {
-        super(source);
-    }
-
-    public OrderCancellingEvent(Object source, Clock clock) {
-        super(source, clock);
-    }
-
-    public Order getOrder() {
-        return (Order) super.getSource();
+    public OrderCancellingEvent(Order order, ZonedDateTime createdAt) {
+        super(order, createdAt);
     }
 }

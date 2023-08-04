@@ -8,7 +8,6 @@ import com.sangjun.order.domain.event.OrderPaidEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Clock;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -47,7 +46,7 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     public OrderCancellingEvent initiateOrderCancel(Order order, List<String> failureMessages) {
         order.initCancel();
         log.info("Order payment is cancelling for order id: {}", order.getId().getValue());
-        return new OrderCancellingEvent(order, Clock.system(ZoneId.of(ZONE_ID)));
+        return new OrderCancellingEvent(order, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
 
     @Override

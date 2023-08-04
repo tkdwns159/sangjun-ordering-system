@@ -35,10 +35,7 @@ public class OrderApprovalSaga implements SagaStep<RestaurantApprovalResponse, E
     public OrderCancellingEvent rollback(RestaurantApprovalResponse data) {
         log.info("Cancelling order with id: {}", data.getOrderId());
         Order order = orderSagaHelper.findOrder(data.getOrderId());
-        OrderCancellingEvent orderCancellingEvent = orderDomainService.initiateOrderCancel(
-                order,
-                data.getFailureMessages()
-        );
+        var orderCancellingEvent = orderDomainService.initiateOrderCancel(order, data.getFailureMessages());
         orderSagaHelper.saveOrder(order);
         log.info("Order with id: {} is cancelling", order.getId().getValue());
         return orderCancellingEvent;

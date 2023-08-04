@@ -11,7 +11,6 @@ import com.sangjun.order.domain.service.dto.message.PaymentResponse;
 import com.sangjun.order.domain.service.dto.message.RestaurantApprovalResponse;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
 import java.util.UUID;
 
 
@@ -41,7 +40,7 @@ public class OrderMessagingDataMapper {
                 .setCustomerId(order.getCustomerId().getValue().toString())
                 .setOrderId(order.getId().getValue().toString())
                 .setRestaurantId(order.getRestaurantId().getValue().toString())
-                .setCreatedAt(Instant.ofEpochMilli(orderCancelledEvent.getTimestamp()))
+                .setCreatedAt(orderCancelledEvent.getCreatedAt().toInstant())
                 .setPaymentOrderStatus(PaymentOrderStatus.CANCELLED)
                 .setPrice(orderCancelledEvent.getOrder().getPrice().getAmount())
                 .build();

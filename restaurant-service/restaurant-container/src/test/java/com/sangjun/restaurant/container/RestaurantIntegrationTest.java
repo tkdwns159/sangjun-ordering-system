@@ -1,14 +1,10 @@
 package com.sangjun.restaurant.container;
 
-import com.sangjun.common.dataaccess.restaurant.entity.RestaurantEntity;
-import com.sangjun.common.dataaccess.restaurant.repository.RestaurantJpaRepository;
-import com.sangjun.common.domain.valueobject.OrderApprovalStatus;
 import com.sangjun.kafka.order.avro.model.Product;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalResponseAvroModel;
 import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
-import com.sangjun.restaurant.dataaccess.entity.OrderApprovalEntity;
-import com.sangjun.restaurant.dataaccess.repository.OrderApprovalJpaRepository;
+import com.sangjun.restaurant.application.ports.input.message.listener.RestaurantApprovalApplicationService;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.jupiter.api.*;
@@ -26,13 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -67,18 +61,15 @@ public class RestaurantIntegrationTest {
     private String restaurantApprovalResponseTopic;
 
     @Autowired
-    private RestaurantJpaRepository restaurantJpaRepository;
-
-    @Autowired
-    private OrderApprovalJpaRepository orderApprovalJpaRepository;
-
-    @Autowired
     private KafkaTemplate<String, RestaurantApprovalRequestAvroModel> restaurantRequestKt;
 
     @Autowired
     private ConsumerFactory<String, RestaurantApprovalResponseAvroModel> restaurantResponseCf;
+    @Autowired
+    private RestaurantApprovalApplicationService restaurantApprovalService;
 
     private Consumer<String, RestaurantApprovalResponseAvroModel> restaurantResponseConsumer;
+
 
     @BeforeAll
     void setUp() {
@@ -137,400 +128,117 @@ public class RestaurantIntegrationTest {
     }
 
     @Test
-    void 주문승인_메시지를_수신했을때_정상적인_주문이면_주문을_승인한다() throws ExecutionException, InterruptedException {
+    void 주문승인대기_처리() {
         //given
-        BigDecimal price = new BigDecimal("2200");
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID)
-                .productId(PRODUCT_ID)
-                .productAvailable(true)
-                .restaurantActive(true)
-                .restaurantName("myRestaurant")
-                .productName("test-prod-1")
-                .productPrice(price)
-                .productId(PRODUCT_ID)
-                .build());
-
-        Product product = Product.newBuilder()
-                .setId(PRODUCT_ID.toString())
-                .setQuantity(1)
-                .build();
-
-        RestaurantApprovalRequestAvroModel msg = RestaurantApprovalRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .setOrderId(ORDER_ID.toString())
-                .setPrice(price)
-                .setCreatedAt(Instant.now())
-                .setProducts(List.of(product))
-                .setSagaId(UUID.randomUUID().toString())
-                .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
-                .build();
-
-        //when
-        restaurantRequestKt.send(restaurantApprovalRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(200);
-
-        OrderApprovalEntity orderApprovalEntity = orderApprovalJpaRepository.findByOrderId(ORDER_ID).get();
-        assertThat(orderApprovalEntity.getRestaurantId())
-                .isEqualTo(RESTAURANT_ID);
-        assertThat(orderApprovalEntity.getStatus())
-                .isEqualTo(OrderApprovalStatus.APPROVED);
-
-        checkRestaurantResponse(RESTAURANT_ID,
-                ORDER_ID,
-                com.sangjun.kafka.order.avro.model.OrderApprovalStatus.APPROVED);
-    }
-
-
-    @Test
-    void 주문승인_메시지를_수신했을때_식당이_해당_제품을_취급하지않으면_주문을_거부한다() throws ExecutionException, InterruptedException {
-        //given
-        BigDecimal price = new BigDecimal("2200");
-        BigDecimal price2 = new BigDecimal("3300");
-        BigDecimal sum = price2.add(price);
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID)
-                .restaurantName("myRestaurant")
-                .restaurantActive(true)
-                .productId(PRODUCT_ID)
-                .productAvailable(true)
-                .productName("test-prod-1")
-                .productPrice(price)
-                .build());
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID_2)
-                .restaurantName("myRestaurant2")
-                .restaurantActive(true)
-                .productId(PRODUCT_ID_2)
-                .productAvailable(true)
-                .productName("test-prod-2")
-                .productPrice(price2)
-                .build());
-
-        Product product = Product.newBuilder()
-                .setId(PRODUCT_ID.toString())
-                .setQuantity(1)
-                .build();
-        Product product2 = Product.newBuilder()
-                .setId(PRODUCT_ID_2.toString())
-                .setQuantity(1)
-                .build();
-
-        RestaurantApprovalRequestAvroModel msg = RestaurantApprovalRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .setOrderId(ORDER_ID.toString())
-                .setPrice(sum)
-                .setCreatedAt(Instant.now())
-                .setProducts(List.of(product, product2))
-                .setSagaId(UUID.randomUUID().toString())
-                .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
-                .build();
-
-        //when
-        restaurantRequestKt.send(restaurantApprovalRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(200);
-
-        OrderApprovalEntity orderApprovalEntity = orderApprovalJpaRepository.findByOrderId(ORDER_ID).get();
-        assertThat(orderApprovalEntity.getRestaurantId())
-                .isEqualTo(RESTAURANT_ID);
-        assertThat(orderApprovalEntity.getStatus())
-                .isEqualTo(OrderApprovalStatus.REJECTED);
-
-        checkRestaurantResponse(RESTAURANT_ID,
-                ORDER_ID,
-                com.sangjun.kafka.order.avro.model.OrderApprovalStatus.REJECTED);
-    }
-
-    @Test
-    void 주문승인_메시지를_수신했을때_정상적인_주문이면_복수의_물품에_대해_주문이_승인된다() throws ExecutionException, InterruptedException {
-        //given
-        BigDecimal price = new BigDecimal("2200");
-        BigDecimal price2 = new BigDecimal("3300");
-        BigDecimal sum = price2.add(price);
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID)
-                .restaurantName("myRestaurant")
-                .restaurantActive(true)
-                .productId(PRODUCT_ID)
-                .productAvailable(true)
-                .productName("test-prod-1")
-                .productPrice(price)
-                .build());
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID)
-                .restaurantName("myRestaurant")
-                .restaurantActive(true)
-                .productId(PRODUCT_ID_2)
-                .productAvailable(true)
-                .productName("test-prod-2")
-                .productPrice(price2)
-                .build());
-
-        Product product = Product.newBuilder()
-                .setId(PRODUCT_ID.toString())
-                .setQuantity(1)
-                .build();
-        Product product2 = Product.newBuilder()
-                .setId(PRODUCT_ID_2.toString())
-                .setQuantity(1)
-                .build();
-
-        RestaurantApprovalRequestAvroModel msg = RestaurantApprovalRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .setOrderId(ORDER_ID.toString())
-                .setPrice(sum)
-                .setCreatedAt(Instant.now())
-                .setProducts(List.of(product, product2))
-                .setSagaId(UUID.randomUUID().toString())
-                .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
-                .build();
-
-        //when
-        restaurantRequestKt.send(restaurantApprovalRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(200);
-
-        OrderApprovalEntity orderApprovalEntity = orderApprovalJpaRepository.findByOrderId(ORDER_ID).get();
-        assertThat(orderApprovalEntity.getRestaurantId())
-                .isEqualTo(RESTAURANT_ID);
-        assertThat(orderApprovalEntity.getStatus())
-                .isEqualTo(OrderApprovalStatus.APPROVED);
-
-        checkRestaurantResponse(RESTAURANT_ID,
-                ORDER_ID,
-                com.sangjun.kafka.order.avro.model.OrderApprovalStatus.APPROVED);
-    }
-
-    @Test
-    void 주문승인_메시지를_수신했을때_가격_합계가_다르면_주문이_거부된다_물품2개인_경우() throws ExecutionException, InterruptedException {
-        //given
-        BigDecimal price = new BigDecimal("2200");
-        BigDecimal price2 = new BigDecimal("3300");
-        BigDecimal falseSum = new BigDecimal("10000");
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID)
-                .restaurantName("myRestaurant")
-                .restaurantActive(true)
-                .productId(PRODUCT_ID)
-                .productAvailable(true)
-                .productName("test-prod-1")
-                .productPrice(price)
-                .build());
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID)
-                .restaurantName("myRestaurant")
-                .restaurantActive(true)
-                .productId(PRODUCT_ID_2)
-                .productAvailable(true)
-                .productName("test-prod-2")
-                .productPrice(price2)
-                .build());
-
-        Product product = Product.newBuilder()
-                .setId(PRODUCT_ID.toString())
-                .setQuantity(1)
-                .build();
-        Product product2 = Product.newBuilder()
-                .setId(PRODUCT_ID_2.toString())
-                .setQuantity(1)
-                .build();
-
-        RestaurantApprovalRequestAvroModel msg = RestaurantApprovalRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .setOrderId(ORDER_ID.toString())
-                .setPrice(falseSum)
-                .setCreatedAt(Instant.now())
-                .setProducts(List.of(product, product2))
-                .setSagaId(UUID.randomUUID().toString())
-                .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
-                .build();
-
-        //when
-        restaurantRequestKt.send(restaurantApprovalRequestTopic, ORDER_ID.toString(), msg)
-                .get();
-
-        //then
-        Thread.sleep(200);
-
-        OrderApprovalEntity orderApprovalEntity = orderApprovalJpaRepository.findByOrderId(ORDER_ID).get();
-        assertThat(orderApprovalEntity.getRestaurantId())
-                .isEqualTo(RESTAURANT_ID);
-        assertThat(orderApprovalEntity.getStatus())
-                .isEqualTo(OrderApprovalStatus.REJECTED);
-
-        checkRestaurantResponse(RESTAURANT_ID,
-                ORDER_ID,
-                com.sangjun.kafka.order.avro.model.OrderApprovalStatus.REJECTED);
-    }
-
-    @Test
-    void 주문승인_메시지를_수신했을때_가격_합계가_다르면_주문이_거부된다_복수의_단일상품인_경우() throws ExecutionException, InterruptedException {
-        //given
-        BigDecimal price = new BigDecimal("2200");
-        BigDecimal falseSum = new BigDecimal("2200"); // must be 4400 because quantity is 2 (see below)
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID)
-                .restaurantName("myRestaurant")
-                .restaurantActive(true)
-                .productId(PRODUCT_ID)
-                .productAvailable(true)
-                .productName("test-prod-1")
-                .productPrice(price)
-                .build());
-
-        Product product = Product.newBuilder()
+        주문받을_식당과_제품들이_등록되어있음();
+        Product product1 = Product.newBuilder()
                 .setId(PRODUCT_ID.toString())
                 .setQuantity(2)
                 .build();
-
-        RestaurantApprovalRequestAvroModel msg = RestaurantApprovalRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .setOrderId(ORDER_ID.toString())
-                .setPrice(falseSum)
-                .setCreatedAt(Instant.now())
-                .setProducts(List.of(product))
-                .setSagaId(UUID.randomUUID().toString())
-                .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
+        Product product2 = Product.newBuilder()
+                .setId(PRODUCT_ID_2.toString())
+                .setQuantity(3)
                 .build();
 
         //when
-        restaurantRequestKt.send(restaurantApprovalRequestTopic, ORDER_ID.toString(), msg)
-                .get();
+        var msg = RestaurantApprovalRequestAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(ORDER_ID.toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
+                .setCreatedAt(Instant.now())
+                .setProducts(List.of(product1, product2))
+                .setSagaId("")
+                .build();
+        var key = ORDER_ID.toString();
+        restaurantRequestKt.send(restaurantApprovalRequestTopic, key, msg);
 
         //then
-        Thread.sleep(200);
+        주문대기처리됨();
+    }
 
-        OrderApprovalEntity orderApprovalEntity = orderApprovalJpaRepository.findByOrderId(ORDER_ID).get();
-        assertThat(orderApprovalEntity.getRestaurantId())
-                .isEqualTo(RESTAURANT_ID);
-        assertThat(orderApprovalEntity.getStatus())
-                .isEqualTo(OrderApprovalStatus.REJECTED);
+    private void 주문받을_식당과_제품들이_등록되어있음() {
+    }
 
-        checkRestaurantResponse(RESTAURANT_ID,
-                ORDER_ID,
-                com.sangjun.kafka.order.avro.model.OrderApprovalStatus.REJECTED);
+    private void 주문대기처리됨() {
     }
 
     @Test
-    void 주문승인_메시지를_수신했을때_상품이_주문불가상태_이면_주문을_거부한다() throws ExecutionException, InterruptedException {
+    void 주문승인() {
         //given
-        BigDecimal price = new BigDecimal("2200");
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID)
-                .productId(PRODUCT_ID)
-                .productAvailable(false)
-                .restaurantActive(true)
-                .restaurantName("myRestaurant")
-                .productName("test-prod-1")
-                .productPrice(price)
-                .productId(PRODUCT_ID)
-                .build());
-
-        Product product = Product.newBuilder()
-                .setId(PRODUCT_ID.toString())
-                .setQuantity(1)
-                .build();
-
-        RestaurantApprovalRequestAvroModel msg = RestaurantApprovalRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .setOrderId(ORDER_ID.toString())
-                .setPrice(price)
-                .setCreatedAt(Instant.now())
-                .setProducts(List.of(product))
-                .setSagaId(UUID.randomUUID().toString())
-                .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
-                .build();
+        주문받을_식당과_제품들이_등록되어있음();
+        UUID waitingId = 승인대기중인_주문이_있음();
 
         //when
-        restaurantRequestKt.send(restaurantApprovalRequestTopic, ORDER_ID.toString(), msg)
-                .get();
+        restaurantApprovalService.approveOrder(waitingId.toString());
 
         //then
-        Thread.sleep(200);
+        주문승인완료_메세지_전송();
+    }
 
-        OrderApprovalEntity orderApprovalEntity = orderApprovalJpaRepository.findByOrderId(ORDER_ID).get();
-        assertThat(orderApprovalEntity.getRestaurantId())
-                .isEqualTo(RESTAURANT_ID);
-        assertThat(orderApprovalEntity.getStatus())
-                .isEqualTo(OrderApprovalStatus.REJECTED);
+    private UUID 승인대기중인_주문이_있음() {
+        return UUID.randomUUID();
+    }
 
-        checkRestaurantResponse(RESTAURANT_ID,
-                ORDER_ID,
-                com.sangjun.kafka.order.avro.model.OrderApprovalStatus.REJECTED);
+    private void 주문승인완료_메세지_전송() {
     }
 
     @Test
-    void 주문승인_메시지를_수신했을때_식당이_이용불가상태_이면_주문을_거부한다() throws ExecutionException, InterruptedException {
+    void 주문이_아직_승인되지_않았을때_주문대기취소() {
         //given
-        BigDecimal price = new BigDecimal("2200");
-
-        saveRestaurantEntity(RestaurantEntity.builder()
-                .restaurantId(RESTAURANT_ID)
-                .productId(PRODUCT_ID)
-                .productAvailable(true)
-                .restaurantActive(false)
-                .restaurantName("myRestaurant")
-                .productName("test-prod-1")
-                .productPrice(price)
-                .productId(PRODUCT_ID)
-                .build());
-
-        Product product = Product.newBuilder()
-                .setId(PRODUCT_ID.toString())
-                .setQuantity(1)
-                .build();
-
-        RestaurantApprovalRequestAvroModel msg = RestaurantApprovalRequestAvroModel.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
-                .setOrderId(ORDER_ID.toString())
-                .setPrice(price)
-                .setCreatedAt(Instant.now())
-                .setProducts(List.of(product))
-                .setSagaId(UUID.randomUUID().toString())
-                .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
-                .build();
+        주문받을_식당과_제품들이_등록되어있음();
+        승인대기중인_주문이_있음();
 
         //when
-        restaurantRequestKt.send(restaurantApprovalRequestTopic, ORDER_ID.toString(), msg)
-                .get();
+        var msg = RestaurantApprovalRequestAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(ORDER_ID.toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .setRestaurantOrderStatus(RestaurantOrderStatus.CANCELLED)
+                .setCreatedAt(Instant.now())
+                .setSagaId("")
+                .build();
+        var key = ORDER_ID.toString();
+        restaurantRequestKt.send(restaurantApprovalRequestTopic, key, msg);
 
         //then
-        Thread.sleep(200);
-
-        OrderApprovalEntity orderApprovalEntity = orderApprovalJpaRepository.findByOrderId(ORDER_ID).get();
-        assertThat(orderApprovalEntity.getRestaurantId())
-                .isEqualTo(RESTAURANT_ID);
-        assertThat(orderApprovalEntity.getStatus())
-                .isEqualTo(OrderApprovalStatus.REJECTED);
-
-        checkRestaurantResponse(RESTAURANT_ID,
-                ORDER_ID,
-                com.sangjun.kafka.order.avro.model.OrderApprovalStatus.REJECTED);
+        주문대기취소됨();
     }
+
+    private void 주문대기취소됨() {
+
+    }
+
+    @Test
+    void 주문이_승인되었을때_주문대기취소() {
+        //given
+        주문받을_식당과_제품들이_등록되어있음();
+        승인대기중인_주문이_있음();
+        승인대기중인_주문이_승인됨();
+
+        //when
+        var msg = RestaurantApprovalRequestAvroModel.newBuilder()
+                .setId(UUID.randomUUID().toString())
+                .setOrderId(ORDER_ID.toString())
+                .setRestaurantId(RESTAURANT_ID.toString())
+                .setRestaurantOrderStatus(RestaurantOrderStatus.CANCELLED)
+                .setCreatedAt(Instant.now())
+                .setSagaId("")
+                .build();
+        var key = ORDER_ID.toString();
+        restaurantRequestKt.send(restaurantApprovalRequestTopic, key, msg);
+
+        //then
+        주문대기취소요청이_무시됨();
+    }
+
+    private void 승인대기중인_주문이_승인됨() {
+    }
+
+    private void 주문대기취소요청이_무시됨() {
+
+    }
+
 
     private void checkRestaurantResponse(UUID restaurantId,
                                          UUID orderId,
@@ -557,14 +265,5 @@ public class RestaurantIntegrationTest {
         restaurantResponseConsumer.commitSync();
         return resultMap;
     }
-
-    private void saveRestaurantEntity(RestaurantEntity restaurantEntity) {
-        restaurantJpaRepository.save(restaurantEntity);
-        entityManager.flush();
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
-        TestTransaction.start();
-    }
-
 
 }

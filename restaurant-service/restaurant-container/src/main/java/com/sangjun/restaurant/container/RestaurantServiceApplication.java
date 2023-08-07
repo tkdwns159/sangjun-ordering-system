@@ -5,8 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@EnableJpaRepositories(basePackages = {"com.sangjun.restaurant.dataaccess", "com.sangjun.common.dataaccess"})
-@EntityScan(basePackages = {"com.sangjun.restaurant.dataaccess", "com.sangjun.common.dataaccess"})
+@EnableJpaRepositories(basePackages = {"com.sangjun.restaurant.dataaccess"})
+@EntityScan(basePackages = {"com.sangjun.restaurant.domain", "com.sangjun.common.domain"})
 @SpringBootApplication(scanBasePackages = "com.sangjun")
 public class RestaurantServiceApplication {
     public static void main(String[] args) {

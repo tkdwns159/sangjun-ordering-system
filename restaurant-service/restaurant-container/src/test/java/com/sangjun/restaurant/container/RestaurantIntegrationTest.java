@@ -1,10 +1,16 @@
 package com.sangjun.restaurant.container;
 
+import com.sangjun.common.domain.valueobject.Money;
+import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.kafka.order.avro.model.Product;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalResponseAvroModel;
 import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
 import com.sangjun.restaurant.application.ports.input.service.RestaurantApprovalApplicationService;
+import com.sangjun.restaurant.application.ports.output.message.repository.PendingOrderRepository;
+import com.sangjun.restaurant.application.ports.output.message.repository.RestaurantRepository;
+import com.sangjun.restaurant.domain.entity.Restaurant;
+import com.sangjun.restaurant.domain.valueobject.PendingOrderStatus;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.jupiter.api.*;
@@ -45,14 +51,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(classes = TestConfig.class,
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class RestaurantIntegrationTest {
-    private static final UUID RESTAURANT_ID = UUID.randomUUID();
-    private static final UUID RESTAURANT_ID_2 = UUID.randomUUID();
-    private static final UUID ORDER_ID = UUID.randomUUID();
-    private static final UUID PRODUCT_ID = UUID.randomUUID();
-    private static final UUID PRODUCT_ID_2 = UUID.randomUUID();
+    private final UUID RESTAURANT_ID = UUID.randomUUID();
+    private final UUID ORDER_ID = UUID.randomUUID();
 
     @PersistenceContext
-    private EntityManager entityManager;
+    private EntityManager em;
 
     @Value("${restaurant-service.restaurant-approval-request-topic-name}")
     private String restaurantApprovalRequestTopic;
@@ -67,6 +70,10 @@ public class RestaurantIntegrationTest {
     private ConsumerFactory<String, RestaurantApprovalResponseAvroModel> restaurantResponseCf;
     @Autowired
     private RestaurantApprovalApplicationService restaurantApprovalService;
+    @Autowired
+    private RestaurantRepository restaurantRepository;
+    @Autowired
+    private PendingOrderRepository pendingOrderRepository;
 
     private Consumer<String, RestaurantApprovalResponseAvroModel> restaurantResponseConsumer;
 
@@ -106,20 +113,20 @@ public class RestaurantIntegrationTest {
     }
 
     private void truncateAllTables() {
-        Query query = entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE");
+        Query query = em.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE");
         query.executeUpdate();
 
-        query = entityManager.createNativeQuery(
+        query = em.createNativeQuery(
                 "SELECT 'TRUNCATE TABLE ' || TABLE_SCHEMA || '.' || TABLE_NAME || ';' FROM INFORMATION_SCHEMA.TABLES WHERE " +
                         "TABLE_SCHEMA in ('restaurant')");
         List<String> statements = query.getResultList();
 
         for (String statement : statements) {
-            query = entityManager.createNativeQuery(statement);
+            query = em.createNativeQuery(statement);
             query.executeUpdate();
         }
 
-        query = entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE");
+        query = em.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE");
         query.executeUpdate();
     }
 
@@ -130,37 +137,65 @@ public class RestaurantIntegrationTest {
     @Test
     void 주문승인대기_처리() {
         //given
-        주문받을_식당과_제품들이_등록되어있음();
+        Restaurant restaurant = 주문받을_식당과_제품들이_등록되어있음();
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        var products = restaurant.getProducts();
         Product product1 = Product.newBuilder()
-                .setId(PRODUCT_ID.toString())
+                .setId(products.get(0).getId().getValue().toString())
                 .setQuantity(2)
                 .build();
         Product product2 = Product.newBuilder()
-                .setId(PRODUCT_ID_2.toString())
+                .setId(products.get(1).getId().getValue().toString())
                 .setQuantity(3)
                 .build();
+        Money price = products.get(0).getPrice().multiply(2)
+                .add(products.get(1).getPrice().multiply(3));
 
         //when
         var msg = RestaurantApprovalRequestAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setOrderId(ORDER_ID.toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
+                .setRestaurantId(restaurant.getId().getValue().toString())
                 .setRestaurantOrderStatus(RestaurantOrderStatus.PAID)
                 .setCreatedAt(Instant.now())
                 .setProducts(List.of(product1, product2))
+                .setPrice(price.getAmount())
                 .setSagaId("")
                 .build();
         var key = ORDER_ID.toString();
         restaurantRequestKt.send(restaurantApprovalRequestTopic, key, msg);
 
         //then
-        주문대기처리됨();
+        주문대기처리됨(new OrderId(ORDER_ID));
     }
 
-    private void 주문받을_식당과_제품들이_등록되어있음() {
+    private Restaurant 주문받을_식당과_제품들이_등록되어있음() {
+        var product1 = com.sangjun.restaurant.domain.entity.Product.builder()
+                .name("product1")
+                .price(Money.of("3300"))
+                .available(true)
+                .quantity(100)
+                .build();
+        var product2 = com.sangjun.restaurant.domain.entity.Product.builder()
+                .name("product2")
+                .price(Money.of("1230"))
+                .available(true)
+                .quantity(100)
+                .build();
+
+        Restaurant restaurant = Restaurant.builder()
+                .isActive(true)
+                .products(List.of(product1, product2))
+                .build();
+        return restaurantRepository.save(restaurant);
     }
 
-    private void 주문대기처리됨() {
+    private void 주문대기처리됨(OrderId orderId) {
+        var pendingOrder = pendingOrderRepository.findByOrderId(orderId).get();
+        assertThat(pendingOrder.getStatus())
+                .isEqualTo(PendingOrderStatus.PENDING);
     }
 
     @Test

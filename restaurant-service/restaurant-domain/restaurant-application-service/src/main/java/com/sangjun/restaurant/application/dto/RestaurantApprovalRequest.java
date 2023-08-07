@@ -16,8 +16,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RestaurantApprovalRequest {
-    private String id;
-    private String sagaId;
     private String restaurantId;
     private String orderId;
     private RestaurantOrderStatus restaurantOrderStatus;

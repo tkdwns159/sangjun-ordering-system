@@ -4,90 +4,17 @@ import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.ProductId;
 
+import javax.persistence.Access;
+import javax.persistence.AccessType;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "product", schema = "restaurant")
+@Access(AccessType.FIELD)
 public class Product extends BaseEntity<ProductId> {
     private String name;
     private Money price;
-    private final int quantity;
+    private int quantity;
     private boolean available;
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setPrice(Money price) {
-        this.price = price;
-    }
-
-    public void setAvailable(boolean available) {
-        this.available = available;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Money getPrice() {
-        return price;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public boolean isAvailable() {
-        return available;
-    }
-
-    private Product(Builder builder) {
-        setId(builder.id);
-        name = builder.name;
-        price = builder.price;
-        quantity = builder.quantity;
-        available = builder.available;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-
-    public static final class Builder {
-        private ProductId id;
-        private String name;
-        private Money price;
-        private int quantity;
-        private boolean available;
-
-        private Builder() {
-        }
-
-        public Builder id(ProductId val) {
-            id = val;
-            return this;
-        }
-
-        public Builder name(String val) {
-            name = val;
-            return this;
-        }
-
-        public Builder price(Money val) {
-            price = val;
-            return this;
-        }
-
-        public Builder quantity(int val) {
-            quantity = val;
-            return this;
-        }
-
-        public Builder available(boolean val) {
-            available = val;
-            return this;
-        }
-
-        public Product build() {
-            return new Product(this);
-        }
-    }
 }

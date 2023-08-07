@@ -4,7 +4,7 @@ import com.sangjun.kafka.order.avro.model.Product;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalResponseAvroModel;
 import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
-import com.sangjun.restaurant.application.ports.input.message.listener.RestaurantApprovalApplicationService;
+import com.sangjun.restaurant.application.ports.input.service.RestaurantApprovalApplicationService;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.jupiter.api.*;

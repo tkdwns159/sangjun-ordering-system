@@ -4,7 +4,7 @@ import com.sangjun.kafka.order.avro.model.RestaurantApprovalResponseAvroModel;
 import com.sangjun.kafka.producer.KafkaMessageHelper;
 import com.sangjun.kafka.producer.service.KafkaProducer;
 import com.sangjun.restaurant.application.config.RestaurantServiceConfigData;
-import com.sangjun.restaurant.application.ports.output.message.publisher.OrderRejectedMessagedPublisher;
+import com.sangjun.restaurant.application.ports.output.message.publisher.OrderRejectedMessagePublisher;
 import com.sangjun.restaurant.domain.event.OrderRejectedEvent;
 import com.sangjun.restaurant.messaging.mapper.RestaurantMessagingDataMapper;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderRejectedKafkaMessagePublisher implements OrderRejectedMessagedPublisher {
+public class OrderRejectedKafkaMessagePublisher implements OrderRejectedMessagePublisher {
     private final RestaurantMessagingDataMapper restaurantMessagingDataMapper;
     private final KafkaProducer<String, RestaurantApprovalResponseAvroModel> kafkaProducer;
     private final RestaurantServiceConfigData restaurantServiceConfigData;

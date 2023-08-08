@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.sangjun.restaurant.messaging.mapper.RestaurantMessageMapper.MAPPER;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -35,10 +37,9 @@ public class RestaurantApprovalRequestKafkaListener implements KafkaConsumer<Res
                 partitions.toString(),
                 offsets.toString());
 
-        messages.forEach(restaurantApprovalRequestAvroModel -> {
-            log.info("Processing order approval for order id: {}", restaurantApprovalRequestAvroModel.getOrderId());
-            restaurantApprovalRequestMessageListener.approveOrder(restaurantMessagingDataMapper.
-                    restaurantApprovalRequestAvroModelToRestaurantApproval(restaurantApprovalRequestAvroModel));
+        messages.forEach(message -> {
+            log.info("Processing order approval for order id: {}", message.getOrderId());
+            restaurantApprovalRequestMessageListener.registerPendingOrder(MAPPER.toRestaurantApprovalRequest(message));
         });
     }
 }

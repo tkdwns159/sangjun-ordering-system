@@ -11,6 +11,7 @@ import com.sangjun.restaurant.application.ports.output.message.repository.Produc
 import com.sangjun.restaurant.domain.entity.Product;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.StreamUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -19,6 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.sangjun.restaurant.application.mapper.RestaurantApplicationMapper.MAPPER;
 import static java.util.Objects.requireNonNull;
@@ -67,14 +69,13 @@ public class RestaurantApprovalRequestMessageListenerImpl implements RestaurantA
     private Money computeTotalPrice(List<ProductDto> productDtos,
                                     Map<ProductId, Product> productMap,
                                     RestaurantId restaurantId) {
-        Money total = Money.ZERO;
-        for (var productDto : productDtos) {
-            Product product = getProduct(productMap, productDto.getProductId(), restaurantId);
-            Money subTotal = product.getPrice()
-                    .multiply(productDto.getQuantity());
-            total = total.add(subTotal);
-        }
-        return total;
+        Stream<Product> productStream = productDtos.stream()
+                .map(ProductDto::getProductId)
+                .map(id -> getProduct(productMap, id, restaurantId));
+
+        return StreamUtils.zip(productStream, productDtos.stream(), (product, productDto) ->
+                        product.getPrice().multiply(productDto.getQuantity()))
+                .reduce(Money.ZERO, Money::add);
     }
 
     private Product getProduct(Map<ProductId, Product> productMap,

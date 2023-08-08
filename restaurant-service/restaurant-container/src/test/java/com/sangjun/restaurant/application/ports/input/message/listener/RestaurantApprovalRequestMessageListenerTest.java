@@ -17,11 +17,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.util.StreamUtils;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -70,8 +72,9 @@ class RestaurantApprovalRequestMessageListenerTest {
         //given
         UUID orderId = UUID.randomUUID();
         var products = restaurant.getProducts();
-        Money exactPrice = products.get(0).getPrice().multiply(2)
-                .add(products.get(1).getPrice());
+        Money exactPrice = computeTotalPrice(
+                products.stream().map(Product::getPrice),
+                Stream.of(2, 1));
         Money price = exactPrice.subtract(Money.of("100"));
 
         var productDto1 = ProductDto.builder()
@@ -113,8 +116,10 @@ class RestaurantApprovalRequestMessageListenerTest {
                 .productId(products2.get(1).getId())
                 .quantity(1)
                 .build();
-        Money price = products1.get(0).getPrice().multiply(2)
-                .add(products2.get(1).getPrice());
+        Money price = computeTotalPrice(
+                Stream.of(products1.get(0).getPrice(), products2.get(1).getPrice()),
+                Stream.of(2, 1));
+
         UUID orderId = UUID.randomUUID();
 
         //when, then
@@ -137,8 +142,7 @@ class RestaurantApprovalRequestMessageListenerTest {
         //given
         UUID orderId = UUID.randomUUID();
         var products = restaurant.getProducts();
-        Money price = products.get(0).getPrice().multiply(2)
-                .add(products.get(1).getPrice());
+        Money price = computeTotalPrice(products.stream().map(Product::getPrice), Stream.of(2, 1));
 
         var productDto1 = ProductDto.builder()
                 .productId(products.get(0).getId())
@@ -162,10 +166,19 @@ class RestaurantApprovalRequestMessageListenerTest {
 
         //then
         PendingOrder pendingOrder = pendingOrderRepository.findByOrderId(new OrderId(orderId)).get();
+        verifyPendingOrder(pendingOrder);
+    }
+
+    private void verifyPendingOrder(PendingOrder pendingOrder) {
         Assertions.assertThat(pendingOrder.getStatus())
                 .isEqualTo(PendingOrderStatus.PENDING);
         Assertions.assertThat(pendingOrder.getRestaurantId())
                 .isEqualTo(restaurant.getId());
     }
 
+    private Money computeTotalPrice(Stream<Money> prices, Stream<Integer> quantities) {
+        return StreamUtils.zip(prices, quantities, (price, quantity)
+                        -> price.multiply(quantity))
+                .reduce(Money.ZERO, Money::add);
+    }
 }

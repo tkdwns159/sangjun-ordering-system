@@ -43,6 +43,9 @@ public class PendingOrder extends BaseEntity<PendingOrderId> {
         return status;
     }
 
+    public RestaurantId getRestaurantId() {
+        return restaurantId;
+    }
 
     public static final class Builder {
         private RestaurantId restaurantId;

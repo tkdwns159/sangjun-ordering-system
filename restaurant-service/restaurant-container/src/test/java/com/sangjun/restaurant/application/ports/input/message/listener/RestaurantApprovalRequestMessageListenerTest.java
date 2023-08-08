@@ -1,12 +1,16 @@
 package com.sangjun.restaurant.application.ports.input.message.listener;
 
 import com.sangjun.common.domain.valueobject.Money;
+import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.RestaurantOrderStatus;
 import com.sangjun.restaurant.application.dto.ProductDto;
 import com.sangjun.restaurant.application.dto.RestaurantApprovalRequest;
+import com.sangjun.restaurant.application.ports.output.message.repository.PendingOrderRepository;
 import com.sangjun.restaurant.application.ports.output.message.repository.RestaurantRepository;
+import com.sangjun.restaurant.domain.entity.PendingOrder;
 import com.sangjun.restaurant.domain.entity.Product;
 import com.sangjun.restaurant.domain.entity.Restaurant;
+import com.sangjun.restaurant.domain.valueobject.PendingOrderStatus;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -29,6 +33,9 @@ class RestaurantApprovalRequestMessageListenerTest {
 
     @Autowired
     private RestaurantRepository restaurantRepository;
+
+    @Autowired
+    private PendingOrderRepository pendingOrderRepository;
 
     private Restaurant restaurant;
 
@@ -123,6 +130,42 @@ class RestaurantApprovalRequestMessageListenerTest {
         Assertions.assertThatThrownBy(() -> listener.registerPendingOrder(request))
                 .hasMessageContaining("product")
                 .hasMessageContaining("restaurant");
+    }
+
+    @Test
+    void 주문대기처리() {
+        //given
+        UUID orderId = UUID.randomUUID();
+        var products = restaurant.getProducts();
+        Money price = products.get(0).getPrice().multiply(2)
+                .add(products.get(1).getPrice());
+
+        var productDto1 = ProductDto.builder()
+                .productId(products.get(0).getId())
+                .quantity(2)
+                .build();
+        var productDto2 = ProductDto.builder()
+                .productId(products.get(1).getId())
+                .quantity(1)
+                .build();
+
+        //when
+        var request = RestaurantApprovalRequest.builder()
+                .restaurantId(restaurant.getId().getValue().toString())
+                .orderId(orderId.toString())
+                .price(price.getAmount())
+                .createdAt(Instant.now())
+                .products(List.of(productDto1, productDto2))
+                .restaurantOrderStatus(RestaurantOrderStatus.PAID)
+                .build();
+        listener.registerPendingOrder(request);
+
+        //then
+        PendingOrder pendingOrder = pendingOrderRepository.findByOrderId(new OrderId(orderId)).get();
+        Assertions.assertThat(pendingOrder.getStatus())
+                .isEqualTo(PendingOrderStatus.PENDING);
+        Assertions.assertThat(pendingOrder.getRestaurantId())
+                .isEqualTo(restaurant.getId());
     }
 
 }

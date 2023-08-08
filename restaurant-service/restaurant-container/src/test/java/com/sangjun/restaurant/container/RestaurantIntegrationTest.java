@@ -135,7 +135,7 @@ public class RestaurantIntegrationTest {
     }
 
     @Test
-    void 주문승인대기_처리() {
+    void 주문승인대기_처리() throws InterruptedException {
         //given
         Restaurant restaurant = 주문받을_식당과_제품들이_등록되어있음();
         TestTransaction.flagForCommit();
@@ -166,6 +166,7 @@ public class RestaurantIntegrationTest {
                 .build();
         var key = ORDER_ID.toString();
         restaurantRequestKt.send(restaurantApprovalRequestTopic, key, msg);
+        Thread.sleep(200);
 
         //then
         주문대기처리됨(new OrderId(ORDER_ID));

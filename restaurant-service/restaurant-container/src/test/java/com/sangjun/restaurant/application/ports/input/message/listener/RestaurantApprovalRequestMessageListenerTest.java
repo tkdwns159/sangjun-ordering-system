@@ -8,7 +8,9 @@ import com.sangjun.restaurant.application.ports.output.message.repository.Restau
 import com.sangjun.restaurant.domain.entity.Product;
 import com.sangjun.restaurant.domain.entity.Restaurant;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @ActiveProfiles("test")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = TestConfig.class)
 class RestaurantApprovalRequestMessageListenerTest {
 
@@ -27,37 +30,11 @@ class RestaurantApprovalRequestMessageListenerTest {
     @Autowired
     private RestaurantRepository restaurantRepository;
 
-    @Test
-    void 상품가격_총합과_지불가격이_다르면_예외발생() {
-        //given
-        Restaurant restaurant = 주문받을_식당과_제품들이_등록되어있음();
-        UUID restaurantId = UUID.randomUUID();
-        UUID orderId = UUID.randomUUID();
-        var products = restaurant.getProducts();
-        Money exactPrice = products.get(0).getPrice().multiply(2)
-                .add(products.get(1).getPrice());
-        Money price = exactPrice.subtract(Money.of("100"));
+    private Restaurant restaurant;
 
-        var productDto1 = ProductDto.builder()
-                .productId(products.get(0).getId())
-                .quantity(2)
-                .build();
-        var productDto2 = ProductDto.builder()
-                .productId(products.get(1).getId())
-                .quantity(1)
-                .build();
-
-        //when, then
-        var request = RestaurantApprovalRequest.builder()
-                .restaurantId(restaurantId.toString())
-                .orderId(orderId.toString())
-                .price(price.getAmount())
-                .createdAt(Instant.now())
-                .products(List.of(productDto1, productDto2))
-                .restaurantOrderStatus(RestaurantOrderStatus.PAID)
-                .build();
-
-        Assertions.assertThatThrownBy(() -> listener.registerPendingOrder(request));
+    @BeforeAll
+    void setup() {
+        restaurant = 주문받을_식당과_제품들이_등록되어있음();
     }
 
     private Restaurant 주문받을_식당과_제품들이_등록되어있음() {
@@ -80,4 +57,72 @@ class RestaurantApprovalRequestMessageListenerTest {
                 .build();
         return restaurantRepository.save(restaurant);
     }
+
+    @Test
+    void 상품가격_총합과_지불가격이_다르면_예외발생() {
+        //given
+        UUID orderId = UUID.randomUUID();
+        var products = restaurant.getProducts();
+        Money exactPrice = products.get(0).getPrice().multiply(2)
+                .add(products.get(1).getPrice());
+        Money price = exactPrice.subtract(Money.of("100"));
+
+        var productDto1 = ProductDto.builder()
+                .productId(products.get(0).getId())
+                .quantity(2)
+                .build();
+        var productDto2 = ProductDto.builder()
+                .productId(products.get(1).getId())
+                .quantity(1)
+                .build();
+
+        //when, then
+        var request = RestaurantApprovalRequest.builder()
+                .restaurantId(restaurant.getId().getValue().toString())
+                .orderId(orderId.toString())
+                .price(price.getAmount())
+                .createdAt(Instant.now())
+                .products(List.of(productDto1, productDto2))
+                .restaurantOrderStatus(RestaurantOrderStatus.PAID)
+                .build();
+
+        Assertions.assertThatThrownBy(() -> listener.registerPendingOrder(request))
+                .hasMessageContaining("given price")
+                .hasMessageContaining("actual total price");
+    }
+
+
+    @Test
+    void 해당_식당에서_취급하지않는_상품이_있을경우_예외발생() {
+        //given
+        Restaurant restaurant2 = 주문받을_식당과_제품들이_등록되어있음();
+        var products1 = restaurant.getProducts();
+        var products2 = restaurant2.getProducts();
+        var productDto1 = ProductDto.builder()
+                .productId(products1.get(0).getId())
+                .quantity(2)
+                .build();
+        var productDto2 = ProductDto.builder()
+                .productId(products2.get(1).getId())
+                .quantity(1)
+                .build();
+        Money price = products1.get(0).getPrice().multiply(2)
+                .add(products2.get(1).getPrice());
+        UUID orderId = UUID.randomUUID();
+
+        //when, then
+        var request = RestaurantApprovalRequest.builder()
+                .restaurantId(restaurant.getId().getValue().toString())
+                .orderId(orderId.toString())
+                .price(price.getAmount())
+                .createdAt(Instant.now())
+                .products(List.of(productDto1, productDto2))
+                .restaurantOrderStatus(RestaurantOrderStatus.PAID)
+                .build();
+
+        Assertions.assertThatThrownBy(() -> listener.registerPendingOrder(request))
+                .hasMessageContaining("product")
+                .hasMessageContaining("restaurant");
+    }
+
 }

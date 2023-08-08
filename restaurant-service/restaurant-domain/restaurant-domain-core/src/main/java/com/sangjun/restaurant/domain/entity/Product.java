@@ -3,11 +3,9 @@ package com.sangjun.restaurant.domain.entity;
 import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.ProductId;
+import com.sangjun.common.domain.valueobject.RestaurantId;
 
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Entity
@@ -18,9 +16,15 @@ public class Product extends BaseEntity<ProductId> {
     private Money price;
     private int quantity;
     private boolean available;
+    @Embedded
+    private RestaurantId restaurantId;
 
     public Money getPrice() {
         return price;
+    }
+
+    public RestaurantId getRestaurantId() {
+        return restaurantId;
     }
 
     protected Product() {

@@ -2,6 +2,7 @@ package com.sangjun.restaurant.application;
 
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.ProductId;
+import com.sangjun.common.domain.valueobject.RestaurantId;
 import com.sangjun.restaurant.application.dto.ProductDto;
 import com.sangjun.restaurant.application.dto.RestaurantApprovalRequest;
 import com.sangjun.restaurant.application.ports.input.message.listener.RestaurantApprovalRequestMessageListener;
@@ -15,10 +16,12 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.sangjun.restaurant.application.mapper.RestaurantApplicationMapper.MAPPER;
+import static java.util.Objects.requireNonNull;
 
 @Slf4j
 @Service
@@ -37,13 +40,19 @@ public class RestaurantApprovalRequestMessageListenerImpl implements RestaurantA
 
     private void validatePrice(RestaurantApprovalRequest restaurantApprovalRequest) {
         List<ProductDto> productDtos = restaurantApprovalRequest.getProducts();
-        Map<ProductId, Product> productMap = toMap(productRepository.findAllByIdIn(toProductIds(productDtos)));
-        Money total = computeTotalPrice(productDtos, productMap);
+        RestaurantId restaurantId = toRestaurantId(restaurantApprovalRequest.getRestaurantId());
+        Map<ProductId, Product> productMap =
+                toMap(productRepository.findAllByRestaurantIdAndIdIn(restaurantId, toProductIds(productDtos)));
+        Money total = computeTotalPrice(productDtos, productMap, restaurantId);
 
         if (isDifferent(restaurantApprovalRequest.getPrice(), total.getAmount())) {
-            throw new IllegalArgumentException(String.format("Given price: %s is not equal to the actual total price: %s",
+            throw new IllegalArgumentException(String.format("given price: %s is not equal to the actual total price: %s",
                     restaurantApprovalRequest.getPrice(), total));
         }
+    }
+
+    private RestaurantId toRestaurantId(String id) {
+        return new RestaurantId(UUID.fromString(id));
     }
 
     private List<ProductId> toProductIds(List<ProductDto> products) {
@@ -55,15 +64,24 @@ public class RestaurantApprovalRequestMessageListenerImpl implements RestaurantA
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
     }
 
-    private Money computeTotalPrice(List<ProductDto> productDtos, Map<ProductId, Product> productMap) {
+    private Money computeTotalPrice(List<ProductDto> productDtos,
+                                    Map<ProductId, Product> productMap,
+                                    RestaurantId restaurantId) {
         Money total = Money.ZERO;
         for (var productDto : productDtos) {
-            Product product = productMap.get(productDto.getProductId());
+            Product product = getProduct(productMap, productDto.getProductId(), restaurantId);
             Money subTotal = product.getPrice()
                     .multiply(productDto.getQuantity());
             total = total.add(subTotal);
         }
         return total;
+    }
+
+    private Product getProduct(Map<ProductId, Product> productMap,
+                               ProductId productId,
+                               RestaurantId restaurantId) {
+        return requireNonNull(productMap.get(productId),
+                String.format("product(%s) is not found in restaurant(%s)", productId, restaurantId));
     }
 
     private boolean isDifferent(BigDecimal givenPrice, BigDecimal actualPrice) {

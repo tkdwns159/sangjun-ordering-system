@@ -1,7 +1,6 @@
 package com.sangjun.restaurant.application.dto;
 
 import com.sangjun.common.domain.valueobject.RestaurantOrderStatus;
-import com.sangjun.restaurant.domain.entity.Product;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,7 +18,7 @@ public class RestaurantApprovalRequest {
     private String restaurantId;
     private String orderId;
     private RestaurantOrderStatus restaurantOrderStatus;
-    private List<Product> products;
+    private List<ProductDto> products;
     private BigDecimal price;
     private Instant createdAt;
 }

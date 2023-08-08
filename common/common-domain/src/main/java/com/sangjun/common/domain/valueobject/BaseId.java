@@ -35,4 +35,9 @@ public abstract class BaseId<T> implements Serializable {
     public int hashCode() {
         return Objects.hash(value);
     }
+
+    @Override
+    public String toString() {
+        return this.getValue().toString();
+    }
 }

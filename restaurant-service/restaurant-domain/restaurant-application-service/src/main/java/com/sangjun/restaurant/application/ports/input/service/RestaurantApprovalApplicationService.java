@@ -1,4 +1,4 @@
-package com.sangjun.restaurant.application.ports.input.message.listener;
+package com.sangjun.restaurant.application.ports.input.service;
 
 import org.springframework.stereotype.Service;
 

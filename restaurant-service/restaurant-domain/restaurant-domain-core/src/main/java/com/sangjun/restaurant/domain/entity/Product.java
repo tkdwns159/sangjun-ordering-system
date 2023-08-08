@@ -3,43 +3,35 @@ package com.sangjun.restaurant.domain.entity;
 import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.ProductId;
+import com.sangjun.common.domain.valueobject.RestaurantId;
 
+import javax.persistence.*;
+import java.util.UUID;
+
+@Entity
+@Table(name = "product", schema = "restaurant")
+@Access(AccessType.FIELD)
 public class Product extends BaseEntity<ProductId> {
     private String name;
     private Money price;
-    private final int quantity;
+    private int quantity;
     private boolean available;
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setPrice(Money price) {
-        this.price = price;
-    }
-
-    public void setAvailable(boolean available) {
-        this.available = available;
-    }
-
-    public String getName() {
-        return name;
-    }
+    @Embedded
+    private RestaurantId restaurantId;
 
     public Money getPrice() {
         return price;
     }
 
-    public int getQuantity() {
-        return quantity;
+    public RestaurantId getRestaurantId() {
+        return restaurantId;
     }
 
-    public boolean isAvailable() {
-        return available;
+    protected Product() {
     }
 
     private Product(Builder builder) {
-        setId(builder.id);
+        setId(new ProductId(UUID.randomUUID()));
         name = builder.name;
         price = builder.price;
         quantity = builder.quantity;
@@ -52,18 +44,12 @@ public class Product extends BaseEntity<ProductId> {
 
 
     public static final class Builder {
-        private ProductId id;
         private String name;
         private Money price;
         private int quantity;
         private boolean available;
 
         private Builder() {
-        }
-
-        public Builder id(ProductId val) {
-            id = val;
-            return this;
         }
 
         public Builder name(String val) {

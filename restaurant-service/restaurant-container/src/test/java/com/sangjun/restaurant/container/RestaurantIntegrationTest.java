@@ -2,14 +2,13 @@ package com.sangjun.restaurant.container;
 
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.OrderId;
-import com.sangjun.kafka.order.avro.model.Product;
-import com.sangjun.kafka.order.avro.model.RestaurantApprovalRequestAvroModel;
-import com.sangjun.kafka.order.avro.model.RestaurantApprovalResponseAvroModel;
-import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
+import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.restaurant.application.ports.input.service.RestaurantApprovalApplicationService;
 import com.sangjun.restaurant.application.ports.output.message.repository.PendingOrderRepository;
 import com.sangjun.restaurant.application.ports.output.message.repository.RestaurantRepository;
+import com.sangjun.restaurant.domain.entity.PendingOrder;
 import com.sangjun.restaurant.domain.entity.Restaurant;
+import com.sangjun.restaurant.domain.valueobject.PendingOrderId;
 import com.sangjun.restaurant.domain.valueobject.PendingOrderStatus;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -202,28 +201,49 @@ public class RestaurantIntegrationTest {
     @Test
     void 주문승인() {
         //given
-        주문받을_식당과_제품들이_등록되어있음();
-        UUID waitingId = 승인대기중인_주문이_있음();
+        Restaurant restaurant = 주문받을_식당과_제품들이_등록되어있음();
+        PendingOrderId pendingOrderId = 승인대기중인_주문이_있음(restaurant);
 
         //when
-        restaurantApprovalService.approveOrder(waitingId.toString());
+        restaurantApprovalService.approveOrder(pendingOrderId.toString());
 
         //then
-        주문승인완료_메세지_전송();
+        PendingOrder pendingOrder = pendingOrderRepository.findById(pendingOrderId).get();
+        assertThat(pendingOrder.getStatus())
+                .isEqualTo(PendingOrderStatus.APPROVED);
+
+        주문승인완료_메세지_전송(restaurant);
     }
 
-    private UUID 승인대기중인_주문이_있음() {
-        return UUID.randomUUID();
+    private PendingOrderId 승인대기중인_주문이_있음(Restaurant restaurant) {
+        PendingOrder pendingOrder = PendingOrder.builder()
+                .status(PendingOrderStatus.PENDING)
+                .restaurantId(restaurant.getId())
+                .orderId(new OrderId(ORDER_ID))
+                .build();
+        PendingOrder savedPendingOrder = pendingOrderRepository.save(pendingOrder);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        return savedPendingOrder.getId();
     }
 
-    private void 주문승인완료_메세지_전송() {
+    private void 주문승인완료_메세지_전송(Restaurant restaurant) {
+        Map<String, RestaurantApprovalResponseAvroModel> responseMap = consumeRestaurantResponseTopic();
+        var response = responseMap.get(ORDER_ID.toString());
+        assertThat(response.getOrderId())
+                .isEqualTo(ORDER_ID.toString());
+        assertThat(response.getRestaurantId())
+                .isEqualTo(restaurant.getId().toString());
+        assertThat(response.getOrderApprovalStatus())
+                .isEqualTo(OrderApprovalStatus.APPROVED);
     }
 
     @Test
     void 주문이_아직_승인되지_않았을때_주문대기취소() {
         //given
-        주문받을_식당과_제품들이_등록되어있음();
-        승인대기중인_주문이_있음();
+        Restaurant restaurant = 주문받을_식당과_제품들이_등록되어있음();
+        승인대기중인_주문이_있음(restaurant);
 
         //when
         var msg = RestaurantApprovalRequestAvroModel.newBuilder()
@@ -248,8 +268,8 @@ public class RestaurantIntegrationTest {
     @Test
     void 주문이_승인되었을때_주문대기취소() {
         //given
-        주문받을_식당과_제품들이_등록되어있음();
-        승인대기중인_주문이_있음();
+        Restaurant restaurant = 주문받을_식당과_제품들이_등록되어있음();
+        승인대기중인_주문이_있음(restaurant);
         승인대기중인_주문이_승인됨();
 
         //when

@@ -3,12 +3,16 @@ package com.sangjun.restaurant.domain.entity;
 import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.RestaurantId;
+import com.sangjun.restaurant.domain.event.OrderApprovedEvent;
 import com.sangjun.restaurant.domain.valueobject.PendingOrderId;
 import com.sangjun.restaurant.domain.valueobject.PendingOrderStatus;
 
 import javax.persistence.*;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 import static java.util.Objects.requireNonNull;
 
 @Entity
@@ -45,6 +49,15 @@ public class PendingOrder extends BaseEntity<PendingOrderId> {
 
     public RestaurantId getRestaurantId() {
         return restaurantId;
+    }
+
+    public OrderId getOrderId() {
+        return orderId;
+    }
+
+    public OrderApprovedEvent approve() {
+        this.status = PendingOrderStatus.APPROVED;
+        return new OrderApprovedEvent(this, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
 
     public static final class Builder {

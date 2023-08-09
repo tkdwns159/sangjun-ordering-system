@@ -6,17 +6,16 @@ import com.sangjun.kafka.producer.service.KafkaProducer;
 import com.sangjun.restaurant.application.config.RestaurantServiceConfigData;
 import com.sangjun.restaurant.application.ports.output.message.publisher.OrderApprovedMessagePublisher;
 import com.sangjun.restaurant.domain.event.OrderApprovedEvent;
-import com.sangjun.restaurant.messaging.mapper.RestaurantMessagingDataMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import static com.sangjun.restaurant.messaging.mapper.RestaurantMessageMapper.MAPPER;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class OrderApprovedKafkaMessagePublisher implements OrderApprovedMessagePublisher {
-
-    private final RestaurantMessagingDataMapper mapper;
 
     private final KafkaProducer<String, RestaurantApprovalResponseAvroModel> kafkaProducer;
 
@@ -27,13 +26,12 @@ public class OrderApprovedKafkaMessagePublisher implements OrderApprovedMessageP
 
     @Override
     public void publish(OrderApprovedEvent domainEvent) {
-        String orderId = domainEvent.getOrderApproval().getOrderId().getValue().toString();
+        String orderId = domainEvent.getPendingOrder().getOrderId().toString();
 
         log.info("Received OrderApprovedEvent for order id :{}", orderId);
 
         try {
-            RestaurantApprovalResponseAvroModel responseAvroModel =
-                    mapper.orderApprovedEventToRestaurantApprovalResponseAvroModel(domainEvent);
+            var responseAvroModel = MAPPER.toRestaurantApprovalResponseAvroModel(domainEvent);
 
             kafkaProducer.send(
                     restaurantServiceConfigData.getRestaurantApprovalResponseTopicName(),

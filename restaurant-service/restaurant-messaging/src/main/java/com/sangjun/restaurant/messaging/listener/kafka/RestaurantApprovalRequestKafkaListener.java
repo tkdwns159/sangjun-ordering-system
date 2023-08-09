@@ -3,7 +3,6 @@ package com.sangjun.restaurant.messaging.listener.kafka;
 import com.sangjun.kafka.consumer.KafkaConsumer;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalRequestAvroModel;
 import com.sangjun.restaurant.application.ports.input.message.listener.RestaurantApprovalRequestMessageListener;
-import com.sangjun.restaurant.messaging.mapper.RestaurantMessagingDataMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -21,7 +20,6 @@ import static com.sangjun.restaurant.messaging.mapper.RestaurantMessageMapper.MA
 @RequiredArgsConstructor
 public class RestaurantApprovalRequestKafkaListener implements KafkaConsumer<RestaurantApprovalRequestAvroModel> {
     private final RestaurantApprovalRequestMessageListener restaurantApprovalRequestMessageListener;
-    private final RestaurantMessagingDataMapper restaurantMessagingDataMapper;
 
     @Override
     @KafkaListener(id = "${kafka-consumer-config.restaurant-approval-consumer-group-id}",

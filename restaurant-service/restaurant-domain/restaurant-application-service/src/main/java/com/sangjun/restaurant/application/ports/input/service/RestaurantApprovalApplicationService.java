@@ -10,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class RestaurantApprovalApplicationService {
@@ -19,18 +17,15 @@ public class RestaurantApprovalApplicationService {
     private final PendingOrderRepository pendingOrderRepository;
 
     @Transactional
-    public void approveOrder(String pendingOrderId) {
+    public void approveOrder(PendingOrderId pendingOrderId) {
         var pendingOrder = findPendingOrder(pendingOrderId);
         OrderApprovedEvent domainEvent = pendingOrder.approve();
         orderApprovalEventShooter.fire(domainEvent);
     }
 
-    private PendingOrder findPendingOrder(String pendingOrderId) {
-        return pendingOrderRepository.findById(toPengOrderId(pendingOrderId))
+    private PendingOrder findPendingOrder(PendingOrderId pendingOrderId) {
+        return pendingOrderRepository.findById(pendingOrderId)
                 .orElseThrow(() -> new PendingOrderNotFound(pendingOrderId));
     }
 
-    private PendingOrderId toPengOrderId(String pendingOrderId) {
-        return new PendingOrderId(UUID.fromString(pendingOrderId));
-    }
 }

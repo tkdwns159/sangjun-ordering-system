@@ -28,10 +28,10 @@ import java.util.stream.Stream;
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = TestConfig.class)
-class RestaurantApprovalRequestMessageListenerTest {
+class OrderApprovalRequestMessageListenerTest {
 
     @Autowired
-    private RestaurantApprovalRequestMessageListener listener;
+    private OrderApprovalRequestMessageListener listener;
 
     @Autowired
     private RestaurantRepository restaurantRepository;

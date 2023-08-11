@@ -5,7 +5,7 @@ import com.sangjun.common.domain.valueobject.ProductId;
 import com.sangjun.common.domain.valueobject.RestaurantId;
 import com.sangjun.restaurant.application.dto.ProductDto;
 import com.sangjun.restaurant.application.dto.RestaurantApprovalRequest;
-import com.sangjun.restaurant.application.ports.input.message.listener.RestaurantApprovalRequestMessageListener;
+import com.sangjun.restaurant.application.ports.input.message.listener.OrderApprovalRequestMessageListener;
 import com.sangjun.restaurant.application.ports.output.message.repository.PendingOrderRepository;
 import com.sangjun.restaurant.application.ports.output.message.repository.ProductRepository;
 import com.sangjun.restaurant.domain.entity.Product;
@@ -28,7 +28,7 @@ import static java.util.Objects.requireNonNull;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RestaurantApprovalRequestMessageListenerImpl implements RestaurantApprovalRequestMessageListener {
+public class OrderApprovalRequestMessageListenerImpl implements OrderApprovalRequestMessageListener {
     private final OrderApprovalEventShooter orderApprovalEventShooter;
     private final PendingOrderRepository pendingOrderRepository;
     private final ProductRepository productRepository;

@@ -18,20 +18,18 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.util.StreamUtils;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-@ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(classes = TestConfig.class)
-class RestaurantApprovalRequestMessageListenerTest {
+class OrderApprovalRequestMessageListenerTest {
 
     @Autowired
-    private RestaurantApprovalRequestMessageListener listener;
+    private OrderApprovalRequestMessageListener listener;
 
     @Autowired
     private RestaurantRepository restaurantRepository;

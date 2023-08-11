@@ -4,6 +4,7 @@ import com.sangjun.common.domain.entity.BaseEntity;
 import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.RestaurantId;
 import com.sangjun.restaurant.domain.event.OrderApprovedEvent;
+import com.sangjun.restaurant.domain.event.OrderRejectedEvent;
 import com.sangjun.restaurant.domain.valueobject.PendingOrderId;
 import com.sangjun.restaurant.domain.valueobject.PendingOrderStatus;
 
@@ -58,6 +59,11 @@ public class PendingOrder extends BaseEntity<PendingOrderId> {
     public OrderApprovedEvent approve() {
         this.status = PendingOrderStatus.APPROVED;
         return new OrderApprovedEvent(this, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
+    }
+
+    public OrderRejectedEvent reject() {
+        this.status = PendingOrderStatus.CANCELLED;
+        return new OrderRejectedEvent(this, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
 
     public static final class Builder {

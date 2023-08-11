@@ -7,6 +7,7 @@ import com.sangjun.kafka.order.avro.model.OrderApprovalStatus;
 import com.sangjun.kafka.order.avro.model.Product;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalRequestAvroModel;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalResponseAvroModel;
+import com.sangjun.restaurant.application.dto.PendingOrderCancelRequest;
 import com.sangjun.restaurant.application.dto.ProductDto;
 import com.sangjun.restaurant.application.dto.RestaurantApprovalRequest;
 import com.sangjun.restaurant.domain.event.OrderApprovalEvent;
@@ -27,6 +28,8 @@ public interface RestaurantMessageMapper {
     ProductDto toProductDto(Product product);
 
     RestaurantApprovalRequest toRestaurantApprovalRequest(RestaurantApprovalRequestAvroModel restaurantApprovalRequestAvroModel);
+
+    PendingOrderCancelRequest toPendingOrderCancelRequest(RestaurantApprovalRequestAvroModel restaurantApprovalRequestAvroModel);
 
     default OrderApprovalStatus toOrderApprovalStatus(PendingOrderStatus pendingOrderStatus) {
         return switch (pendingOrderStatus) {

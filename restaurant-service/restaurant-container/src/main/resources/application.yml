@@ -62,6 +62,8 @@ spring:
     open-in-view: false
     show-sql: true
     database-platform: org.hibernate.dialect.PostgreSQL95Dialect
+    hibernate:
+      ddl-auto: none
 
   datasource:
     url:
@@ -73,6 +75,4 @@ spring:
       platform: postgres
       schema-locations:
         - classpath*:init-schema.sql
-      data-locations:
-        - classpath*:init-data.sql
       mode: always

@@ -20,22 +20,18 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("test")
 @EmbeddedKafka(
         count = 3,
         partitions = 3,
@@ -202,30 +198,31 @@ public class RestaurantIntegrationTest {
     void 주문승인() {
         //given
         Restaurant restaurant = 주문받을_식당과_제품들이_등록되어있음();
-        PendingOrderId pendingOrderId = 승인대기중인_주문이_있음(restaurant);
+        PendingOrder pendingOrder = 승인대기중인_주문이_있음(restaurant);
+        var pendingOrderId = pendingOrder.getId();
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
 
         //when
-        restaurantApprovalService.approveOrder(pendingOrderId.toString());
+        restaurantApprovalService.approveOrder(pendingOrderId);
 
         //then
-        PendingOrder pendingOrder = pendingOrderRepository.findById(pendingOrderId).get();
-        assertThat(pendingOrder.getStatus())
+        PendingOrder foundPendingOrder = pendingOrderRepository.findById(pendingOrderId).get();
+        assertThat(foundPendingOrder.getStatus())
                 .isEqualTo(PendingOrderStatus.APPROVED);
 
         주문승인완료_메세지_전송(restaurant);
     }
 
-    private PendingOrderId 승인대기중인_주문이_있음(Restaurant restaurant) {
+    private PendingOrder 승인대기중인_주문이_있음(Restaurant restaurant) {
         PendingOrder pendingOrder = PendingOrder.builder()
                 .status(PendingOrderStatus.PENDING)
                 .restaurantId(restaurant.getId())
                 .orderId(new OrderId(ORDER_ID))
                 .build();
         PendingOrder savedPendingOrder = pendingOrderRepository.save(pendingOrder);
-        TestTransaction.flagForCommit();
-        TestTransaction.end();
 
-        return savedPendingOrder.getId();
+        return savedPendingOrder;
     }
 
     private void 주문승인완료_메세지_전송(Restaurant restaurant) {
@@ -240,10 +237,13 @@ public class RestaurantIntegrationTest {
     }
 
     @Test
-    void 주문이_아직_승인되지_않았을때_주문대기취소() {
+    void 주문이_아직_승인되지_않았을때_주문대기취소() throws InterruptedException {
         //given
         Restaurant restaurant = 주문받을_식당과_제품들이_등록되어있음();
-        승인대기중인_주문이_있음(restaurant);
+        PendingOrder pendingOrder = 승인대기중인_주문이_있음(restaurant);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
 
         //when
         var msg = RestaurantApprovalRequestAvroModel.newBuilder()
@@ -252,66 +252,67 @@ public class RestaurantIntegrationTest {
                 .setRestaurantId(RESTAURANT_ID.toString())
                 .setRestaurantOrderStatus(RestaurantOrderStatus.CANCELLED)
                 .setCreatedAt(Instant.now())
+                .setProducts(Collections.emptyList())
                 .setSagaId("")
+                .setPrice(new BigDecimal("3000"))
                 .build();
+
         var key = ORDER_ID.toString();
         restaurantRequestKt.send(restaurantApprovalRequestTopic, key, msg);
+        Thread.sleep(200);
 
         //then
-        주문대기취소됨();
+        주문대기취소됨(pendingOrder.getId());
     }
 
-    private void 주문대기취소됨() {
+    private void 주문대기취소됨(PendingOrderId pendingOrderId) {
+        메세지가_발행되지_않아야함();
+        PendingOrder foundPendingOrder = pendingOrderRepository.findById(pendingOrderId).get();
+        assertThat(foundPendingOrder.getStatus())
+                .isEqualTo(PendingOrderStatus.CANCELLED);
+    }
 
+    private void 메세지가_발행되지_않아야함() {
+        Map<String, RestaurantApprovalResponseAvroModel> responseMap = consumeRestaurantResponseTopic();
+        assertThat(responseMap.isEmpty())
+                .isTrue();
     }
 
     @Test
-    void 주문이_승인되었을때_주문대기취소() {
+    void 주문이_승인되었을때_주문대기취소() throws InterruptedException {
         //given
         Restaurant restaurant = 주문받을_식당과_제품들이_등록되어있음();
-        승인대기중인_주문이_있음(restaurant);
-        승인대기중인_주문이_승인됨();
+        PendingOrder pendingOrder = 승인대기중인_주문이_있음(restaurant);
+        승인대기중인_주문이_승인됨(pendingOrder);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
 
         //when
         var msg = RestaurantApprovalRequestAvroModel.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setOrderId(ORDER_ID.toString())
-                .setRestaurantId(RESTAURANT_ID.toString())
+                .setRestaurantId(restaurant.getId().toString())
                 .setRestaurantOrderStatus(RestaurantOrderStatus.CANCELLED)
                 .setCreatedAt(Instant.now())
+                .setProducts(Collections.emptyList())
+                .setPrice(new BigDecimal("3000"))
                 .setSagaId("")
                 .build();
         var key = ORDER_ID.toString();
         restaurantRequestKt.send(restaurantApprovalRequestTopic, key, msg);
+        Thread.sleep(200);
 
         //then
-        주문대기취소요청이_무시됨();
+        메세지가_발행되지_않아야함();
+        PendingOrder foundPendingOrder = pendingOrderRepository.findByOrderId(new OrderId(ORDER_ID)).get();
+        assertThat(foundPendingOrder.getStatus())
+                .isEqualTo(PendingOrderStatus.APPROVED);
     }
 
-    private void 승인대기중인_주문이_승인됨() {
+    private void 승인대기중인_주문이_승인됨(PendingOrder pendingOrder) {
+        pendingOrder.approve();
     }
 
-    private void 주문대기취소요청이_무시됨() {
-
-    }
-
-
-    private void checkRestaurantResponse(UUID restaurantId,
-                                         UUID orderId,
-                                         com.sangjun.kafka.order.avro.model.OrderApprovalStatus orderApprovalStatus) {
-        Map<String, RestaurantApprovalResponseAvroModel> resultMap = consumeRestaurantResponseTopic();
-
-        assertThat(resultMap.size())
-                .isEqualTo(1);
-
-        RestaurantApprovalResponseAvroModel response = resultMap.get(orderId.toString());
-        assertThat(response.getRestaurantId())
-                .isEqualTo(restaurantId.toString());
-        assertThat(response.getOrderId())
-                .isEqualTo(orderId.toString());
-        assertThat(response.getOrderApprovalStatus())
-                .isEqualTo(orderApprovalStatus);
-    }
 
     private Map<String, RestaurantApprovalResponseAvroModel> consumeRestaurantResponseTopic() {
         ConsumerRecords<String, RestaurantApprovalResponseAvroModel> records =

@@ -6,7 +6,7 @@ import com.sangjun.restaurant.application.exception.PendingOrderNotFound;
 import com.sangjun.restaurant.application.ports.input.message.listener.PendingOrderCancelRequestMessageListener;
 import com.sangjun.restaurant.application.ports.output.message.repository.PendingOrderRepository;
 import com.sangjun.restaurant.domain.entity.PendingOrder;
-import com.sangjun.restaurant.domain.event.OrderRejectedEvent;
+import com.sangjun.restaurant.domain.valueobject.PendingOrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +21,9 @@ public class PendingOrderCancelRequestMessageListenerImpl implements PendingOrde
     public void cancelPendingOrder(PendingOrderCancelRequest pendingOrderCancelRequest) {
         OrderId orderId = pendingOrderCancelRequest.getOrderId();
         PendingOrder pendingOrder = findPendingOrder(orderId);
-        OrderRejectedEvent domainEvent = pendingOrder.reject();
+        if (pendingOrder.getStatus() == PendingOrderStatus.PENDING) {
+            pendingOrder.reject();
+        }
     }
 
     private PendingOrder findPendingOrder(OrderId orderId) {

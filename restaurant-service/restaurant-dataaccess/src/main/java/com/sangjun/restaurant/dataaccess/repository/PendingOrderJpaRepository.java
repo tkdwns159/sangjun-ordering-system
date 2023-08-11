@@ -14,4 +14,7 @@ public interface PendingOrderJpaRepository extends PendingOrderRepository, Repos
 
     @Override
     PendingOrder save(PendingOrder pendingOrder);
+
+    @Override
+    Optional<PendingOrder> findById(PendingOrderId pendingOrderId);
 }

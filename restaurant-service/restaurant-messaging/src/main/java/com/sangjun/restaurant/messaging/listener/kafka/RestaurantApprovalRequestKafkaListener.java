@@ -2,8 +2,9 @@ package com.sangjun.restaurant.messaging.listener.kafka;
 
 import com.sangjun.kafka.consumer.KafkaConsumer;
 import com.sangjun.kafka.order.avro.model.RestaurantApprovalRequestAvroModel;
-import com.sangjun.restaurant.application.ports.input.message.listener.RestaurantApprovalRequestMessageListener;
-import com.sangjun.restaurant.messaging.mapper.RestaurantMessagingDataMapper;
+import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
+import com.sangjun.restaurant.application.ports.input.message.listener.OrderApprovalRequestMessageListener;
+import com.sangjun.restaurant.application.ports.input.message.listener.PendingOrderCancelRequestMessageListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -20,8 +21,8 @@ import static com.sangjun.restaurant.messaging.mapper.RestaurantMessageMapper.MA
 @Component
 @RequiredArgsConstructor
 public class RestaurantApprovalRequestKafkaListener implements KafkaConsumer<RestaurantApprovalRequestAvroModel> {
-    private final RestaurantApprovalRequestMessageListener restaurantApprovalRequestMessageListener;
-    private final RestaurantMessagingDataMapper restaurantMessagingDataMapper;
+    private final OrderApprovalRequestMessageListener orderApprovalRequestMessageListener;
+    private final PendingOrderCancelRequestMessageListener pendingOrderCancelRequestMessageListener;
 
     @Override
     @KafkaListener(id = "${kafka-consumer-config.restaurant-approval-consumer-group-id}",
@@ -37,9 +38,27 @@ public class RestaurantApprovalRequestKafkaListener implements KafkaConsumer<Res
                 partitions.toString(),
                 offsets.toString());
 
-        messages.forEach(message -> {
-            log.info("Processing order approval for order id: {}", message.getOrderId());
-            restaurantApprovalRequestMessageListener.registerPendingOrder(MAPPER.toRestaurantApprovalRequest(message));
-        });
+        registerPendingOrders(messages);
+        cancelPendingOrders(messages);
     }
+
+    private void registerPendingOrders(List<RestaurantApprovalRequestAvroModel> messages) {
+        messages.stream()
+                .filter(message -> message.getRestaurantOrderStatus() == RestaurantOrderStatus.PAID)
+                .forEach(message -> {
+                    log.info("Processing order approval for order id: {}", message.getOrderId());
+                    orderApprovalRequestMessageListener.registerPendingOrder(MAPPER.toRestaurantApprovalRequest(message));
+                });
+    }
+
+    private void cancelPendingOrders(List<RestaurantApprovalRequestAvroModel> messages) {
+        messages.stream()
+                .filter(message -> message.getRestaurantOrderStatus() == RestaurantOrderStatus.CANCELLED)
+                .forEach(message -> {
+                    log.info("Cancelling order approval for order id: {}", message.getOrderId());
+                    pendingOrderCancelRequestMessageListener.cancelPendingOrder(MAPPER.toPendingOrderCancelRequest(message));
+                });
+    }
+
+
 }

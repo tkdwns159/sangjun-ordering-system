@@ -3,7 +3,9 @@ package com.sangjun.order.domain.entity;
 import com.sangjun.common.domain.entity.AggregateRoot;
 import com.sangjun.common.domain.valueobject.*;
 import com.sangjun.order.domain.FailureMessageAttributeConverter;
+import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.event.OrderCreatedEvent;
+import com.sangjun.order.domain.event.OrderPaidEvent;
 import com.sangjun.order.domain.exception.OrderDomainException;
 import com.sangjun.order.domain.valueobject.OrderItem;
 import com.sangjun.order.domain.valueobject.StreetAddress;
@@ -161,7 +163,7 @@ public class Order extends AggregateRoot<OrderId> {
         }
     }
 
-    public void pay() {
+    public OrderPaidEvent pay() {
         if (this.orderStatus != OrderStatus.PENDING) {
             log.error("Order must be in PENDING state for pay operation! Order status: {}",
                     this.orderStatus);
@@ -170,14 +172,17 @@ public class Order extends AggregateRoot<OrderId> {
         }
 
         this.orderStatus = OrderStatus.PAID;
+
+        return new OrderPaidEvent(this, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
 
     public void approve() {
         this.orderStatus = OrderStatus.APPROVED;
     }
 
-    public void initCancel() {
+    public OrderCancellingEvent initCancel() {
         this.orderStatus = OrderStatus.CANCELLING;
+        return new OrderCancellingEvent(this, ZonedDateTime.now(ZoneId.of(ZONE_ID)));
     }
 
     private void updateFailureMessages(List<String> failureMessages) {

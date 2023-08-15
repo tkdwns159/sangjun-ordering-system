@@ -30,7 +30,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.event.RecordApplicationEvents;
@@ -110,18 +109,21 @@ public class OrderIntegrationTest {
 
     @Autowired
     private CreateOrderApplicationService createOrderService;
+
     @Autowired
     private CancelOrderApplicationService cancelOrderService;
+
     @Autowired
     private RestaurantRepository restaurantRepository;
+
     @Autowired
     private OrderRepository orderRepository;
+
     @Autowired
     private CustomerRepository customerRepository;
+
     @PersistenceContext
     private EntityManager entityManager;
-    @Autowired
-    private EmbeddedKafkaBroker embeddedKafka;
 
     @Autowired
     private ConsumerFactory<String, PaymentRequestAvroModel> paymentCf;
@@ -465,7 +467,7 @@ public class OrderIntegrationTest {
 
         //when
         paymentResponseKt.send(paymentResponseTopic, orderId.getValue().toString(), msg);
-        Thread.sleep(200);
+        Thread.sleep(250);
 
         //then
         Order foundOrder = orderRepository.findById(orderId).get();

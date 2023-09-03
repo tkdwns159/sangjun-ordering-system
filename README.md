@@ -7,6 +7,8 @@
 
 위에 나열된 4개의 서비스로 구성된 모의 주문 시스템입니다. 각각의 서비스가 독립된 인스턴스로 실행되어 Kafka를 통해 이벤트 메세지를 주고받도록 구현했습니다.
 
+식당 서비스는 구현 및 수정이 더 필요한 상태이며, 고객 서비스는 설계단계부터 진행해야하는 상태입니다. 또한, 처음 구현으로부터 달라진 부분이 크기때문에 카프카 메세지 포맷의 수정도 필요합니다.
+
 ## Skills
 
 - Java 17
@@ -39,5 +41,8 @@ Kafka broker의 `/var/lib/kafka/data` 에 볼륨 마운트 설정을 해놓았�
 
 ## Details
 
-- [Server Architecture](https://drive.google.com/file/d/1OXqb6fq_craaYSuYOrKrigisBmnzbdw2/view?usp=drive_link)
-- [API specification](docs/api_spec.md)
+- [서버 구조](img/server_architecture.png)
+- [주문 로직 흐름 순서도](img/flow_chart.png)
+- [패키지-클래스 관계도](img/package_and_class_relationship_diagram.png)
+- [메시지 흐름 순서도](docs/message_flow.md)
+- [API 명세](docs/api_spec.md)

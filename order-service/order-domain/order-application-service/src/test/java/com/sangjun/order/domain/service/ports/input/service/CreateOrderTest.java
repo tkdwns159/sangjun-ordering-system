@@ -6,15 +6,15 @@ import com.sangjun.common.domain.valueobject.OrderStatus;
 import com.sangjun.common.domain.valueobject.ProductId;
 import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
+import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
-import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
+import com.sangjun.order.domain.service.ports.output.repository.ProductRepository;
 import com.sangjun.order.domain.valueobject.OrderItem;
-import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,16 +58,16 @@ class CreateOrderTest {
     private CustomerRepository customerRepository;
 
     @MockBean
-    private RestaurantRepository restaurantRepository;
+    private ProductRepository productRepository;
 
 
     @BeforeEach
     void preCondition() {
         Customer customer = new Customer(new CustomerId(customerId));
 
-        when(customerRepository.findById(customerId))
+        when(customerRepository.findById(customer.getId()))
                 .thenReturn(Optional.of(customer));
-        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+        when(productRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
                 .thenReturn(List.of(
                         Product.builder()
                                 .id(new ProductId(productId1))
@@ -236,7 +236,7 @@ class CreateOrderTest {
                 .orderAddressDto(orderAddressDto)
                 .build();
         // when
-        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+        when(productRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
                 .thenReturn(List.of(
                         Product.builder()
                                 .id(new ProductId(productId1))

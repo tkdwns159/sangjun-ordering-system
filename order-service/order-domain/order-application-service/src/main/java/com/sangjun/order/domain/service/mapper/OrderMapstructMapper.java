@@ -3,13 +3,13 @@ package com.sangjun.order.domain.service.mapper;
 import com.sangjun.common.domain.mapper.CentralConfig;
 import com.sangjun.common.domain.mapper.CommonMapper;
 import com.sangjun.order.domain.entity.Order;
+import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
 import com.sangjun.order.domain.service.dto.create.OrderAddressDto;
 import com.sangjun.order.domain.service.dto.create.OrderItemDto;
 import com.sangjun.order.domain.service.dto.track.TrackOrderResponse;
 import com.sangjun.order.domain.valueobject.OrderItem;
-import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import org.mapstruct.Mapper;
@@ -34,7 +34,7 @@ public interface OrderMapstructMapper {
 
     @Mapping(target = "deliveryAddress", source = "orderAddressDto")
     Order toOrder(CreateOrderCommand createOrderCommand);
-    
+
 
     @Mapping(target = "orderTrackingId", source = "trackingId.value")
     @Mapping(target = "message", constant = "Order created successfully")

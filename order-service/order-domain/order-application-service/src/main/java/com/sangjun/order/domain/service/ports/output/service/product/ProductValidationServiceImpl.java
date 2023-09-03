@@ -2,8 +2,8 @@ package com.sangjun.order.domain.service.ports.output.service.product;
 
 import com.sangjun.common.domain.valueobject.ProductId;
 import com.sangjun.common.domain.valueobject.RestaurantId;
-import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
-import com.sangjun.order.domain.valueobject.Product;
+import com.sangjun.order.domain.entity.Product;
+import com.sangjun.order.domain.service.ports.output.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,11 +17,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ProductValidationServiceImpl implements ProductValidationService {
-    private final RestaurantRepository restaurantRepository;
+    private final ProductRepository productRepository;
 
     @Override
     public void validateProducts(RestaurantId restaurantId, List<Product> products) {
-        Map<ProductId, Product> foundProductMap = toHashMap(restaurantRepository
+        Map<ProductId, Product> foundProductMap = toHashMap(productRepository
                 .findProductsByRestaurantIdInProductIds(restaurantId, getProductIds(products)));
 
         for (var product : products) {

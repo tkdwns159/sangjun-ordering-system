@@ -7,6 +7,7 @@ import com.sangjun.kafka.order.avro.model.RestaurantOrderStatus;
 import com.sangjun.kafka.order.avro.model.*;
 import com.sangjun.order.domain.entity.Customer;
 import com.sangjun.order.domain.entity.Order;
+import com.sangjun.order.domain.entity.Product;
 import com.sangjun.order.domain.service.dto.CancelOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderCommand;
 import com.sangjun.order.domain.service.dto.create.CreateOrderResponse;
@@ -16,9 +17,8 @@ import com.sangjun.order.domain.service.ports.input.service.CancelOrderApplicati
 import com.sangjun.order.domain.service.ports.input.service.CreateOrderApplicationService;
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
 import com.sangjun.order.domain.service.ports.output.repository.OrderRepository;
-import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
+import com.sangjun.order.domain.service.ports.output.repository.ProductRepository;
 import com.sangjun.order.domain.valueobject.OrderItem;
-import com.sangjun.order.domain.valueobject.Product;
 import com.sangjun.order.domain.valueobject.StreetAddress;
 import com.sangjun.order.domain.valueobject.TrackingId;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,6 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,7 +64,6 @@ import static org.mockito.Mockito.when;
 @TestMethodOrder(value = MethodOrderer.Random.class)
 @Transactional
 @Slf4j
-@RecordApplicationEvents
 public class OrderIntegrationTest {
     private static final UUID CUSTOMER_ID = UUID.fromString("f6316e90-1837-4940-b5db-a3c49a9a10ca");
     private static final UUID RESTAURANT_ID = UUID.fromString("ad68afcc-e55e-4e6a-bc6d-95a26a5410ff");
@@ -114,7 +112,7 @@ public class OrderIntegrationTest {
     private CancelOrderApplicationService cancelOrderService;
 
     @Autowired
-    private RestaurantRepository restaurantRepository;
+    private ProductRepository productRepository;
 
     @Autowired
     private OrderRepository orderRepository;
@@ -233,9 +231,9 @@ public class OrderIntegrationTest {
                 .orderAddressDto(orderAddressDto)
                 .build();
         //when
-        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+        when(productRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
                 .thenReturn(List.of(PRODUCT_1, PRODUCT_2));
-        when(customerRepository.findById(CUSTOMER_ID))
+        when(customerRepository.findById(customer.getId()))
                 .thenReturn(Optional.of(customer));
 
         CreateOrderResponse resp = createOrderService.createOrder(command);
@@ -434,7 +432,7 @@ public class OrderIntegrationTest {
 
         //when
         paymentResponseKt.send(paymentResponseTopic, orderId.getValue().toString(), msg);
-        Thread.sleep(200);
+        Thread.sleep(250);
 
         //then
         Order foundOrder = orderRepository.findById(orderId).get();

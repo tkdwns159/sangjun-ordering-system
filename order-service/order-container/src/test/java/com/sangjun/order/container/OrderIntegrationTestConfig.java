@@ -1,7 +1,7 @@
 package com.sangjun.order.container;
 
 import com.sangjun.order.domain.service.ports.output.repository.CustomerRepository;
-import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
+import com.sangjun.order.domain.service.ports.output.repository.ProductRepository;
 import org.mockito.Mockito;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -13,8 +13,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import static org.springframework.context.annotation.ComponentScan.Filter;
 
-@EnableJpaRepositories(basePackages = {"com.sangjun.order.dataaccess", "com.sangjun.common.dataaccess"})
-@EntityScan(basePackages = {"com.sangjun.order.domain", "com.sangjun.common.domain"})
+@EnableJpaRepositories(basePackages = {"com.sangjun.order.dataaccess"})
+@EntityScan(basePackages = {"com.sangjun.order.domain"})
 @ComponentScan(basePackages = {"com.sangjun.order", "com.sangjun.kafka"},
         excludeFilters = {@Filter(type = FilterType.ANNOTATION, classes = {ComponentScan.class})
         })
@@ -23,8 +23,8 @@ import static org.springframework.context.annotation.ComponentScan.Filter;
 public class OrderIntegrationTestConfig {
 
     @Bean
-    public RestaurantRepository restaurantRepository() {
-        return Mockito.mock(RestaurantRepository.class);
+    public ProductRepository productRepository() {
+        return Mockito.mock(ProductRepository.class);
     }
 
     @Bean

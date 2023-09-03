@@ -13,7 +13,7 @@ public class CustomerCheckServiceImpl implements CustomerCheckService {
     @Override
     public boolean existsById(CustomerId customerId) {
         return customerRepository
-                .findById(customerId.getValue())
+                .findById(customerId)
                 .isPresent();
     }
 }

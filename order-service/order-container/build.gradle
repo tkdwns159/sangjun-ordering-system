@@ -22,7 +22,6 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'com.h2database:h2'
-    testImplementation 'com.sangjun.common:common-dataaccess'
     testImplementation('org.springframework.kafka:spring-kafka') {
         exclude group: 'org.slf4j', module: 'slft4j-log4j12'
         exclude group: 'log4j', module: 'log4j'

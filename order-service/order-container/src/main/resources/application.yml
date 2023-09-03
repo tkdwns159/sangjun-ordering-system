@@ -70,7 +70,7 @@ spring:
 
   datasource:
     url:
-      jdbc:postgresql://localhost:5000/postgres?currentSchema=p_order&binaryTransfer=true&reWriteBatchedInserts=true&stringtype=unspecified
+      jdbc:postgresql://localhost:5000/postgres?binaryTransfer=true&reWriteBatchedInserts=true&stringtype=unspecified
     username: postgres
     password: admin
   sql:

@@ -1,7 +1,9 @@
-package com.sangjun.order.domain.valueobject;
+package com.sangjun.order.domain.entity;
 
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.ProductId;
+
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
@@ -69,6 +71,19 @@ public class Product {
         public Product build() {
             return new Product(this);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Product product = (Product) o;
+        return quantity == product.quantity && Objects.equals(id, product.id) && Objects.equals(price, product.price);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, price, quantity);
     }
 }
 

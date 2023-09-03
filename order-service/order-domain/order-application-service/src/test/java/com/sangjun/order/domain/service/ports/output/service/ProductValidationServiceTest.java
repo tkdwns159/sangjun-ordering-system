@@ -3,9 +3,9 @@ package com.sangjun.order.domain.service.ports.output.service;
 import com.sangjun.common.domain.valueobject.Money;
 import com.sangjun.common.domain.valueobject.ProductId;
 import com.sangjun.common.domain.valueobject.RestaurantId;
-import com.sangjun.order.domain.service.ports.output.repository.RestaurantRepository;
+import com.sangjun.order.domain.entity.Product;
+import com.sangjun.order.domain.service.ports.output.repository.ProductRepository;
 import com.sangjun.order.domain.service.ports.output.service.product.ProductValidationService;
-import com.sangjun.order.domain.valueobject.Product;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ class ProductValidationServiceTest {
     private ProductValidationService productValidationService;
 
     @Autowired
-    private RestaurantRepository restaurantRepository;
+    private ProductRepository productRepository;
 
     RestaurantId restaurantId = new RestaurantId(UUID.randomUUID());
     ProductId productId1 = new ProductId(UUID.randomUUID());
@@ -49,7 +49,7 @@ class ProductValidationServiceTest {
     void 요청한_제품id를_찾을수없으면_예외발생() {
         //given
         //when
-        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+        when(productRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
                 .thenReturn(List.of(
                         Product.builder()
                                 .id(productId1)
@@ -66,7 +66,7 @@ class ProductValidationServiceTest {
     void 요청수량보다_재고수량이_적으면_예외발생() {
         //given
         //when
-        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+        when(productRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
                 .thenReturn(List.of(Product.builder()
                         .id(productId1)
                         .quantity(quantity1 - 1)
@@ -82,7 +82,7 @@ class ProductValidationServiceTest {
         //given
 
         //when
-        when(restaurantRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
+        when(productRepository.findProductsByRestaurantIdInProductIds(any(), anyList()))
                 .thenReturn(List.of(Product.builder()
                         .id(productId1)
                         .quantity(quantity1)

@@ -14,9 +14,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
-
 @Mapper(config = CentralConfig.class, uses = CommonMapper.class)
 public interface PaymentMessageMapper {
     PaymentMessageMapper MAPPER = Mappers.getMapper(PaymentMessageMapper.class);
@@ -37,15 +34,10 @@ public interface PaymentMessageMapper {
         return orderId.getValue().toString();
     }
 
-    default Instant toInstant(ZonedDateTime time) {
-        return time.toInstant();
-    }
-
 
     @Mapping(target = ".", source = "payment")
     @Mapping(target = "paymentId", source = "payment.id")
     @Mapping(target = "sagaId", constant = "")
-    @Mapping(target = "createdAt", source = "createdAt")
     PaymentResponseAvroModel toPaymentResponseAvroModel(PaymentEvent paymentEvent);
 
     @Mapping(target = "paymentStatus", source = "paymentOrderStatus")

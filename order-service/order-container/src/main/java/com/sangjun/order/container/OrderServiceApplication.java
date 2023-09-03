@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 
-@EnableJpaRepositories(basePackages = {"com.sangjun.order.dataaccess", "com.sangjun.common.dataaccess"})
-@EntityScan(basePackages = {"com.sangjun.order.dataaccess", "com.sangjun.common.dataaccess"})
+@EnableJpaRepositories(basePackages = {"com.sangjun.order.dataaccess"})
+@EntityScan(basePackages = {"com.sangjun.order.domain"})
 @SpringBootApplication(scanBasePackages = {"com.sangjun"})
 public class OrderServiceApplication {
     public static void main(String[] args) {

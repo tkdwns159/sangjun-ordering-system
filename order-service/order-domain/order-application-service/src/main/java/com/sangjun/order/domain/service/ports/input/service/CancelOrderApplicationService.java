@@ -1,7 +1,6 @@
 package com.sangjun.order.domain.service.ports.input.service;
 
 import com.sangjun.common.domain.valueobject.OrderStatus;
-import com.sangjun.order.domain.OrderDomainService;
 import com.sangjun.order.domain.entity.Order;
 import com.sangjun.order.domain.event.OrderCancellingEvent;
 import com.sangjun.order.domain.event.OrderPaidEvent;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 
 import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 
@@ -24,7 +22,6 @@ import static com.sangjun.common.utils.CommonConstants.ZONE_ID;
 @RequiredArgsConstructor
 public class CancelOrderApplicationService {
     private final OrderRepository orderRepository;
-    private final OrderDomainService orderDomainService;
     private final OrderEventShooter orderEventShooter;
 
     @Transactional
@@ -33,8 +30,8 @@ public class CancelOrderApplicationService {
         final Order order = getOrder(trackingId);
         final OrderStatus orderStatus = order.getOrderStatus();
 
-        if (!IsNonCancellable(orderStatus)) {
-            var orderCancellingEvent = orderDomainService.initiateOrderCancel(order, new ArrayList<>());
+        if (!isNonCancellable(orderStatus)) {
+            var orderCancellingEvent = order.initCancel();
             fireDomainEvent(order, orderStatus, orderCancellingEvent);
         }
     }
@@ -44,7 +41,7 @@ public class CancelOrderApplicationService {
                 .orElseThrow(() -> new OrderNotFoundException(trackingId));
     }
 
-    private static boolean IsNonCancellable(OrderStatus orderStatus) {
+    private static boolean isNonCancellable(OrderStatus orderStatus) {
         return orderStatus == OrderStatus.CANCELLED
                 || orderStatus == OrderStatus.CANCELLING
                 || orderStatus == OrderStatus.APPROVED;

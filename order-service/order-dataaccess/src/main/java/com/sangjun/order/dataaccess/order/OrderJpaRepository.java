@@ -1,4 +1,4 @@
-package com.sangjun.order.dataaccess.order.repository;
+package com.sangjun.order.dataaccess.order;
 
 import com.sangjun.common.domain.valueobject.OrderId;
 import com.sangjun.common.domain.valueobject.OrderStatus;

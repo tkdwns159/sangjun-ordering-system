@@ -1,11 +1,11 @@
 package com.sangjun.order.domain.service.ports.output.repository;
 
+import com.sangjun.common.domain.valueobject.CustomerId;
 import com.sangjun.order.domain.entity.Customer;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public interface CustomerRepository {
 
-    Optional<Customer> findById(UUID customerId);
+    Optional<Customer> findById(CustomerId customerId);
 }

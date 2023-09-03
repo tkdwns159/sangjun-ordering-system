@@ -3,9 +3,7 @@ package com.sangjun.order.domain.service;
 import com.sangjun.common.domain.event.DomainEvent;
 import com.sangjun.common.domain.event.EmptyEvent;
 import com.sangjun.common.domain.valueobject.OrderStatus;
-import com.sangjun.order.domain.OrderDomainService;
 import com.sangjun.order.domain.entity.Order;
-import com.sangjun.order.domain.event.OrderPaidEvent;
 import com.sangjun.order.domain.service.dto.message.PaymentResponse;
 import com.sangjun.saga.SagaStep;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class OrderPaymentSaga implements SagaStep<PaymentResponse, DomainEvent, EmptyEvent> {
-    private final OrderDomainService orderDomainService;
     private final OrderSagaHelper orderSagaHelper;
 
     @Override
@@ -29,10 +26,8 @@ public class OrderPaymentSaga implements SagaStep<PaymentResponse, DomainEvent, 
             log.info("Order with id: {} is being cancelled", data.getOrderId());
             return EmptyEvent.INSTANCE;
         }
-
-        OrderPaidEvent orderPaidEvent = orderDomainService.payOrder(order);
-        orderSagaHelper.loadOrderItems(order);
-
+        var orderPaidEvent = order.pay();
+        orderSagaHelper.loadOrderItems(orderPaidEvent.getOrder());
         return orderPaidEvent;
     }
 
@@ -40,7 +35,7 @@ public class OrderPaymentSaga implements SagaStep<PaymentResponse, DomainEvent, 
     @Transactional
     public EmptyEvent rollback(PaymentResponse data) {
         Order order = orderSagaHelper.findOrder(data.getOrderId());
-        orderDomainService.cancelOrder(order, data.getFailureMessages());
+        order.cancel();
         return EmptyEvent.INSTANCE;
     }
 }

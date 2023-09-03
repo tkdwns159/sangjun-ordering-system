@@ -1,35 +1,53 @@
 ## [[return]](../README.md)
 
-## 메세지 플로우
-
-<p>
-    <img src="../img/saga-2.png"/>
-</p>
+## 메세지 흐름에 대한 설명
 
 ### 정상 실행 흐름
 
-1. Order Service에 주문이 요청되고, 주문 데이터를 생성합니다. 초기 주문 상태는 PENDING 입니다.
-2. Order Service에서 해당 주문에 대한 결제 요청을 Payment Service로 보냅니다. (ORDER CREATED)
-3. 결제가 완료되면, Payment Service에서 Order Service로 완료 메세지를 보냅니다. (PAYMENT COMPLETED)
-4. 해당 메세지를 수신한 Order Service는 주문 상태를 PENDING에서 PAID 로 바꿉니다.
-5. Order Service에서 해당 주문에 대한 식당의 승인을 받기위해 Restaurant Service에 승인 요청을 보냅니다. (ORDER PAID)
-6. 승인이 완료되면, Restaurant Service에서 Order Service로 완료 메세지를 보냅니다.(ORDER APPROVED)
-7. 해당 메세지를 수신한 Order Service는 주문 상태를 APPROVED로 바꿉니다.
-
 <p>
-    <img src="../img/saga(failure).png"/>
+    <img src="../img/saga_happy_flow_chart.png"/>
 </p>
 
-### 결제 실패시
+1. **PENDING**
 
-결제 실패시, 주문 상태를 PENDING에서 CANCELLED로 바꾸고 실패처리합니다.
+Order Service에 주문이 요청되고, PENDING 상태의 주문 정보를 생성합니다. 주문 정보가 생성된 이후에는 OrderCreated 이벤트가 발행됩니다.
 
-### 식당 승인 거부 및 실패시
+2. **PAID**
 
-식당 승인 요청을 하기 위해서는 결제가 성공적으로 완료되어야하기 때문에, 해당 주문의 현재 주문상태는 PAID 입니다.
+Payment Service에서 OrderCreated 이벤트를 수신하고, 이벤트와 연관된 주문에 대한 결제를 처리합니다. 결제가 완료되면, PaymentCompleted 이벤트가 발행됩니다.
 
-1. 식당 승인이 실패하거나 거부되었을 경우, Restaurant Service에서 승인 실패 메세지를 보냅니다. (ORDER CANCELLED)
-2. 해당 메세지를 수신한 Order Service는 주문 상태를 PAID 에서 CANCELLING 으로 바꿉니다.
-3. Order Service는 결제를 철회하기 위해 Payment Service에 결제 철회 메세지를 보냅니다. (ORDER CANCELLED)
-3. 결제가 성공적으로 철회되면, Payment Service는 Order Service에 완료 메세지를 보냅니다. (PAYMENT CANCELLED)
-4. 해당 메세지를 수신한 Order Service는 주문 상태를 CANCELLED 로 바꾸고 실패처리합니다.
+Order Service는 PaymentCompleted 이벤트를 수신하고, 주문 정보의 상태를 PAID로 변경시킵니다. 이후 OrderPaid 이벤트가 발행됩니다.
+
+3. **APPROVED**
+
+Restaurant Service에서 OrderPaid 이벤트를 수신하고, 주문을 곧바로 승인합니다. 이후 OrderApprovalCompleted 이벤트가 발행됩니다.
+
+Order Service는 OrderApprovalCompletedEvent를 수신하고, 주문 정보의 상태를 Approved로 변경시킵니다.
+
+_* APPROVED 단계의 경우, 현재 OrderPaid 이벤트를 수신하자마자 주문을 승인하는 구조입니다. 이를 식당의 승인을 직접 받아 주문을 승인하는 방식으로 수정할 예정입니다._
+
+### 실패 실행 흐름
+
+<p>
+    <img src="../img/saga_rollback_flow_chart.png"/>
+</p>
+
+### 주문에 대한 결제 실패
+
+Payment Service에서 결제가 실패하면 PaymentFailed 이벤트가 발행됩니다.
+
+Order Service는 PaymentFailed 이벤트를 수신하고, 주문 상태를 PENDING에서 CANCELLED로 변경시킵니다.
+
+### 식당 승인 거부 및 실패
+
+식당에 승인 요청을 하는 시점의 주문 상태는 PAID입니다. 승인의 거부 및 실패시 OrderRejected 이벤트가 발행됩니다.
+
+1. **CANCELLING**
+
+Order Service는 OrderRejected 이벤트를 수신하고, 주문 정보의 상태를 PAID에서 CANCELLING으로 변경시킵니다. 이후 OrderCancelling 이벤트가 발행됩니다.
+
+2. **CANCELLED**
+
+Payment Service는 OrderCancelling 이벤트를 수신하고, 결제를 취소처리합니다. 이후 PaymentCancelled 이벤트가 발행됩니다.
+
+Order Service는 PaymentCancelled 이벤트를 수신하고, 주문 정보의 상태를 CANCELLED로 변경시킵니다.
